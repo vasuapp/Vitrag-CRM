@@ -1,0 +1,6 @@
+node_modules/
+.env
+realpro_crm.db
+realpro_sessions.db
+database.sqlite
+simulated_google_sheet.csv

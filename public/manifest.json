@@ -1,0 +1,22 @@
+{
+  "short_name": "REALPro",
+  "name": "REALPro CRM - RealOS Pro",
+  "description": "Enterprise-grade real estate business operating system, custom hydrated and automated.",
+  "icons": [
+    {
+      "src": "/uploads/logo_192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/uploads/logo_512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0f1923",
+  "theme_color": "#C9991A",
+  "display": "standalone",
+  "orientation": "portrait"
+}

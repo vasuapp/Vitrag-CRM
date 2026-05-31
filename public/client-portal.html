@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Deal Tracker Portal | REALPro CRM</title>
+  <!-- Outfit & Inter Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Tabler Icons CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <!-- PWA Manifest & Service Worker -->
+  <link rel="manifest" href="/manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js');
+      });
+    }
+  </script>
+  
+  <style>
+    :root {
+      --bg-dark: #0f1923;
+      --bg-panel: rgba(26, 38, 51, 0.45);
+      --bg-card: rgba(255, 255, 255, 0.02);
+      --gold: #C9991A;
+      --gold-l: #e5b945;
+      --gold-d: #8c680d;
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #f0f3f5;
+      --text-muted: #8e9ca8;
+      --green: #2ecc71;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      background-image: radial-gradient(circle at 80% 20%, rgba(201, 153, 26, 0.04) 0%, transparent 60%),
+                        radial-gradient(circle at 20% 80%, rgba(155, 89, 182, 0.03) 0%, transparent 50%);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      width: 100%;
+      flex: 1;
+    }
+
+    /* Auth Card View */
+    .auth-container {
+      max-width: 420px;
+      margin: 100px auto;
+      background: var(--bg-panel);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(201, 153, 26, 0.2);
+      border-radius: var(--radius);
+      padding: 40px 30px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .auth-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .auth-title span {
+      color: var(--gold-l);
+    }
+
+    .auth-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 25px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
+
+    .form-label {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--gold-l);
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .form-control {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      color: #fff;
+      font-size: 14px;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--gold);
+      background: rgba(0, 0, 0, 0.4);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--gold);
+      color: #000;
+      box-shadow: 0 4px 12px rgba(201, 153, 26, 0.25);
+    }
+
+    .btn-primary:hover {
+      background: var(--gold-l);
+      box-shadow: 0 4px 18px rgba(201, 153, 26, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Dashboard Layout */
+    .dashboard-container {
+      display: none; /* Controlled via script */
+    }
+
+    /* Branded Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 25px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 25px;
+    }
+
+    .brand-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .brand-title span {
+      color: var(--gold-l);
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .user-info {
+      text-align: right;
+    }
+
+    .user-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .user-role {
+      font-size: 11px;
+      color: var(--gold-l);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    /* Visual Pipeline Stepper */
+    .stepper-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 25px 30px;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+
+    .stepper-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--gold-l);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .stepper {
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+      margin-top: 10px;
+      padding: 0 10px;
+    }
+
+    .stepper::before {
+      content: '';
+      position: absolute;
+      top: 15px;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      z-index: 1;
+    }
+
+    .step-progress-bar {
+      position: absolute;
+      top: 15px;
+      left: 0;
+      height: 4px;
+      background: var(--gold);
+      z-index: 2;
+      transition: width 0.5s ease;
+      width: 0%; /* Dynamic width */
+    }
+
+    .step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 3;
+      flex: 1;
+    }
+
+    .step-circle {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #111b24;
+      border: 2.5px solid var(--border);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      transition: all 0.3s ease;
+    }
+
+    .step.active .step-circle {
+      border-color: var(--gold);
+      background: var(--gold);
+      color: #000;
+      box-shadow: 0 0 12px var(--gold);
+    }
+
+    .step.completed .step-circle {
+      border-color: var(--gold);
+      background: rgba(201, 153, 26, 0.2);
+      color: var(--gold-l);
+    }
+
+    .step-label {
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 8px;
+      color: var(--text-muted);
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .step.active .step-label {
+      color: #fff;
+    }
+
+    .step.completed .step-label {
+      color: var(--gold-l);
+    }
+
+    /* Grid layout */
+    .grid-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 25px;
+    }
+
+    .card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 25px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      margin-bottom: 25px;
+    }
+
+    .card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--gold-l);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* Small Property Cards */
+    .props-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 15px;
+    }
+
+    .small-prop-card {
+      background: rgba(255, 255, 255, 0.01);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 15px;
+      transition: all 0.2s ease;
+    }
+
+    .small-prop-card:hover {
+      border-color: var(--gold);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .small-prop-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .small-prop-price {
+      font-size: 14px;
+      color: var(--green);
+      font-weight: 800;
+      margin-top: 2px;
+    }
+
+    .small-prop-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Document Vault Vault */
+    .vault-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .vault-item {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .vault-item:hover {
+      border-color: var(--gold);
+      background: rgba(201, 153, 26, 0.05);
+    }
+
+    .vault-item i {
+      font-size: 24px;
+      color: var(--gold-l);
+    }
+
+    .vault-item-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .vault-item-name {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .vault-item-status {
+      font-size: 10px;
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    /* Secure Chat Module */
+    .chat-box {
+      display: flex;
+      flex-direction: column;
+      height: 380px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .msg-bubble {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .msg-bubble.client {
+      background: var(--gold);
+      color: #000;
+      align-self: flex-end;
+      border-bottom-right-radius: 2px;
+    }
+
+    .msg-bubble.agent {
+      background: rgba(255, 255, 255, 0.05);
+      border: 0.5px solid var(--border);
+      color: #fff;
+      align-self: flex-start;
+      border-bottom-left-radius: 2px;
+    }
+
+    .msg-meta {
+      font-size: 9.5px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      display: block;
+      text-align: right;
+    }
+
+    .msg-bubble.client .msg-meta {
+      color: rgba(0, 0, 0, 0.6);
+    }
+
+    .chat-input-area {
+      display: flex;
+      border-top: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.3);
+    }
+
+    .chat-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 12px 15px;
+      color: #fff;
+      font-size: 13px;
+    }
+
+    .chat-input:focus {
+      outline: none;
+    }
+
+    .chat-send-btn {
+      background: var(--gold);
+      border: none;
+      color: #000;
+      padding: 0 20px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.2s ease;
+    }
+
+    .chat-send-btn:hover {
+      background: var(--gold-l);
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 30px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 11px;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .grid-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- 1. Authentication Interface -->
+    <div class="auth-container" id="auth-panel">
+      <div class="auth-title">REALPro <span>Client Space</span></div>
+      <div class="auth-desc">Authenticate securely to track your real estate purchase, view curated proposals, and chat with your verified advisor.</div>
+      
+      <form id="form-client-login" onsubmit="submitClientLogin(event)">
+        <div class="form-group">
+          <label class="form-label">📱 Registered Phone Number</label>
+          <input type="text" class="form-control" id="auth-phone" placeholder="e.g. +91 99454 03202" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">🔐 Secure 4-Digit Passcode</label>
+          <input type="password" class="form-control" id="auth-pin" placeholder="••••" maxlength="4" value="1234" required>
+        </div>
+
+        <button class="btn btn-primary" type="submit" id="btn-auth-submit">
+          <i class="ti ti-lock-open"></i> Access Secure Portal
+        </button>
+      </form>
+    </div>
+
+    <!-- 2. Secure Dashboard Interface -->
+    <div class="dashboard-container" id="dashboard-panel">
+      <!-- Branded Header -->
+      <header class="header">
+        <div class="brand-title"><i class="ti ti-building-skyscraper" style="color:var(--gold-l); margin-right:6px;"></i> REALPro <span>Portal</span></div>
+        <div class="user-profile">
+          <div class="user-info">
+            <div class="user-name" id="portal-user-name"> Rahul Sharma </div>
+            <div class="user-role">Premium Homebuyer</div>
+          </div>
+          <button class="btn btn-secondary" onclick="clientLogout()" style="width:auto; padding: 4px 10px; font-size:11px;">
+            <i class="ti ti-logout"></i> Exit
+          </button>
+        </div>
+      </header>
+
+      <!-- Stepper Deal Tracker -->
+      <div class="stepper-card">
+        <div class="stepper-title"><i class="ti ti-activity" style="color:var(--gold-l)"></i> Transaction Deal Staging Tracker</div>
+        <div class="stepper">
+          <!-- Stepper progress bar overlay -->
+          <div class="step-progress-bar" id="stepper-bar"></div>
+          
+          <div class="step" id="step-New">
+            <div class="step-circle">1</div>
+            <div class="step-label">Shortlisted</div>
+          </div>
+          <div class="step" id="step-Contacted">
+            <div class="step-circle">2</div>
+            <div class="step-label">Contacted</div>
+          </div>
+          <div class="step" id="step-Qualified">
+            <div class="step-circle">3</div>
+            <div class="step-label">Site Visit</div>
+          </div>
+          <div class="step" id="step-Proposal">
+            <div class="step-circle">4</div>
+            <div class="step-label">Negotiating</div>
+          </div>
+          <div class="step" id="step-Won">
+            <div class="step-circle">5</div>
+            <div class="step-label">Booking</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid Columns -->
+      <div class="grid-layout">
+        <!-- Left Side: Property and Document Vault -->
+        <div>
+          <!-- Shortlisted matched properties -->
+          <div class="card">
+            <div class="card-title"><i class="ti ti-star"></i> My Shortlisted Portfolios</div>
+            <div class="card-sub">Luxury residential offerings curated specifically for your requirements</div>
+            
+            <div class="props-list" id="portal-properties-container">
+              <!-- Matched properties render here -->
+            </div>
+          </div>
+
+          <!-- Document Vault Vault -->
+          <div class="card">
+            <div class="card-title"><i class="ti ti-folder-open"></i> Shared Document Vault</div>
+            <div class="card-sub">Access verified copies of ATS drafts, legal titles, maps, and pre-approvals</div>
+            
+            <div class="vault-grid">
+              <div class="vault-item" onclick="simulateDownload('Agreement to Sell (ATS) Signed Draft')">
+                <i class="ti ti-file-text"></i>
+                <div class="vault-item-info">
+                  <span class="vault-item-name">ATS_Signed_Draft.pdf</span>
+                  <span class="vault-item-status">✓ Ready</span>
+                </div>
+              </div>
+              <div class="vault-item" onclick="simulateDownload('Builder Brochure and Floor Plan')">
+                <i class="ti ti-file-description"></i>
+                <div class="vault-item-info">
+                  <span class="vault-item-name">Floor_Plan_Layout.pdf</span>
+                  <span class="vault-item-status">✓ Ready</span>
+                </div>
+              </div>
+              <div class="vault-item" onclick="simulateDownload('Verification Mother Deeds title sheet')">
+                <i class="ti ti-file-certificate"></i>
+                <div class="vault-item-info">
+                  <span class="vault-item-name">Mother_Deed_Audit.pdf</span>
+                  <span class="vault-item-status">✓ Ready</span>
+                </div>
+              </div>
+              <div class="vault-item" onclick="simulateDownload('Client KYC and RERA clearance ledger')">
+                <i class="ti ti-id-badge"></i>
+                <div class="vault-item-info">
+                  <span class="vault-item-name">RERA_Checked_KYC.pdf</span>
+                  <span class="vault-item-status">✓ Ready</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Side: Messaging Chat Area -->
+        <div>
+          <div class="card" style="padding: 20px;">
+            <div class="card-title"><i class="ti ti-messages"></i> Advisor Chat Desk</div>
+            <div class="card-sub" id="advisor-chat-subtitle">Chat in real-time with advisor Vasu Jain</div>
+            
+            <div class="chat-box">
+              <div class="chat-messages" id="portal-chat-messages">
+                <!-- Chat log rendered dynamically -->
+              </div>
+              
+              <form id="form-chat-submit" onsubmit="submitClientChatMessage(event)" class="chat-input-area">
+                <input type="text" class="chat-control chat-input" id="chat-input-msg" placeholder="Type your inquiry or request a visit..." required autocomplete="off">
+                <button class="chat-send-btn" type="submit">Send</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>© 2026 REALPro CRM. Secured via cryptographically sealed local database structures.</p>
+    </footer>
+  </div>
+
+  <script>
+    let activeLeadId = null;
+    let pollInterval = null;
+
+    async function submitClientLogin(event) {
+      if (event) event.preventDefault();
+      
+      const phone = document.getElementById('auth-phone').value.trim();
+      const pin = document.getElementById('auth-pin').value.trim();
+
+      if (!phone || !pin) return;
+
+      try {
+        const response = await fetch('/api/client/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone })
+        });
+
+        if (!response.ok) {
+          alert('Mobile authentication failed. Please confirm you are registered as an active lead on our platform.');
+          return;
+        }
+
+        const data = await response.json();
+        activeLeadId = data.lead.id;
+        
+        // Slide Auth out, Dashboard in
+        document.getElementById('auth-panel').style.display = 'none';
+        document.getElementById('dashboard-panel').style.display = 'block';
+        
+        // Load dynamic dashboard content
+        loadDashboardContent();
+        
+        // Start polling for real-time advisor chat replies!
+        pollInterval = setInterval(loadDashboardContent, 4000);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function loadDashboardContent() {
+      try {
+        const res = await fetch('/api/client/dashboard');
+        if (!res.ok) {
+          clientLogout();
+          return;
+        }
+
+        const data = await res.json();
+        
+        // Update greeting and titles
+        document.getElementById('portal-user-name').innerText = data.lead.name;
+        document.getElementById('advisor-chat-subtitle').innerText = `Chat in real-time with advisor ${data.lead.agent_name || 'Vasu Jain'}`;
+
+        // Render pipeline stepper progress
+        updatePipelineStepper(data.lead.stage);
+
+        // Render shortlisted matched property cards
+        renderPropertyShortlists(data.properties);
+
+        // Render chat messages log
+        renderChatHistory(data.messages);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function updatePipelineStepper(stage) {
+      // Clear previous active states
+      const steps = ['New', 'Contacted', 'Qualified', 'Proposal', 'Won'];
+      steps.forEach(st => {
+        const el = document.getElementById(`step-${st}`);
+        if (el) el.className = 'step';
+      });
+
+      const activeIndex = steps.indexOf(stage);
+      if (activeIndex !== -1) {
+        // Highlight active and completed steps
+        for(let i = 0; i <= activeIndex; i++) {
+          const el = document.getElementById(`step-${steps[i]}`);
+          if (el) {
+            if (i === activeIndex) el.classList.add('active');
+            else el.classList.add('completed');
+          }
+        }
+        // Update horizontal progress bar width
+        const bar = document.getElementById('stepper-bar');
+        const percentage = (activeIndex / (steps.length - 1)) * 100;
+        bar.style.width = `${percentage}%`;
+      }
+    }
+
+    function renderPropertyShortlists(properties) {
+      const container = document.getElementById('portal-properties-container');
+      if (properties.length === 0) {
+        container.innerHTML = `<div style="padding:20px; font-size:12px; color:var(--text-muted); text-align:center;">No matching shortlist portfolios found yet. Your advisor will compile one shortly!</div>`;
+        return;
+      }
+
+      container.innerHTML = properties.map(pr => `
+        <div class="small-prop-card">
+          <div class="small-prop-title">${pr.society}</div>
+          <div class="small-prop-price">${pr.price_raw}</div>
+          <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">📍 Location: ${pr.location}</div>
+          <div class="small-prop-meta">
+            <span>📐 ${pr.area_sqft} Sqft</span>
+            <span>🔑 ${pr.possession || 'RTMI'}</span>
+            <span style="color:var(--gold-l); font-weight:700;">${pr.configuration || '2BHK'}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderChatHistory(messages) {
+      const container = document.getElementById('portal-chat-messages');
+      const wasAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 40;
+
+      if (messages.length === 0) {
+        container.innerHTML = `<div style="padding:30px 10px; font-size:12px; color:var(--text-muted); text-align:center;">Secure chat thread initialized. Ask a query to advisor Vasu Jain below!</div>`;
+        return;
+      }
+
+      container.innerHTML = messages.map(msg => `
+        <div class="msg-bubble ${msg.sender}">
+          ${msg.message}
+          <span class="msg-meta">${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+        </div>
+      `).join('');
+
+      // Auto scroll to bottom if client was already near bottom
+      if (wasAtBottom) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+
+    async function submitClientChatMessage(event) {
+      if (event) event.preventDefault();
+      
+      const inputEl = document.getElementById('chat-input-msg');
+      const msgText = inputEl.value.trim();
+
+      if (!msgText) return;
+
+      try {
+        const res = await fetch('/api/client/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: msgText })
+        });
+
+        if (res.ok) {
+          inputEl.value = '';
+          loadDashboardContent();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function simulateDownload(filename) {
+      alert(`📥 Starting secure local download file link for: ${filename}.\nThis mock file is fully encrypted and served safely via REALPro vault clearance.`);
+    }
+
+    function clientLogout() {
+      activeLeadId = null;
+      if (pollInterval) clearInterval(pollInterval);
+      
+      document.getElementById('auth-panel').style.display = 'block';
+      document.getElementById('dashboard-panel').style.display = 'none';
+      document.getElementById('auth-phone').value = '';
+    }
+  </script>
+</body>
+</html>

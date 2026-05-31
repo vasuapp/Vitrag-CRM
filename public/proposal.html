@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Curated Property Shortlist | REALPro CRM</title>
+  <!-- Outfit & Inter Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Tabler Icons CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <!-- PWA Manifest & Service Worker -->
+  <link rel="manifest" href="/manifest.json">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js');
+      });
+    }
+  </script>
+  
+  <style>
+    :root {
+      --bg-dark: #0f1923;
+      --bg-panel: rgba(26, 38, 51, 0.45);
+      --bg-card: rgba(255, 255, 255, 0.02);
+      --gold: #C9991A;
+      --gold-l: #e5b945;
+      --gold-d: #8c680d;
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #f0f3f5;
+      --text-muted: #8e9ca8;
+      --green: #2ecc71;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      background-image: radial-gradient(circle at 10% 20%, rgba(201, 153, 26, 0.05) 0%, transparent 60%),
+                        radial-gradient(circle at 90% 80%, rgba(30, 144, 255, 0.03) 0%, transparent 50%);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px 0;
+    }
+
+    /* Branded Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      background: var(--bg-panel);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 30px;
+    }
+
+    .brand-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-title span {
+      color: var(--gold-l);
+    }
+
+    .agent-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 16px;
+      background: rgba(201, 153, 26, 0.1);
+      border: 1.5px solid var(--gold);
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .agent-badge i {
+      color: var(--gold-l);
+      font-size: 16px;
+    }
+
+    /* Intro Hero Panel */
+    .intro-card {
+      background: linear-gradient(135deg, rgba(26, 38, 51, 0.7), rgba(15, 25, 35, 0.9));
+      border: 1px solid rgba(201, 153, 26, 0.15);
+      border-radius: var(--radius);
+      padding: 40px;
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .intro-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(201, 153, 26, 0.1) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .intro-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--gold-l);
+      margin-bottom: 15px;
+      line-height: 1.2;
+    }
+
+    .intro-meta {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .intro-meta span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .intro-message {
+      font-size: 16px;
+      color: #cbd5e1;
+      border-left: 3px solid var(--gold);
+      padding-left: 20px;
+      margin-top: 10px;
+    }
+
+    /* Properties Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 25px;
+      margin-bottom: 50px;
+    }
+
+    /* Property Card Layout */
+    .prop-card {
+      background: var(--bg-panel);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 25px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    .prop-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(201, 153, 26, 0.3);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+    }
+
+    .prop-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 15px;
+      gap: 10px;
+    }
+
+    .prop-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .prop-price {
+      font-size: 20px;
+      color: var(--green);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .prop-location {
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 15px;
+    }
+
+    /* Tags container */
+    .tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 0.5px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .tag-gold {
+      background: rgba(201, 153, 26, 0.12);
+      border-color: var(--gold);
+      color: var(--gold-l);
+    }
+
+    /* Custom 3-column Metadata */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: var(--radius-sm);
+      border: 0.5px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .meta-label {
+      font-size: 9.5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .meta-value {
+      font-size: 12px;
+      color: var(--text);
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Agent Comments section */
+    .comments-box {
+      background: rgba(201, 153, 26, 0.04);
+      border-left: 2px solid var(--gold);
+      padding: 12px 16px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      font-size: 13px;
+      color: #cbd5e1;
+      margin-bottom: 20px;
+    }
+
+    .comments-box strong {
+      color: var(--gold-l);
+      display: block;
+      margin-bottom: 4px;
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    /* CTA Actions */
+    .cta-row {
+      display: flex;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    .btn {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: var(--radius-sm);
+      cursor:pointer;
+      transition: all 0.2s ease;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--gold);
+      color: #000;
+      box-shadow: 0 4px 10px rgba(201, 153, 26, 0.2);
+    }
+
+    .btn-primary:hover {
+      background: var(--gold-l);
+      box-shadow: 0 4px 15px rgba(201, 153, 26, 0.35);
+    }
+
+    .btn-ghost {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    /* Loading Spinner */
+    .loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 100px 0;
+      color: var(--text-muted);
+    }
+
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border-left-color: var(--gold);
+      animation: spin 1s linear infinite;
+      margin-bottom: 15px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Dynamic Alerts / Modals */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 25, 35, 0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: #152232;
+      border: 1px solid var(--gold);
+      border-radius: var(--radius);
+      padding: 30px;
+      max-width: 450px;
+      width: 90%;
+      text-align: center;
+      transform: scale(0.9);
+      transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+
+    .modal-overlay.active .modal-card {
+      transform: scale(1);
+    }
+
+    .modal-card i {
+      font-size: 50px;
+      color: var(--green);
+      margin-bottom: 15px;
+    }
+
+    .modal-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .modal-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 40px 0 20px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .footer a {
+      color: var(--gold-l);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand-title"><i class="ti ti-building-skyscraper" style="color:var(--gold-l)"></i> REALPro <span>CRM</span></div>
+      <div class="agent-badge"><i class="ti ti-shield-check"></i> Verified Advisor Pitch</div>
+    </header>
+
+    <!-- Main Content Area -->
+    <div id="proposal-wrapper">
+      <div class="loader">
+        <div class="spinner"></div>
+        <p>Loading your personalized properties portfolio...</p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>© 2026 REALPro CRM. Generated by Advisor <a href="tel:+919945403202">Vasu Jain</a>. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <!-- Interactive Alert Modal -->
+  <div class="modal-overlay" id="alert-modal">
+    <div class="modal-card">
+      <i class="ti ti-circle-check"></i>
+      <div class="modal-title" id="alert-title">Request Registered</div>
+      <div class="modal-desc" id="alert-desc">We have received your preference. Your dedicated advisor Vasu Jain will connect shortly.</div>
+      <button class="btn btn-primary" onclick="closeAlert()" style="margin: 0 auto; min-width: 120px;">Done</button>
+    </div>
+  </div>
+
+  <script>
+    const token = window.location.pathname.split('/').pop();
+    let proposalData = null;
+
+    async function loadProposalDetails() {
+      try {
+        const response = await fetch(`/api/public/proposals/${token}`);
+        if (!response.ok) {
+          document.getElementById('proposal-wrapper').innerHTML = `
+            <div class="intro-card" style="text-align:center; border-color:var(--red);">
+              <h2 class="intro-title" style="color:#e74c3c;">⚠️ Proposal Portfolio Not Found</h2>
+              <p style="color:var(--text-muted); margin-top:10px;">The secure token is either invalid, deleted, or has reached its expiration date.</p>
+            </div>
+          `;
+          return;
+        }
+
+        const data = await response.json();
+        proposalData = data;
+        renderProposalUI(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderProposalUI(data) {
+      const p = data.proposal;
+      const properties = data.properties;
+
+      let propertiesHTML = '';
+      
+      if (properties.length === 0) {
+        propertiesHTML = `<div class="intro-card" style="text-align:center; grid-column: 1/-1;">No properties attached to this shortlist.</div>`;
+      } else {
+        propertiesHTML = properties.map(pr => {
+          // Check typologies or status
+          const isRental = (pr.property_type || '').toLowerCase().includes('rental') || (pr.price_raw || '').includes('/mo');
+          const mandateBadge = pr.mandate_type === 'Exclusive' ? '<span class="tag tag-gold">👑 Exclusive</span>' : '';
+
+          return `
+            <div class="prop-card">
+              <div>
+                <div class="prop-header">
+                  <h3 class="prop-title">${pr.society}</h3>
+                  <div class="prop-price">${pr.price_raw}</div>
+                </div>
+                
+                <div class="prop-location">
+                  <i class="ti ti-map-pin"></i> ${pr.location} · <strong>${pr.property_type || 'Residential'}</strong>
+                </div>
+
+                <div class="tags">
+                  ${mandateBadge}
+                  <span class="tag">${pr.configuration || 'Config N/A'}</span>
+                  <span class="tag">${isRental ? 'Lease Agreement' : 'Sale Outbound'}</span>
+                  <span class="tag">${pr.possession || 'Immediate'}</span>
+                </div>
+
+                <!-- Curated Metadata Matrix -->
+                <div class="meta-grid">
+                  <div class="meta-item">
+                    <span class="meta-label">📐 Area</span>
+                    <span class="meta-value">${pr.area_sqft} Sqft</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="meta-label">🛋️ Interiors</span>
+                    <span class="meta-value">${pr.interiors || 'N/A'}</span>
+                  </div>
+                  <div class="meta-item">
+                    <span class="meta-label">🚪 Facing</span>
+                    <span class="meta-value">${pr.facing || 'East'}</span>
+                  </div>
+                </div>
+
+                ${pr.agent_comments ? `
+                  <div class="comments-box">
+                    <strong>📋 Advisor Recommendations:</strong>
+                    ${pr.agent_comments}
+                  </div>
+                ` : ''}
+              </div>
+
+              <!-- Call to Actions -->
+              <div class="cta-row">
+                <button class="btn btn-primary" onclick="respondToProposal('site_visit', ${pr.id}, '${pr.society}')">
+                  <i class="ti ti-calendar-event"></i> Book Site Visit
+                </button>
+                <button class="btn btn-ghost" onclick="respondToProposal('interested', ${pr.id}, '${pr.society}')">
+                  <i class="ti ti-thumb-up"></i> I'm Interested
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      const layout = `
+        <!-- Hero Greetings Card -->
+        <div class="intro-card">
+          <h1 class="intro-title">${p.title || 'Exclusive Real Estate Proposal'}</h1>
+          <div class="intro-meta">
+            <span><i class="ti ti-user"></i> Client: <strong>${p.lead_name}</strong></span>
+            <span><i class="ti ti-user-check"></i> Curator: <strong>${p.agent_name || 'Vasu Jain'}</strong></span>
+            <span><i class="ti ti-calendar"></i> Dispatched: <strong>${new Date(p.created_at).toLocaleDateString()}</strong></span>
+          </div>
+          <div class="intro-message">
+            ${p.intro_message || 'Please review the properties chosen below.'}
+          </div>
+        </div>
+
+        <!-- Curated Property shortlists Title -->
+        <h2 style="font-family:'Outfit', sans-serif; font-size:24px; font-weight:800; margin-bottom:20px; color:var(--text); letter-spacing:0.5px;">Curated Listings Grid</h2>
+
+        <!-- Cards grid -->
+        <div class="grid">
+          ${propertiesHTML}
+        </div>
+      `;
+
+      document.getElementById('proposal-wrapper').innerHTML = layout;
+    }
+
+    async function respondToProposal(responseType, propertyId, societyName) {
+      try {
+        const response = await fetch(`/api/public/proposals/${token}/respond`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ response_type: responseType, property_id: propertyId })
+        });
+        
+        if (response.ok) {
+          const actionText = responseType === 'site_visit' ? 'Site Visit Requested!' : 'Interest Expressed!';
+          const descText = responseType === 'site_visit' 
+            ? `Excellent choice! We have scheduled a priority callback to book a physical visit for <strong>${societyName}</strong>. Vasu Jain will contact you shortly.`
+            : `Fabulous! We have logged your preference for <strong>${societyName}</strong>. Our premium desk will contact you with floor plan layout options.`;
+
+          document.getElementById('alert-title').innerText = actionText;
+          document.getElementById('alert-desc').innerHTML = descText;
+          document.getElementById('alert-modal').classList.add('active');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function closeAlert() {
+      document.getElementById('alert-modal').classList.remove('active');
+    }
+
+    // Load initial data
+    loadProposalDetails();
+  </script>
+</body>
+</html>
