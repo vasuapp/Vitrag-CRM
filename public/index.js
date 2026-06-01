@@ -1866,7 +1866,7 @@ function renderResaleProperties(listings) {
   const warningBanner = document.getElementById('stale-properties-warning');
 
   const hasStale = listings.some(p => p.is_stale);
-  warningBanner.style.display = hasStale ? 'block' : 'none';
+  if (warningBanner) warningBanner.style.display = hasStale ? 'block' : 'none';
 
   if (listings.length === 0) {
     container.innerHTML = `<div class="empty"><div class="empty-ic">🏢</div><div class="empty-txt">No properties matched filters. Add a new listing!</div></div>`;
@@ -2086,7 +2086,6 @@ function renderResaleProperties(listings) {
         </div>
       `;
     }
-    container.innerHTML += renderPaginationBar('projects', state.projPage, totalPages, 'changeProjPage');
   container.innerHTML += renderPaginationBar('resale', resalePage, resaleTotalPages);
 }
 
@@ -2282,13 +2281,17 @@ function renderRentalProperties(listings) {
         </div>
       `;
     }
-    container.innerHTML += renderPaginationBar('projects', state.projPage, totalPages, 'changeProjPage');
   container.innerHTML += renderPaginationBar('rental', rentalPage, rentalTotalPages);
 }
 
 function renderCommercialProperties(listings) {
   const container = document.getElementById('inventory-commercial-container');
   
+  if (listings.length === 0) {
+    container.innerHTML = `<div class="empty"><div class="empty-txt">No active commercial listings matched.</div></div>`;
+    return;
+  }
+
   const itemsPerPage = 50;
   const commercialPage = state.propPages.commercial || 1;
   const commercialTotalPages = Math.ceil(listings.length / itemsPerPage) || 1;
@@ -2473,7 +2476,6 @@ function renderCommercialProperties(listings) {
         </div>
       `;
     }
-    container.innerHTML += renderPaginationBar('projects', state.projPage, totalPages, 'changeProjPage');
   container.innerHTML += renderPaginationBar('commercial', commercialPage, commercialTotalPages);
 }
 
@@ -2497,6 +2499,11 @@ function clearInventoryFilters() {
   if (document.getElementById('filter-prop-interiors')) document.getElementById('filter-prop-interiors').value = '';
   if (document.getElementById('filter-prop-recency')) document.getElementById('filter-prop-recency').value = '';
   if (document.getElementById('filter-prop-type')) document.getElementById('filter-prop-type').value = '';
+  if (document.getElementById('filter-prop-facing')) document.getElementById('filter-prop-facing').value = '';
+  if (document.getElementById('filter-prop-status')) document.getElementById('filter-prop-status').value = '';
+  if (document.getElementById('filter-prop-registration')) document.getElementById('filter-prop-registration').value = '';
+  if (document.getElementById('filter-prop-zone')) document.getElementById('filter-prop-zone').value = '';
+  if (document.getElementById('filter-prop-holder-type')) document.getElementById('filter-prop-holder-type').value = '';
   
   // Clear BHK checkboxes
   document.querySelectorAll('.filter-bhk-check').forEach(cb => {
