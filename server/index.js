@@ -330,25 +330,47 @@ app.post('/api/import/:table', upload.single('file'), async (req, res) => {
     }
     const headers = rows[0];
     
-    // Fetch both column names and their PostgreSQL data types dynamically
-    const info = (await db.query("SELECT column_name AS name, data_type FROM information_schema.columns WHERE table_name = $1", [table])).rows;
+    // Fetch column names, types, nullability, and defaults dynamically
+    const info = (await db.query(`
+      SELECT column_name AS name, data_type, is_nullable, column_default 
+      FROM information_schema.columns 
+      WHERE table_name = $1
+    `, [table])).rows;
+    
     const dbCols = info.map(i => i.name).filter(name => name !== 'id');
     const numericTypes = ['numeric', 'integer', 'real', 'double precision', 'decimal', 'smallint', 'bigint'];
     const numericCols = info.filter(i => i.data_type && numericTypes.includes(i.data_type.toLowerCase())).map(i => i.name);
+    const requiredCols = info.filter(i => i.is_nullable === 'NO' && !i.column_default).map(i => i.name);
     
     const sanitizeValue = (colName, val) => {
-      if (val === undefined || val === null || val === '') return null;
+      // 1. If it's a numeric column, parse/clean numeric values
       if (numericCols.includes(colName)) {
+        if (val === undefined || val === null || val === '') {
+          if (requiredCols.includes(colName)) return 0;
+          return null;
+        }
         if (typeof val === 'string') {
           const match = val.replace(/,/g, '').match(/[-+]?[0-9]*\.?[0-9]+/);
           if (match) {
             return parseFloat(match[0]);
           }
+          if (requiredCols.includes(colName)) return 0;
           return null;
         }
         if (typeof val === 'number') return val;
+        return requiredCols.includes(colName) ? 0 : null;
+      }
+      
+      // 2. If it's a non-numeric column and it's required (NOT NULL) and has no value
+      if (val === undefined || val === null || String(val).trim() === '') {
+        if (requiredCols.includes(colName)) {
+          if (colName === 'society') return 'Unknown Society';
+          if (colName === 'name') return 'Unnamed Lead';
+          return 'N/A';
+        }
         return null;
       }
+      
       return val;
     };
 
@@ -362,15 +384,15 @@ app.post('/api/import/:table', upload.single('file'), async (req, res) => {
         const activeCols = [];
         const activeValues = [];
         
+        // We iterate over all dbCols. If a column is required, we want sanitizeValue to provide a default fallback even if the CSV header is not mapped!
         dbCols.forEach(col => {
           const csvIdx = headers.findIndex(h => h.toLowerCase() === col.toLowerCase());
-          if (csvIdx !== -1) {
-            let val = row[csvIdx];
-            let cleanVal = sanitizeValue(col, val);
-            if (cleanVal !== null && cleanVal !== undefined && cleanVal !== '') {
-              activeCols.push(col);
-              activeValues.push(cleanVal);
-            }
+          let val = csvIdx !== -1 ? row[csvIdx] : null;
+          let cleanVal = sanitizeValue(col, val);
+          
+          if (cleanVal !== null && cleanVal !== undefined && cleanVal !== '') {
+            activeCols.push(col);
+            activeValues.push(cleanVal);
           }
         });
 
@@ -426,25 +448,47 @@ app.post('/api/import-mapped/:table', async (req, res) => {
       });
     }
     
-    // Fetch both column names and their PostgreSQL data types dynamically
-    const info = (await db.query("SELECT column_name AS name, data_type FROM information_schema.columns WHERE table_name = $1", [table])).rows;
+    // Fetch column names, types, nullability, and defaults dynamically
+    const info = (await db.query(`
+      SELECT column_name AS name, data_type, is_nullable, column_default 
+      FROM information_schema.columns 
+      WHERE table_name = $1
+    `, [table])).rows;
+    
     const dbCols = info.map(i => i.name).filter(name => name !== 'id');
     const numericTypes = ['numeric', 'integer', 'real', 'double precision', 'decimal', 'smallint', 'bigint'];
     const numericCols = info.filter(i => i.data_type && numericTypes.includes(i.data_type.toLowerCase())).map(i => i.name);
+    const requiredCols = info.filter(i => i.is_nullable === 'NO' && !i.column_default).map(i => i.name);
     
     const sanitizeValue = (colName, val) => {
-      if (val === undefined || val === null || val === '') return null;
+      // 1. If it's a numeric column, parse/clean numeric values
       if (numericCols.includes(colName)) {
+        if (val === undefined || val === null || val === '') {
+          if (requiredCols.includes(colName)) return 0;
+          return null;
+        }
         if (typeof val === 'string') {
           const match = val.replace(/,/g, '').match(/[-+]?[0-9]*\.?[0-9]+/);
           if (match) {
             return parseFloat(match[0]);
           }
+          if (requiredCols.includes(colName)) return 0;
           return null;
         }
         if (typeof val === 'number') return val;
+        return requiredCols.includes(colName) ? 0 : null;
+      }
+      
+      // 2. If it's a non-numeric column and it's required (NOT NULL) and has no value
+      if (val === undefined || val === null || String(val).trim() === '') {
+        if (requiredCols.includes(colName)) {
+          if (colName === 'society') return 'Unknown Society';
+          if (colName === 'name') return 'Unnamed Lead';
+          return 'N/A';
+        }
         return null;
       }
+      
       return val;
     };
 
@@ -455,14 +499,17 @@ app.post('/api/import-mapped/:table', async (req, res) => {
       for (const recordObj of data) {
         const activeCols = [];
         const activeValues = [];
-        for (const col of dbCols) {
+        
+        // We iterate over all dbCols. If a column is required, we want sanitizeValue to provide a default fallback even if the column is not mapped!
+        dbCols.forEach(col => {
           let val = recordObj[col];
           let cleanVal = sanitizeValue(col, val);
           if (cleanVal !== null && cleanVal !== undefined && cleanVal !== '') {
             activeCols.push(col);
             activeValues.push(cleanVal);
           }
-        }
+        });
+        
         if (activeCols.length > 0) {
           let q = `
             INSERT INTO ${table} (${activeCols.join(', ')})
