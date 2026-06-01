@@ -77,7 +77,8 @@ app.use(session({
   } // 24 hours
 }));
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Proxy endpoint to bypass CORS for Google Sheets
 app.post('/api/system/proxy-gsheet', async (req, res) => {
@@ -353,10 +354,10 @@ app.post('/api/import/:table', upload.single('file'), async (req, res) => {
         const csvIdx = headers.findIndex(h => h.toLowerCase() === col.toLowerCase());
         if (csvIdx !== -1) {
           let val = row[csvIdx];
-          if (val === undefined || val === null) return '';
+          if (val === undefined || val === null || val === '') return null;
           return val;
         }
-        return '';
+        return null;
       });
       insertRows.push(record);
       importCount++;
@@ -430,7 +431,7 @@ app.post('/api/import-mapped/:table', async (req, res) => {
       for (const recordObj of data) {
         const record = dbCols.map(col => {
           let val = recordObj[col];
-          if (val === undefined || val === null) return '';
+          if (val === undefined || val === null || val === '') return null;
           return val;
         });
         await insertStmt.run(record);

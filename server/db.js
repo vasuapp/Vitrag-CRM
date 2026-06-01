@@ -1,34 +1,37 @@
-const path = require('path');
-const fs = require('fs');
+require('dotenv').config();
+const { Pool } = require('pg');
 
-let db;
+if (!process.env.DATABASE_URL) {
+  console.error("FATAL ERROR: DATABASE_URL environment variable is missing.");
+  console.error("The CRM now requires PostgreSQL. Please add DATABASE_URL to your .env file.");
+  process.exit(1);
+}
 
-if (process.env.DATABASE_URL) {
-  console.log("DATABASE_URL found. Connecting to PostgreSQL...");
-  const { Pool } = require('pg');
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false } // Required for Railway and many managed Postgres services
-  });
+console.log("DATABASE_URL found. Connecting to PostgreSQL...");
 
-  db = {
-    query: async (text, params) => {
-      let actualParams = params || [];
-      if (Array.isArray(params) && params.length === 1 && Array.isArray(params[0])) {
-        actualParams = params[0];
-      }
-      let counter = 1;
-      const pgText = text.replace(/\?/g, () => `$${counter++}`);
-      return pool.query(pgText, actualParams);
-    },
-    pool: pool
-  };
-  
-  
-  (async () => {
-    try {
-      await pool.query(`
-        CREATE TABLE leads (
+const isLocal = process.env.DATABASE_URL.includes('localhost') || process.env.DATABASE_URL.includes('127.0.0.1');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: isLocal ? false : { rejectUnauthorized: false } // Required for Railway, but disable for local
+});
+
+const db = {
+  query: async (text, params) => {
+    let actualParams = params || [];
+    if (Array.isArray(params) && params.length === 1 && Array.isArray(params[0])) {
+      actualParams = params[0];
+    }
+    let counter = 1;
+    const pgText = text.replace(/\?/g, () => '$' + (counter++));
+    return pool.query(pgText, actualParams);
+  },
+  pool: pool
+};
+
+(async () => {
+  try {
+    await pool.query(`CREATE TABLE leads (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     phone TEXT,
@@ -322,9 +325,9 @@ CREATE TABLE communication_templates (
     );
 
       `);
-      console.log("PostgreSQL tables verified/created successfully.");
-      
-      // Also seed templates if empty
+    console.log("PostgreSQL tables verified/created successfully.");
+    
+    // Also seed templates if empty
       const tempCount = (await pool.query("SELECT COUNT(*) FROM communication_templates")).rows[0].count;
       if (parseInt(tempCount) === 0) {
         const insertTemp = async (name, platform, use_case, content) => await pool.query('INSERT INTO communication_templates (name, platform, use_case, content) VALUES ($1, $2, $3, $4)', [name, platform, use_case, content]);
@@ -334,57 +337,9 @@ CREATE TABLE communication_templates (
         await insertTemp('WA: 2. Schedule Site Visit', 'WhatsApp', 'Lead Nurture', 'Hi {name},\n\nWe have slots open this Saturday for private, chauffeur-driven site tours to *Prestige Lakeside* & *Sobha City*.\n\nWould 11 AM or 3 PM work better for you and your family? Let me know to block it!');
         console.log("Seeded basic templates to Postgres.");
       }
-    } catch(err) {
-      console.error("PG Init Error:", err);
-    }
-  })();
-
-  
-} else {
-  console.log("No DATABASE_URL found. Connecting to local SQLite...");
-  const Database = require('better-sqlite3');
-  const dbPath = path.join(__dirname, 'realpro_crm.db');
-  const sqlite = new Database(dbPath);
-
-  db = {
-    query: async (text, params = []) => {
-      try {
-        let actualParams = params;
-        if (Array.isArray(params) && params.length === 1 && Array.isArray(params[0])) {
-          actualParams = params[0];
-        }
-        
-        let sqliteText = text.replace(/\$\d+/g, '?');
-        sqliteText = sqliteText.replace(/NOW\(\)\s*-\s*INTERVAL\s*'(\d+)\s+days?'/g, "datetime('now', '-$1 day')");
-        sqliteText = sqliteText.replace(/NOW\(\)\s*-\s*INTERVAL\s*'(\d+)\s+day'/g, "datetime('now', '-$1 day')");
-        
-        if (sqliteText.includes('information_schema.columns')) {
-          const match = sqliteText.match(/table_name\s*=\s*'([^']+)'/);
-          if (match && match[1]) {
-            const rows = sqlite.prepare(`PRAGMA table_info('${match[1]}')`).all().map(r => ({ name: r.name }));
-            return { rows: rows, rowCount: rows.length };
-          }
-        }
-        
-        const isSelect = sqliteText.trim().toUpperCase().startsWith('SELECT') || sqliteText.trim().toUpperCase().startsWith('WITH') || sqliteText.includes('RETURNING');
-        
-        if (isSelect) {
-          const stmt = sqlite.prepare(sqliteText);
-          const rows = stmt.all(actualParams);
-          return { rows: rows, rowCount: rows.length };
-        } else {
-          const stmt = sqlite.prepare(sqliteText);
-          const info = stmt.run(actualParams);
-          return { rows: [], rowCount: info.changes };
-        }
-      } catch (err) {
-        console.error("SQLite Query Error:", err, "Query:", text);
-        throw err;
-      }
-    },
-    prepare: (text) => sqlite.prepare(text),
-    exec: (text) => sqlite.exec(text)
-  };
-}
+  } catch(err) {
+    console.error("PG Init Error:", err);
+  }
+})();
 
 module.exports = db;
