@@ -329,9 +329,29 @@ app.post('/api/import/:table', upload.single('file'), async (req, res) => {
       });
     }
     const headers = rows[0];
-    const info = (await db.query(`SELECT column_name AS name FROM information_schema.columns WHERE table_name = '${table}'`)).rows;
-    const dbCols = info.map(i => i.name).filter(name => name !== 'id');
     
+    // Fetch both column names and their PostgreSQL data types dynamically
+    const info = (await db.query("SELECT column_name AS name, data_type FROM information_schema.columns WHERE table_name = $1", [table])).rows;
+    const dbCols = info.map(i => i.name).filter(name => name !== 'id');
+    const numericTypes = ['numeric', 'integer', 'real', 'double precision', 'decimal', 'smallint', 'bigint'];
+    const numericCols = info.filter(i => i.data_type && numericTypes.includes(i.data_type.toLowerCase())).map(i => i.name);
+    
+    const sanitizeValue = (colName, val) => {
+      if (val === undefined || val === null || val === '') return null;
+      if (numericCols.includes(colName)) {
+        if (typeof val === 'string') {
+          const match = val.replace(/,/g, '').match(/[-+]?[0-9]*\.?[0-9]+/);
+          if (match) {
+            return parseFloat(match[0]);
+          }
+          return null;
+        }
+        if (typeof val === 'number') return val;
+        return null;
+      }
+      return val;
+    };
+
     let importCount = 0;
     try {
       await db.query('BEGIN');
@@ -346,9 +366,10 @@ app.post('/api/import/:table', upload.single('file'), async (req, res) => {
           const csvIdx = headers.findIndex(h => h.toLowerCase() === col.toLowerCase());
           if (csvIdx !== -1) {
             let val = row[csvIdx];
-            if (val !== undefined && val !== null && val !== '') {
+            let cleanVal = sanitizeValue(col, val);
+            if (cleanVal !== null && cleanVal !== undefined && cleanVal !== '') {
               activeCols.push(col);
-              activeValues.push(val);
+              activeValues.push(cleanVal);
             }
           }
         });
@@ -404,8 +425,28 @@ app.post('/api/import-mapped/:table', async (req, res) => {
         error: 'No mapped data received'
       });
     }
-    const info = (await db.query(`SELECT column_name AS name FROM information_schema.columns WHERE table_name = '${table}'`)).rows;
+    
+    // Fetch both column names and their PostgreSQL data types dynamically
+    const info = (await db.query("SELECT column_name AS name, data_type FROM information_schema.columns WHERE table_name = $1", [table])).rows;
     const dbCols = info.map(i => i.name).filter(name => name !== 'id');
+    const numericTypes = ['numeric', 'integer', 'real', 'double precision', 'decimal', 'smallint', 'bigint'];
+    const numericCols = info.filter(i => i.data_type && numericTypes.includes(i.data_type.toLowerCase())).map(i => i.name);
+    
+    const sanitizeValue = (colName, val) => {
+      if (val === undefined || val === null || val === '') return null;
+      if (numericCols.includes(colName)) {
+        if (typeof val === 'string') {
+          const match = val.replace(/,/g, '').match(/[-+]?[0-9]*\.?[0-9]+/);
+          if (match) {
+            return parseFloat(match[0]);
+          }
+          return null;
+        }
+        if (typeof val === 'number') return val;
+        return null;
+      }
+      return val;
+    };
 
     let importCount = 0;
     
@@ -416,9 +457,10 @@ app.post('/api/import-mapped/:table', async (req, res) => {
         const activeValues = [];
         for (const col of dbCols) {
           let val = recordObj[col];
-          if (val !== undefined && val !== null && val !== '') {
+          let cleanVal = sanitizeValue(col, val);
+          if (cleanVal !== null && cleanVal !== undefined && cleanVal !== '') {
             activeCols.push(col);
-            activeValues.push(val);
+            activeValues.push(cleanVal);
           }
         }
         if (activeCols.length > 0) {
