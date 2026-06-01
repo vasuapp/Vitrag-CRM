@@ -293,7 +293,7 @@
         <span class="topbar-title" id="page-header-title">Command Dashboard</span>
         
         <div class="topbar-search" style="position: relative; margin: 0 15px; flex: 1; max-width: 400px; display: flex; align-items: center;">
-          <input type="text" id="global-search-input" class="form-input" placeholder="Global Search (Leads, Projects, Properties)..." style="width: 100%; border-radius: 20px; padding-left: 35px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); font-size: 13px;" oninput="performGlobalSearch()">
+          <input type="text" id="global-search-input" class="form-input" placeholder="Global Search (Leads, Projects, Properties)..." style="width: 100%; border-radius: 20px; padding-left: 35px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); font-size: 13px;" oninput="performGlobalSearch()" autocomplete="off">
           <i class="ti ti-search" style="position: absolute; left: 12px; font-size: 15px; opacity: 0.6; pointer-events: none;"></i>
           
           <!-- Dropdown Results -->
@@ -758,7 +758,7 @@
               
               <!-- Property Search Filters -->
               <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; align-items:center;">
-                <input class="form-input" style="flex:2; min-width: 200px;" type="text" placeholder="🔍 Search society, project or location..." id="filter-prop-search" oninput="loadProperties()">
+                <input class="form-input" style="flex:2; min-width: 200px;" type="text" placeholder="🔍 Search society, project or location..." id="filter-prop-search" oninput="loadProperties()" autocomplete="off">
                 <button class="btn btn-ghost" onclick="toggleAdvancedFilters()" id="btn-adv-filters" type="button"><i class="ti ti-adjustments-horizontal"></i> Advanced Filters</button>
                 <button class="btn btn-ghost" onclick="clearInventoryFilters()" type="button">Clear</button>
               </div>
@@ -840,6 +840,71 @@
                       <option value="Semi Furnished">Semi Furnished</option>
                       <option value="Fully Furnished">Fully Furnished</option>
                       <option value="Unfurnished">Unfurnished</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div class="grid3" style="margin-top:12px; border-top:1px solid rgba(255,255,255,0.05); padding-top:12px;">
+                  <!-- Availability Status Filter -->
+                  <div class="form-group">
+                    <label class="form-label" style="color:var(--text-secondary); font-size:11px;">Availability Status</label>
+                    <select class="form-select" id="filter-prop-status" onchange="loadProperties()" style="font-size:12px; margin-top:4px;">
+                      <option value="">All Statuses</option>
+                      <option value="AVAILABLE">🟢 Available Only</option>
+                      <option value="SOLD">🔴 Sold Only</option>
+                    </select>
+                  </div>
+
+                  <!-- Facing Filter -->
+                  <div class="form-group">
+                    <label class="form-label" style="color:var(--text-secondary); font-size:11px;">Property Facing</label>
+                    <select class="form-select" id="filter-prop-facing" onchange="loadProperties()" style="font-size:12px; margin-top:4px;">
+                      <option value="">All Facings</option>
+                      <option value="East">East</option>
+                      <option value="West">West</option>
+                      <option value="North">North</option>
+                      <option value="South">South</option>
+                      <option value="North-East">North-East</option>
+                      <option value="North-West">North-West</option>
+                      <option value="South-East">South-East</option>
+                      <option value="South-West">South-West</option>
+                    </select>
+                  </div>
+
+                  <!-- Registration Status Filter -->
+                  <div class="form-group">
+                    <label class="form-label" style="color:var(--text-secondary); font-size:11px;">Registration Staging</label>
+                    <select class="form-select" id="filter-prop-registration" onchange="loadProperties()" style="font-size:12px; margin-top:4px;">
+                      <option value="">All Registration Status</option>
+                      <option value="Registered">Registered</option>
+                      <option value="Unregistered">Unregistered</option>
+                      <option value="Verified">Verified</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="grid3" style="margin-top:12px; border-top:1px solid rgba(255,255,255,0.05); padding-top:12px;">
+                  <!-- Zone Filter -->
+                  <div class="form-group">
+                    <label class="form-label" style="color:var(--text-secondary); font-size:11px;">Micro-Market Zone</label>
+                    <select class="form-select" id="filter-prop-zone" onchange="loadProperties()" style="font-size:12px; margin-top:4px;">
+                      <option value="">All Zones</option>
+                      <option value="East">East Zone</option>
+                      <option value="West">West Zone</option>
+                      <option value="North">North Zone</option>
+                      <option value="South">South Zone</option>
+                      <option value="Central">Central Zone</option>
+                    </select>
+                  </div>
+
+                  <!-- Holder Type Filter -->
+                  <div class="form-group">
+                    <label class="form-label" style="color:var(--text-secondary); font-size:11px;">Listing Holder Type</label>
+                    <select class="form-select" id="filter-prop-holder-type" onchange="loadProperties()" style="font-size:12px; margin-top:4px;">
+                      <option value="">All Holder Types</option>
+                      <option value="Owner">Owner Direct</option>
+                      <option value="Co-Broker">Co-Broker / Associate</option>
+                      <option value="Developer">Developer Direct</option>
                     </select>
                   </div>
                 </div>
@@ -944,7 +1009,7 @@
             
             <!-- Project Search Filters -->
             <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; align-items:center;">
-              <input class="form-input" style="flex:1.5; min-width: 180px;" type="text" placeholder="🔍 Search projects, builders, location..." id="filter-proj-search" oninput="loadProjects()">
+              <input class="form-input" style="flex:1.5; min-width: 180px;" type="text" placeholder="🔍 Search projects, builders, location..." id="filter-proj-search" oninput="loadProjects()" autocomplete="off">
               
               <!-- Staging filter -->
               <select class="form-select" style="flex:1;" id="filter-proj-stage" onchange="loadProjects()">
@@ -1005,7 +1070,10 @@
           <div class="card">
             <div class="chr">
               <div class="card-title"><i class="ti ti-users-group"></i> Associates & Co-Broker Directory</div>
-              <button class="btn btn-primary" onclick="showAddAssociateModal()">+ Register Associate</button>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input class="form-input" style="width:250px; padding: 4px 8px; font-size:12px;" type="text" placeholder="🔍 Search associate name, company..." id="filter-assoc-search" oninput="loadAssociates()" autocomplete="off">
+                <button class="btn btn-primary" onclick="showAddAssociateModal()">+ Register Associate</button>
+              </div>
             </div>
             <div class="card-sub">Manage network brokers, rating tiers, and linked requirement pools (Click associate row to load dashboard)</div>
             <div class="tw">
@@ -1415,7 +1483,7 @@
               <div class="chr">
                 <div class="card-title"><i class="ti ti-list-check"></i> Requirement & Enquiry Log</div>
                 <div style="display:flex; gap:8px; align-items:center;">
-                  <input class="form-input" type="text" placeholder="🔍 Search client requirement..." id="filter-enquiry-search" style="width:160px; padding: 4px 8px; font-size:11.5px;" oninput="loadEnquiries()">
+                  <input class="form-input" type="text" placeholder="🔍 Search client requirement..." id="filter-enquiry-search" style="width:160px; padding: 4px 8px; font-size:11.5px;" oninput="loadEnquiries()" autocomplete="off">
                   <select class="form-select" id="filter-enquiry-temp" style="width:120px; padding: 4px 8px; font-size:11.5px;">
                     <option value="">All Temperatures</option>
                     <option value="Hot">Hot</option>
@@ -2140,7 +2208,7 @@
             <div class="form-row">
               <div class="form-group" style="flex:2;">
                 <label class="form-label">Active Spreadsheet Sheet URL</label>
-                <input class="form-input" type="text" id="settings-sheets-url" value="https://docs.google.com/spreadsheets/d/1vj_master_properties_sheet/edit" style="font-family:var(--font-mono); font-size:11px;">
+                <input class="form-input" type="text" id="settings-sheets-url" value="https://docs.google.com/spreadsheets/d/1zUI8cfTRaj8ZQAdlDyQcoq6ZFDuxFVyghnEFJkzGtb0/edit?usp=sharing" style="font-family:var(--font-mono); font-size:11px;">
               </div>
               <div class="form-group" style="flex:1;">
                 <label class="form-label">Sync Action Control</label>
@@ -4335,7 +4403,7 @@
         <div class="form-group">
           <label class="form-label">Google Sheets URL (Must be "Anyone with the link can view")</label>
           <div style="display: flex; gap: 8px;">
-            <input class="form-input" type="text" id="import-gsheets-url" placeholder="https://docs.google.com/spreadsheets/d/..." style="flex: 1;">
+            <input class="form-input" type="text" id="import-gsheets-url" value="https://docs.google.com/spreadsheets/d/1zUI8cfTRaj8ZQAdlDyQcoq6ZFDuxFVyghnEFJkzGtb0/edit?usp=sharing" placeholder="https://docs.google.com/spreadsheets/d/..." style="flex: 1;">
             <button class="btn btn-primary" type="button" onclick="importFromGoogleSheet()">Fetch Link</button>
           </div>
         </div>

@@ -284,7 +284,96 @@ app.get('/api/export/:table', async (req, res) => {
         });
       }
     }
-    const rows = (await db.query(`SELECT * FROM ${table} ORDER BY id DESC`)).rows;
+
+    let query = `SELECT * FROM ${table} WHERE deleted_at IS NULL`;
+    const params = [];
+    let paramCounter = 1;
+
+    if (table === 'properties') {
+      const { min_price, max_price, configuration, mandate_type, search, interiors, facing, status, zone, holder_type, registration_status, tab } = req.query;
+      if (min_price) {
+        query += ` AND price >= $${paramCounter++}`;
+        params.push(parseFloat(min_price));
+      }
+      if (max_price) {
+        query += ` AND price <= $${paramCounter++}`;
+        params.push(parseFloat(max_price));
+      }
+      if (mandate_type) {
+        query += ` AND mandate_type ILIKE $${paramCounter++}`;
+        params.push(`%${mandate_type}%`);
+      }
+      if (interiors) {
+        query += ` AND interiors ILIKE $${paramCounter++}`;
+        params.push(`%${interiors}%`);
+      }
+      if (facing) {
+        query += ` AND facing ILIKE $${paramCounter++}`;
+        params.push(`%${facing}%`);
+      }
+      if (status) {
+        query += ` AND status ILIKE $${paramCounter++}`;
+        params.push(`%${status}%`);
+      }
+      if (zone) {
+        query += ` AND zone ILIKE $${paramCounter++}`;
+        params.push(`%${zone}%`);
+      }
+      if (holder_type) {
+        query += ` AND holder_type ILIKE $${paramCounter++}`;
+        params.push(`%${holder_type}%`);
+      }
+      if (registration_status) {
+        query += ` AND registration_status ILIKE $${paramCounter++}`;
+        params.push(`%${registration_status}%`);
+      }
+      if (tab) {
+        if (tab === 'rental') {
+          query += ` AND (property_type ILIKE 'rental' OR price_raw ILIKE '%/mo%')`;
+        } else if (tab === 'commercial') {
+          query += ` AND (property_type ILIKE '%commercial%' OR property_type ILIKE '%office%' OR property_type ILIKE '%retail%' OR property_type ILIKE '%warehouse%' OR property_type ILIKE '%showroom%')`;
+        } else if (tab === 'resale') {
+          query += ` AND NOT (property_type ILIKE 'rental' OR price_raw ILIKE '%/mo%' OR property_type ILIKE '%commercial%' OR property_type ILIKE '%office%' OR property_type ILIKE '%retail%' OR property_type ILIKE '%warehouse%' OR property_type ILIKE '%showroom%')`;
+        }
+      }
+      if (configuration) {
+        const bhks = configuration.split(',');
+        const bhkClauses = bhks.map(() => `configuration ILIKE $${paramCounter++}`);
+        query += ` AND (${bhkClauses.join(' OR ')})`;
+        bhks.forEach(bhk => params.push(`%${bhk}%`));
+      }
+      if (search) {
+        query += ` AND (society ILIKE $${paramCounter} OR location ILIKE $${paramCounter} OR property_type ILIKE $${paramCounter} OR prop_id ILIKE $${paramCounter} OR owner_name ILIKE $${paramCounter} OR owner_phone ILIKE $${paramCounter} OR owner_email ILIKE $${paramCounter} OR comments ILIKE $${paramCounter} OR admin_comments ILIKE $${paramCounter} OR additional_info ILIKE $${paramCounter} OR configuration ILIKE $${paramCounter} OR special_tags ILIKE $${paramCounter})`;
+        params.push(`%${search}%`);
+        paramCounter++;
+      }
+    } else if (table === 'builder_projects') {
+      const { search, stage, area_min, area_max, price_min, price_max } = req.query;
+      if (stage) {
+        query += ` AND uc_rtmi = $${paramCounter++}`;
+        params.push(stage);
+      }
+      if (search) {
+        query += ` AND (project_name ILIKE $${paramCounter} OR builder_name ILIKE $${paramCounter} OR location ILIKE $${paramCounter} OR tower ILIKE $${paramCounter} OR configuration ILIKE $${paramCounter} OR uc_rtmi ILIKE $${paramCounter} OR possession ILIKE $${paramCounter} OR location_usp ILIKE $${paramCounter} OR other_usp ILIKE $${paramCounter} OR special_tags ILIKE $${paramCounter} OR admin_comments ILIKE $${paramCounter})`;
+        params.push(`%${search}%`);
+        paramCounter++;
+      }
+    } else if (table === 'leads') {
+      const { search, status } = req.query;
+      if (status) {
+        query += ` AND status = $${paramCounter++}`;
+        params.push(status);
+      }
+      if (search) {
+        query += ` AND (name ILIKE $${paramCounter} OR phone ILIKE $${paramCounter} OR email ILIKE $${paramCounter} OR notes ILIKE $${paramCounter} OR project_type ILIKE $${paramCounter} OR location_preference ILIKE $${paramCounter} OR config_bhk ILIKE $${paramCounter} OR admin_comments ILIKE $${paramCounter} OR property_requirement ILIKE $${paramCounter} OR source ILIKE $${paramCounter} OR special_tags ILIKE $${paramCounter})`;
+        params.push(`%${search}%`);
+        paramCounter++;
+      }
+    }
+
+    query += ' ORDER BY id DESC';
+    const rows = (await db.query(query, params)).rows;
+
     if (rows.length === 0) {
       const info = (await db.query(`SELECT column_name AS name FROM information_schema.columns WHERE table_name = '${table}'`)).rows;
       const columns = info.map(i => i.name);
@@ -821,9 +910,9 @@ app.get('/api/leads', async (req, res) => {
       params.push(user.id);
     }
     if (search) {
-      query += ' AND (name ILIKE ? OR phone ILIKE ? OR email ILIKE ? OR notes ILIKE ?)';
+      query += ' AND (name ILIKE ? OR phone ILIKE ? OR email ILIKE ? OR notes ILIKE ? OR project_type ILIKE ? OR location_preference ILIKE ? OR config_bhk ILIKE ? OR admin_comments ILIKE ? OR property_requirement ILIKE ? OR source ILIKE ? OR special_tags ILIKE ?)';
       const s = `%${search}%`;
-      params.push(s, s, s, s);
+      params.push(s, s, s, s, s, s, s, s, s, s, s);
     }
     if (status) {
       query += ' AND status = ?';
@@ -1557,9 +1646,9 @@ app.get('/api/properties', async (req, res) => {
       params.push(parseInt(rera_checked));
     }
     if (search) {
-      query += ' AND (society ILIKE ? OR location ILIKE ? OR property_type ILIKE ? OR prop_id ILIKE ?)';
+      query += ' AND (society ILIKE ? OR location ILIKE ? OR property_type ILIKE ? OR prop_id ILIKE ? OR owner_name ILIKE ? OR owner_phone ILIKE ? OR owner_email ILIKE ? OR comments ILIKE ? OR admin_comments ILIKE ? OR additional_info ILIKE ? OR configuration ILIKE ? OR special_tags ILIKE ?)';
       const s = `%${search}%`;
-      params.push(s, s, s, s);
+      params.push(s, s, s, s, s, s, s, s, s, s, s, s);
     }
     query += ' ORDER BY id DESC';
     const listings = (await db.query(query, [params])).rows;
@@ -1740,6 +1829,29 @@ app.post('/api/properties', async (req, res) => {
     res.status(500).json({
       error: err.message
     });
+  }
+});
+app.patch('/api/properties/:id/inline', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { field, value } = req.body;
+    
+    const allowedFields = ['society', 'location', 'configuration', 'area_sqft', 'price', 'deposit', 'maintenance', 'available_from', 'interiors', 'facing', 'project_status', 'status'];
+    if (!allowedFields.includes(field)) {
+      return res.status(400).json({ error: 'Invalid field for inline editing' });
+    }
+    
+    // Update the database field using parametrized query
+    const query = `UPDATE properties SET ${field} = $1, last_updated = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *`;
+    const result = await db.query(query, [value, id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Property not found' });
+    }
+    
+    res.json({ success: true, property: result.rows[0] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 app.put('/api/properties/:id', async (req, res) => {
@@ -2051,9 +2163,9 @@ app.get('/api/projects', async (req, res) => {
     const params = [];
     
     if (search) {
-      query += ' AND (project_name ILIKE ? OR builder_name ILIKE ? OR location ILIKE ?)';
+      query += ' AND (project_name ILIKE ? OR builder_name ILIKE ? OR location ILIKE ? OR tower ILIKE ? OR configuration ILIKE ? OR uc_rtmi ILIKE ? OR possession ILIKE ? OR location_usp ILIKE ? OR other_usp ILIKE ? OR special_tags ILIKE ? OR admin_comments ILIKE ?)';
       const s = `%${search}%`;
-      params.push(s, s, s);
+      params.push(s, s, s, s, s, s, s, s, s, s, s);
     }
     
     query += ' ORDER BY id DESC';

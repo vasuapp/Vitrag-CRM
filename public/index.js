@@ -1747,6 +1747,12 @@ async function loadProperties(keepPages = false) {
     const recency = document.getElementById('filter-prop-recency')?.value || '';
     const type = document.getElementById('filter-prop-type')?.value || '';
     
+    const facing = document.getElementById('filter-prop-facing')?.value || '';
+    const status = document.getElementById('filter-prop-status')?.value || '';
+    const registration = document.getElementById('filter-prop-registration')?.value || '';
+    const zone = document.getElementById('filter-prop-zone')?.value || '';
+    const holderType = document.getElementById('filter-prop-holder-type')?.value || '';
+
     // BHK Checklist selections
     const checkedBHKs = [];
     document.querySelectorAll('.filter-bhk-check:checked').forEach(cb => {
@@ -1762,10 +1768,6 @@ async function loadProperties(keepPages = false) {
     const res = await fetch(url);
     const data = await res.json();
     state.properties = data;
-    
-    // Filter the properties dynamically
-    const disp = document.getElementById('inventory-count-display');
-    if (disp) disp.innerHTML = `Currently showing <strong>${data.length}</strong> total properties from dataset`;
     
     const filteredListings = data.filter(p => {
       // 1. Staging / Price Filter
@@ -1803,8 +1805,23 @@ async function loadProperties(keepPages = false) {
           recencyMatch = diffDays <= 30;
         }
       }
+
+      // 7. Facing Match
+      const facingMatch = !facing || (p.facing || '').toLowerCase() === facing.toLowerCase();
       
-      return priceMatch && mandateMatch && interiorsMatch && typeMatch && bhkMatch && recencyMatch;
+      // 8. Status (Availability) Match
+      const statusMatch = !status || (p.status || '').toLowerCase() === status.toLowerCase();
+      
+      // 9. Registration Match
+      const regMatch = !registration || (p.registration_status || '').toLowerCase() === registration.toLowerCase();
+      
+      // 10. Zone Match
+      const zoneMatch = !zone || (p.zone || '').toLowerCase() === zone.toLowerCase();
+      
+      // 11. Holder Type Match
+      const holderMatch = !holderType || (p.holder_type || '').toLowerCase() === holderType.toLowerCase();
+      
+      return priceMatch && mandateMatch && interiorsMatch && typeMatch && bhkMatch && recencyMatch && facingMatch && statusMatch && regMatch && zoneMatch && holderMatch;
     });
     
     const resaleListings = [];
@@ -1824,6 +1841,17 @@ async function loadProperties(keepPages = false) {
         resaleListings.push(p);
       }
     });
+
+    // Update count display based on active tab
+    let activeCount = filteredListings.length;
+    if (state.inventoryTab === 'resale') activeCount = resaleListings.length;
+    else if (state.inventoryTab === 'rental') activeCount = rentalListings.length;
+    else if (state.inventoryTab === 'commercial') activeCount = commercialListings.length;
+
+    const disp = document.getElementById('inventory-count-display');
+    if (disp) {
+      disp.innerHTML = `Currently showing <strong>${activeCount}</strong> matching listings in active segment (Total matched: ${filteredListings.length} of ${data.length})`;
+    }
     
     renderResaleProperties(resaleListings);
     renderRentalProperties(rentalListings);
@@ -1869,7 +1897,7 @@ function renderResaleProperties(listings) {
             </div>
             <div class="inv-loc" style="margin-top: 6px; font-size:12px;">📍 Location: <strong>${p.location}</strong> | Staging: <strong>${p.project_status || 'RTMI'}</strong></div>
           </div>
-          <div style="text-align:right">
+          <div style="text-align:right; padding-right: 35px;">
             <div class="inv-price" style="font-size:18px; color:var(--green); font-weight:800;">${formatPriceToWords(p.price)}</div>
             <div class="inv-upd">Last update: ${new Date(p.last_updated).toLocaleDateString()}</div>
           </div>
@@ -1995,15 +2023,16 @@ function renderResaleProperties(listings) {
               <tr style="${p.is_stale ? 'background: rgba(192, 57, 43, 0.05); color: var(--red);' : ''}">
                 <td><input type="checkbox" class="row-checkbox-resale" value="${p.id}" onchange="updateBulkSelectionState('resale')"></td>
                 <td><span class="chip chip-cold btn-sm" style="font-size:9px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">${p.prop_id || 'N/A'}</span></td>
-                <td><strong>${p.society}</strong>
-                  ${(!p.status || p.status.toUpperCase() === 'AVAILABLE') ? `<br><span class="chip ch-gold btn-sm" style="font-size:8px; font-weight:700; background:rgba(46, 204, 113, 0.2); border:0.5px solid var(--green); color:var(--green); margin-top:4px; display:inline-block;">🟢 AVAILABLE</span>` : ''}
-                  ${p.special_tags ? p.special_tags.split(',').map(tag => `<br><span class="chip chip-warm btn-sm" style="font-size:8px; font-weight:600; margin-top:2px; display:inline-block;">🏷️ ${tag.trim()}</span>`).join('') : ''}
-                  ${p.sync_status && p.sync_status !== 'NOT_SYNCED' ? `<br><span class="portal-sync-badge" style="margin-top:4px;"><i class="ti ti-world"></i> ${p.sync_status}</span>` : ''}
-                </td>
-                <td>${p.location}</td>
-                <td>${p.configuration}</td>
-                <td>${p.area_sqft}</td>
-                <td style="color:var(--green); font-weight:600;">${formatPriceToWords(p.price)}</td>
+                 <td style="cursor: text;">
+                   <strong contenteditable="true" class="editable-cell" onblur="updatePropertyInline(${p.id}, 'society', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.society}</strong>
+                   ${(!p.status || p.status.toUpperCase() === 'AVAILABLE') ? `<br><span class="chip ch-gold btn-sm" style="font-size:8px; font-weight:700; background:rgba(46, 204, 113, 0.2); border:0.5px solid var(--green); color:var(--green); margin-top:4px; display:inline-block;">🟢 AVAILABLE</span>` : ''}
+                   ${p.special_tags ? p.special_tags.split(',').map(tag => `<br><span class="chip chip-warm btn-sm" style="font-size:8px; font-weight:600; margin-top:2px; display:inline-block;">🏷️ ${tag.trim()}</span>`).join('') : ''}
+                   ${p.sync_status && p.sync_status !== 'NOT_SYNCED' ? `<br><span class="portal-sync-badge" style="margin-top:4px;"><i class="ti ti-world"></i> ${p.sync_status}</span>` : ''}
+                 </td>
+                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'location', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.location}</td>
+                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'configuration', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.configuration}</td>
+                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'area_sqft', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.area_sqft}</td>
+                 <td contenteditable="true" class="editable-cell" style="color:var(--green); font-weight:600; cursor: text;" onblur="updatePropertyInline(${p.id}, 'price', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${formatPriceToWords(p.price)}</td>
                 <td><span class="tag tag-primary" style="font-size:9.5px;">${p.mandate_type || 'Open'}</span></td>
                 <td>${p.interiors}</td>
                 <td>${p.facing || 'East'}</td>
@@ -2078,6 +2107,7 @@ function renderRentalProperties(listings) {
   if (state.viewModes.rental === 'card') {
     container.innerHTML = slicedListings.map(p => `
       <div class="inv-item" style="border-left: 3.5px solid var(--gold) !important;">
+        <div style="position: absolute; top: 12px; right: 12px; z-index: 10;"><input type="checkbox" class="row-checkbox-rental" value="${p.id}" onchange="updateBulkSelectionState('rental')" style="transform: scale(1.3); cursor: pointer;" onclick="event.stopPropagation()"></div>
         <div class="inv-row">
           <div>
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
@@ -2091,7 +2121,7 @@ function renderRentalProperties(listings) {
             </div>
             <div class="inv-loc" style="margin-top:6px; font-size:12px;">📍 Location: <strong>${p.location}</strong> · Configurations: <strong>${p.configuration}</strong></div>
           </div>
-          <div style="text-align:right">
+          <div style="text-align:right; padding-right: 35px;">
             <div class="inv-price" style="font-size:18px; color:var(--green); font-weight:800;">${formatPriceToWords(p.price)}</div>
             <div class="inv-upd" style="font-size:11px; color:var(--text-muted);">Available: ${p.available_from || 'Immediate'}</div>
           </div>
@@ -2196,17 +2226,18 @@ function renderRentalProperties(listings) {
               <tr>
                 <td><input type="checkbox" class="row-checkbox-rental" value="${p.id}" onchange="updateBulkSelectionState('rental')"></td>
                 <td><span class="chip chip-cold btn-sm" style="font-size:9px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">${p.prop_id || 'N/A'}</span></td>
-                <td><strong>${p.society}</strong>
-                  ${(!p.status || p.status.toUpperCase() === 'AVAILABLE') ? `<br><span class="chip ch-gold btn-sm" style="font-size:8px; font-weight:700; background:rgba(46, 204, 113, 0.2); border:0.5px solid var(--green); color:var(--green); margin-top:4px; display:inline-block;">🟢 AVAILABLE</span>` : ''}
-                  ${p.special_tags ? p.special_tags.split(',').map(tag => `<br><span class="chip chip-warm btn-sm" style="font-size:8px; font-weight:600; margin-top:2px; display:inline-block;">🏷️ ${tag.trim()}</span>`).join('') : ''}
-                  ${p.sync_status && p.sync_status !== 'NOT_SYNCED' ? `<br><span class="portal-sync-badge" style="margin-top:4px;"><i class="ti ti-world"></i> ${p.sync_status}</span>` : ''}
-                </td>
-                <td>${p.location}</td>
-                <td>${p.configuration}</td>
-                <td>${p.area_sqft}</td>
-                <td style="color:var(--green); font-weight:600;">${formatPriceToWords(p.price)}</td>
-                <td>₹${(p.deposit || 0).toLocaleString()}</td>
-                <td>₹${(p.maintenance || 0).toLocaleString()}</td>
+                 <td style="cursor: text;">
+                   <strong contenteditable="true" class="editable-cell" onblur="updatePropertyInline(${p.id}, 'society', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.society}</strong>
+                   ${(!p.status || p.status.toUpperCase() === 'AVAILABLE') ? `<br><span class="chip ch-gold btn-sm" style="font-size:8px; font-weight:700; background:rgba(46, 204, 113, 0.2); border:0.5px solid var(--green); color:var(--green); margin-top:4px; display:inline-block;">🟢 AVAILABLE</span>` : ''}
+                   ${p.special_tags ? p.special_tags.split(',').map(tag => `<br><span class="chip chip-warm btn-sm" style="font-size:8px; font-weight:600; margin-top:2px; display:inline-block;">🏷️ ${tag.trim()}</span>`).join('') : ''}
+                   ${p.sync_status && p.sync_status !== 'NOT_SYNCED' ? `<br><span class="portal-sync-badge" style="margin-top:4px;"><i class="ti ti-world"></i> ${p.sync_status}</span>` : ''}
+                 </td>
+                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'location', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.location}</td>
+                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'configuration', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.configuration}</td>
+                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'area_sqft', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.area_sqft}</td>
+                 <td contenteditable="true" class="editable-cell" style="color:var(--green); font-weight:600; cursor: text;" onblur="updatePropertyInline(${p.id}, 'price', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${formatPriceToWords(p.price)}</td>
+                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'deposit', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.deposit || 0}</td>
+                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'maintenance', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.maintenance || 0}</td>
                 <td>${p.available_from || 'Immediate'}</td>
                 <td>${p.interiors}</td>
                 <td>
@@ -2267,6 +2298,7 @@ function renderCommercialProperties(listings) {
   if (state.viewModes.commercial === 'card') {
     container.innerHTML = slicedListings.map(p => `
       <div class="inv-item" style="border-left: 3.5px solid var(--purple) !important;">
+        <div style="position: absolute; top: 12px; right: 12px; z-index: 10;"><input type="checkbox" class="row-checkbox-commercial" value="${p.id}" onchange="updateBulkSelectionState('commercial')" style="transform: scale(1.3); cursor: pointer;" onclick="event.stopPropagation()"></div>
         <div class="inv-row">
           <div>
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
@@ -2280,7 +2312,7 @@ function renderCommercialProperties(listings) {
             </div>
             <div class="inv-loc" style="margin-top:6px; font-size:12px;">📍 Location: <strong>${p.location}</strong> · Available For: <strong style="color:var(--purple)">${p.available_for || 'Rent / Lease'}</strong></div>
           </div>
-          <div style="text-align:right">
+          <div style="text-align:right; padding-right: 35px;">
             <div class="inv-price" style="font-size:18px; color:var(--green); font-weight:800;">${formatPriceToWords(p.price)}</div>
             <div class="inv-upd" style="font-size:11px; color:var(--text-muted);">Handover: ${p.possession || 'Immediate'}</div>
           </div>
@@ -2385,18 +2417,19 @@ function renderCommercialProperties(listings) {
               <tr>
                 <td><input type="checkbox" class="row-checkbox-commercial" value="${p.id}" onchange="updateBulkSelectionState('commercial')"></td>
                 <td><span class="chip chip-cold btn-sm" style="font-size:9px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">${p.prop_id || 'N/A'}</span></td>
-                <td><strong>${p.society}</strong>
-                  ${(!p.status || p.status.toUpperCase() === 'AVAILABLE') ? `<br><span class="chip ch-gold btn-sm" style="font-size:8px; font-weight:700; background:rgba(46, 204, 113, 0.2); border:0.5px solid var(--green); color:var(--green); margin-top:4px; display:inline-block;">🟢 AVAILABLE</span>` : ''}
-                  ${p.special_tags ? p.special_tags.split(',').map(tag => `<br><span class="chip chip-warm btn-sm" style="font-size:8px; font-weight:600; margin-top:2px; display:inline-block;">🏷️ ${tag.trim()}</span>`).join('') : ''}
-                  ${p.sync_status && p.sync_status !== 'NOT_SYNCED' ? `<br><span class="portal-sync-badge" style="margin-top:4px;"><i class="ti ti-world"></i> ${p.sync_status}</span>` : ''}
-                </td>
-                <td>${p.location}</td>
-                <td>${p.property_type}</td>
-                <td style="color:var(--purple); font-weight:600;">${p.available_for || 'Lease'}</td>
-                <td>${p.area_sqft} Sqft</td>
-                <td style="color:var(--green); font-weight:600;">${formatPriceToWords(p.price)}</td>
-                <td>₹${(p.deposit || 0).toLocaleString()}</td>
-                <td>₹${(p.maintenance || 0).toLocaleString()}</td>
+                 <td style="cursor: text;">
+                   <strong contenteditable="true" class="editable-cell" onblur="updatePropertyInline(${p.id}, 'society', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.society}</strong>
+                   ${(!p.status || p.status.toUpperCase() === 'AVAILABLE') ? `<br><span class="chip ch-gold btn-sm" style="font-size:8px; font-weight:700; background:rgba(46, 204, 113, 0.2); border:0.5px solid var(--green); color:var(--green); margin-top:4px; display:inline-block;">🟢 AVAILABLE</span>` : ''}
+                   ${p.special_tags ? p.special_tags.split(',').map(tag => `<br><span class="chip chip-warm btn-sm" style="font-size:8px; font-weight:600; margin-top:2px; display:inline-block;">🏷️ ${tag.trim()}</span>`).join('') : ''}
+                   ${p.sync_status && p.sync_status !== 'NOT_SYNCED' ? `<br><span class="portal-sync-badge" style="margin-top:4px;"><i class="ti ti-world"></i> ${p.sync_status}</span>` : ''}
+                 </td>
+                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'location', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.location}</td>
+                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'property_type', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.property_type}</td>
+                 <td contenteditable="true" class="editable-cell" style="color:var(--purple); font-weight:600; cursor: text;" onblur="updatePropertyInline(${p.id}, 'available_for', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.available_for || 'Lease'}</td>
+                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'area_sqft', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.area_sqft} Sqft</td>
+                 <td contenteditable="true" class="editable-cell" style="color:var(--green); font-weight:600; cursor: text;" onblur="updatePropertyInline(${p.id}, 'price', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${formatPriceToWords(p.price)}</td>
+                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'deposit', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.deposit || 0}</td>
+                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'maintenance', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.maintenance || 0}</td>
                 <td>${p.possession || 'Immediate'}</td>
                 <td>
                   <div style="display:flex; gap:4px;">
@@ -2495,6 +2528,8 @@ function switchInventoryTab(tabId) {
   document.getElementById('inventory-rental-pane').style.display = tabId === 'rental' ? 'block' : 'none';
   document.getElementById('inventory-commercial-pane').style.display = tabId === 'commercial' ? 'block' : 'none';
   document.getElementById('inventory-masked-pane').style.display = tabId === 'masked' ? 'block' : 'none';
+  
+  loadProperties(true);
 }
 
 async function loadProjects() {
@@ -2609,7 +2644,7 @@ async function loadProjects() {
     container.innerHTML = filteredData.map(p => `
         <div class="card" style="background: linear-gradient(135deg, rgba(30, 42, 58, 0.45), rgba(184, 134, 11, 0.04)); cursor:pointer;" onclick="showProjectDetails(${p.id})">
           <div style="position: absolute; top: 12px; right: 12px; z-index: 10;"><input type="checkbox" class="row-checkbox-projects" value="${p.id}" onchange="updateBulkSelectionState('projects')" style="transform: scale(1.3); cursor: pointer;" onclick="event.stopPropagation()"></div>
-          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; padding-right: 35px;">
             <div>
               <div class="card-title" style="font-size:16px; font-weight:700; color:var(--gold-l);"><i class="ti ti-building-skyscraper"></i> ${p.project_name}</div>
               <div class="card-sub">Builder/Developer: <strong>${p.builder_name}</strong></div>
@@ -2733,13 +2768,25 @@ async function loadAssociates() {
         data.map(a => `<option value="${a.id}">${a.name} (${a.company || 'Private Brokerage'})</option>`).join('');
     }
 
+    const searchVal = (document.getElementById('filter-assoc-search')?.value || '').toLowerCase().trim();
+    let displayData = data;
+    if (searchVal) {
+      displayData = data.filter(a => 
+        (a.name || '').toLowerCase().includes(searchVal) ||
+        (a.company || '').toLowerCase().includes(searchVal) ||
+        (a.speciality_zones || '').toLowerCase().includes(searchVal) ||
+        (a.phone || '').toLowerCase().includes(searchVal) ||
+        (a.email || '').toLowerCase().includes(searchVal)
+      );
+    }
+
     const tbody = document.getElementById('associates-list-container');
-    if (data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" class="empty">No co-brokers logged. Click Register Associate to begin!</td></tr>`;
+    if (displayData.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="empty">No co-brokers logged or matched criteria. Click Register Associate to begin!</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = data.map(a => `
+    tbody.innerHTML = displayData.map(a => `
       <tr style="cursor:pointer;" onclick="showAssociateDetails(${a.id})" class="assoc-row">
         <td><strong>${a.name}</strong> ${a.is_inner_circle ? '<span class="badge badge-amber" style="font-size:9px; padding:2px 6px;">⭐ Inner Circle</span>' : ''}</td>
         <td>${a.company || 'Private Brokerage'}</td>
@@ -4580,7 +4627,7 @@ window.showAddCommercialModal = () => {
 };
 
 window.cloneProperty = function(id) {
-  const p = state.properties.find(x => x.id === id);
+  const p = state.properties.find(x => x.id == id);
   if (!p) {
     showToast('Property not found', 'error');
     return;
@@ -4742,7 +4789,7 @@ window.cloneProperty = function(id) {
 };
 
 window.editFullProperty = function(id) {
-  const p = state.properties.find(x => x.id === id);
+  const p = state.properties.find(x => x.id == id);
   if (!p) {
     showToast('Property not found', 'error');
     return;
@@ -5030,8 +5077,9 @@ window.showAddProjectModal = function() {
 }
 
 window.editProject = function(id) {
-  const p = state.projects.find(x => x.id === id);
+  const p = state.projects.find(x => x.id == id);
   if(!p) return;
+  closeModal('modal-project-detail');
   editingProjectId = id;
   
   document.getElementById('proj-builder').value = p.builder_name || '';
@@ -7792,15 +7840,90 @@ async function loadDailyOperationsReport() {
 
 // 10. Secure CSV Export Prompt (Admin Auth check)
 async function triggerSecureExport(table) {
+  let queryParams = [];
+  
+  if (table === 'properties') {
+    const search = (document.getElementById('filter-prop-search')?.value || '').trim();
+    if (search) queryParams.push(`search=${encodeURIComponent(search)}`);
+    
+    const minPrice = document.getElementById('filter-prop-price-min')?.value || '';
+    if (minPrice) queryParams.push(`min_price=${encodeURIComponent(minPrice)}`);
+    
+    const maxPrice = document.getElementById('filter-prop-price-max')?.value || '';
+    if (maxPrice) queryParams.push(`max_price=${encodeURIComponent(maxPrice)}`);
+    
+    const mandate = document.getElementById('filter-prop-mandate')?.value || '';
+    if (mandate) queryParams.push(`mandate_type=${encodeURIComponent(mandate)}`);
+    
+    const interiors = document.getElementById('filter-prop-interiors')?.value || '';
+    if (interiors) queryParams.push(`interiors=${encodeURIComponent(interiors)}`);
+    
+    const facing = document.getElementById('filter-prop-facing')?.value || '';
+    if (facing) queryParams.push(`facing=${encodeURIComponent(facing)}`);
+    
+    const status = document.getElementById('filter-prop-status')?.value || '';
+    if (status) queryParams.push(`status=${encodeURIComponent(status)}`);
+    
+    const zone = document.getElementById('filter-prop-zone')?.value || '';
+    if (zone) queryParams.push(`zone=${encodeURIComponent(zone)}`);
+    
+    const holderType = document.getElementById('filter-prop-holder-type')?.value || '';
+    if (holderType) queryParams.push(`holder_type=${encodeURIComponent(holderType)}`);
+    
+    const registration = document.getElementById('filter-prop-registration')?.value || '';
+    if (registration) queryParams.push(`registration_status=${encodeURIComponent(registration)}`);
+    
+    // BHK Checklist selections
+    const checkedBHKs = [];
+    document.querySelectorAll('.filter-bhk-check:checked').forEach(cb => {
+      checkedBHKs.push(cb.value);
+    });
+    if (checkedBHKs.length > 0) {
+      queryParams.push(`configuration=${encodeURIComponent(checkedBHKs.join(','))}`);
+    }
+    
+    // Tab filter
+    if (state.inventoryTab) {
+      queryParams.push(`tab=${encodeURIComponent(state.inventoryTab)}`);
+    }
+  } else if (table === 'builder_projects') {
+    const search = (document.getElementById('filter-proj-search')?.value || '').trim();
+    if (search) queryParams.push(`search=${encodeURIComponent(search)}`);
+    
+    const stage = document.getElementById('filter-proj-stage')?.value || '';
+    if (stage) queryParams.push(`stage=${encodeURIComponent(stage)}`);
+    
+    const areaMin = document.getElementById('filter-proj-area-min')?.value || '';
+    if (areaMin) queryParams.push(`area_min=${encodeURIComponent(areaMin)}`);
+    
+    const areaMax = document.getElementById('filter-proj-area-max')?.value || '';
+    if (areaMax) queryParams.push(`area_max=${encodeURIComponent(areaMax)}`);
+    
+    const priceMin = document.getElementById('filter-proj-price-min')?.value || '';
+    if (priceMin) queryParams.push(`price_min=${encodeURIComponent(priceMin)}`);
+    
+    const priceMax = document.getElementById('filter-proj-price-max')?.value || '';
+    if (priceMax) queryParams.push(`price_max=${encodeURIComponent(priceMax)}`);
+  } else if (table === 'leads') {
+    const search = (document.getElementById('filter-enquiry-search')?.value || '').trim();
+    if (search) queryParams.push(`search=${encodeURIComponent(search)}`);
+    
+    const temp = document.getElementById('filter-enquiry-temp')?.value || '';
+    if (temp) queryParams.push(`status=${encodeURIComponent(temp)}`);
+  }
+  
+  const queryString = queryParams.length > 0 ? '&' + queryParams.join('&') : '';
+  const initialQuerySymbol = queryParams.length > 0 ? '?' + queryParams.join('&') : '';
+
   // Check if Employee Masking is active by reading setting state
   if (!state.systemSettings.showMaskedFields) {
     const pass = prompt('Admin Authorization Password Required for CSV exports in Employee View:');
     if (!pass) return;
     
     try {
-      const res = await fetch(`/api/export/${table}?password=${encodeURIComponent(pass)}`);
+      const res = await fetch(`/api/export/${table}?password=${encodeURIComponent(pass)}${queryString}`);
       if (res.ok) {
-        window.location.href = `/api/export/${table}?password=${encodeURIComponent(pass)}`;
+        window.location.href = `/api/export/${table}?password=${encodeURIComponent(pass)}${queryString}`;
       } else {
         const err = await res.json();
         showToast(err.error || 'Authorization failed.');
@@ -7811,7 +7934,7 @@ async function triggerSecureExport(table) {
     }
   } else {
     // Natively trigger download directly for Administrator view
-    window.location.href = `/api/export/${table}`;
+    window.location.href = `/api/export/${table}${initialQuerySymbol}`;
   }
 }
 
@@ -11015,3 +11138,68 @@ function formatIndianNumber(num) {
 window.exportAdminReport = function() {
   window.print();
 };
+
+window.updatePropertyInline = async function(id, field, el) {
+  let val = el.innerText.trim();
+  if (field === 'price' || field === 'area_sqft' || field === 'deposit' || field === 'maintenance') {
+    let cleanVal = val.replace(/[^\d.]/g, '');
+    let parsed = parseFloat(cleanVal) || 0;
+    
+    if (/lakh|l\b/i.test(val)) {
+      parsed = parsed * 100000;
+    } else if (/crore|cr\b/i.test(val)) {
+      parsed = parsed * 10000000;
+    }
+    val = parsed;
+  }
+  
+  try {
+    const res = await fetch(`/api/properties/${id}/inline`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ field: field, value: val })
+    });
+    if (res.ok) {
+      showToast('Live Spreadsheet Sync Complete.');
+      const resData = await res.json();
+      
+      const idx = state.properties.findIndex(x => x.id == id);
+      if (idx !== -1) {
+        state.properties[idx] = resData.property;
+      }
+      
+      if (field === 'price') {
+        el.innerText = formatPriceToWords(val);
+      }
+    } else {
+      const err = await res.json();
+      showToast(err.error || 'Failed to update cell inline.', 'error');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to update cell inline.', 'error');
+  }
+};
+
+(function() {
+  const style = document.createElement('style');
+  style.innerHTML = `
+    .editable-cell {
+      border: 1px dashed transparent !important;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+      outline: none;
+    }
+    .editable-cell:hover {
+      border: 1px dashed var(--gold-l) !important;
+      background: rgba(184, 134, 11, 0.08) !important;
+    }
+    .editable-cell:focus {
+      border: 1px solid var(--gold) !important;
+      background: rgba(184, 134, 11, 0.15) !important;
+      box-shadow: 0 0 8px rgba(184, 134, 11, 0.3) !important;
+    }
+  `;
+  document.head.appendChild(style);
+})();
