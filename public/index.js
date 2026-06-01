@@ -1887,10 +1887,10 @@ function renderResaleProperties(listings) {
           <div>
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
               <span class="inv-name" style="font-size: 16px; font-weight: 700; color:var(--gold-l);">${p.society}</span> 
-              <span class="chip chip-cold btn-sm" style="font-size:9.5px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">ID: ${p.prop_id || 'N/A'}</span>
+              <span class="chip chip-cold btn-sm" style="font-size:9.5px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">ID: ${p.prop_id || '#' + p.id}</span>
               ${p.is_stale ? `<span class="chip chip-hot btn-sm" style="font-size:9px; font-weight:700;">⚠️ STALE LISTING</span>` : ''}
               ${p.mandate_type === 'Exclusive' ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(184,134,11,0.2); border:0.5px solid var(--gold); color:var(--gold-l);">👑 EXCLUSIVE</span>` : ''}
-              ${(!p.status || p.status.toUpperCase() === 'AVAILABLE') ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(46, 204, 113, 0.2); border:0.5px solid var(--green); color:var(--green);">🟢 AVAILABLE</span>` : ''}
+              ${(()=>{ const s=(p.status||'AVAILABLE').toUpperCase(); if(s==='AVAILABLE') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(46,204,113,0.2);border:0.5px solid var(--green);color:var(--green);">🟢 AVAILABLE</span>`; if(s==='SOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.2);border:0.5px solid var(--red);color:var(--red);">🔴 SOLD</span>`; if(s==='ON HOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(230,126,34,0.2);border:0.5px solid #e67e22;color:#e67e22;">🟠 ON HOLD</span>`; if(s==='WITHDRAWN') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(127,140,141,0.2);border:0.5px solid #7f8c8d;color:#7f8c8d;">⚫ WITHDRAWN</span>`; if(s==='EXPIRED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.1);border:0.5px solid #c0392b;color:#c0392b;opacity:0.7;">🔕 EXPIRED</span>`; if(s==='RESERVED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(52,152,219,0.2);border:0.5px solid var(--blue);color:var(--blue-light);">🔵 RESERVED</span>`; return ''; })()}
               ${p.associate_id ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(52, 152, 219, 0.2); border:0.5px solid var(--blue); color:var(--blue-light);">🏢 ASSOCIATE INVENTORY</span>` : ''}
               ${p.special_tags ? p.special_tags.split(',').map(tag => `<span class="chip chip-warm btn-sm" style="font-size:9px; font-weight:600;">🏷️ ${tag.trim()}</span>`).join(' ') : ''}
               ${p.sync_status && p.sync_status !== 'NOT_SYNCED' ? `<span class="portal-sync-badge"><i class="ti ti-world"></i> ${p.sync_status}</span>` : ''}
@@ -1906,8 +1906,12 @@ function renderResaleProperties(listings) {
         <!-- Premium 3-column Metadata Grid -->
         <div class="metadata-grid-3">
           <div class="metadata-item">
-            <span class="metadata-label">📐 Size & Config</span>
-            <span class="metadata-value">${p.area_sqft} Sqft (${p.configuration})</span>
+            <span class="metadata-label">📐 Super Area</span>
+            <span class="metadata-value">${p.area_sqft} Sqft</span>
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label">🛏️ Configuration</span>
+            <span class="metadata-value">${p.configuration || 'N/A'}</span>
           </div>
           <div class="metadata-item">
             <span class="metadata-label">🛋️ Interiors</span>
@@ -2022,7 +2026,7 @@ function renderResaleProperties(listings) {
             ${slicedListings.map(p => `
               <tr style="${p.is_stale ? 'background: rgba(192, 57, 43, 0.05); color: var(--red);' : ''}">
                 <td><input type="checkbox" class="row-checkbox-resale" value="${p.id}" onchange="updateBulkSelectionState('resale')"></td>
-                <td><span class="chip chip-cold btn-sm" style="font-size:9px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">${p.prop_id || 'N/A'}</span></td>
+                <td><span class="chip chip-cold btn-sm" style="font-size:9px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">${p.prop_id || '#' + p.id}</span></td>
                  <td style="cursor: text;">
                    <strong contenteditable="true" class="editable-cell" onblur="updatePropertyInline(${p.id}, 'society', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.society}</strong>
                    ${(!p.status || p.status.toUpperCase() === 'AVAILABLE') ? `<br><span class="chip ch-gold btn-sm" style="font-size:8px; font-weight:700; background:rgba(46, 204, 113, 0.2); border:0.5px solid var(--green); color:var(--green); margin-top:4px; display:inline-block;">🟢 AVAILABLE</span>` : ''}
@@ -2111,9 +2115,9 @@ function renderRentalProperties(listings) {
           <div>
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
               <span class="inv-name" style="font-size: 16px; font-weight: 700; color:var(--gold-l);">${p.society}</span>
-              <span class="chip chip-cold btn-sm" style="font-size:9.5px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">ID: ${p.prop_id || 'N/A'}</span>
+              <span class="chip chip-cold btn-sm" style="font-size:9.5px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">ID: ${p.prop_id || '#' + p.id}</span>
               ${p.mandate_type === 'Exclusive' ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(184,134,11,0.2); border:0.5px solid var(--gold); color:var(--gold-l);">👑 EXCLUSIVE</span>` : ''}
-              ${(!p.status || p.status.toUpperCase() === 'AVAILABLE') ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(46, 204, 113, 0.2); border:0.5px solid var(--green); color:var(--green);">🟢 AVAILABLE</span>` : ''}
+              ${(()=>{ const s=(p.status||'AVAILABLE').toUpperCase(); if(s==='AVAILABLE') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(46,204,113,0.2);border:0.5px solid var(--green);color:var(--green);">🟢 AVAILABLE</span>`; if(s==='SOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.2);border:0.5px solid var(--red);color:var(--red);">🔴 RENTED OUT</span>`; if(s==='ON HOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(230,126,34,0.2);border:0.5px solid #e67e22;color:#e67e22;">🟠 ON HOLD</span>`; if(s==='WITHDRAWN') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(127,140,141,0.2);border:0.5px solid #7f8c8d;color:#7f8c8d;">⚫ WITHDRAWN</span>`; if(s==='EXPIRED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.1);border:0.5px solid #c0392b;color:#c0392b;opacity:0.7;">🔕 EXPIRED</span>`; if(s==='RESERVED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(52,152,219,0.2);border:0.5px solid var(--blue);color:var(--blue-light);">🔵 RESERVED</span>`; return ''; })()}
               ${p.associate_id ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(52, 152, 219, 0.2); border:0.5px solid var(--blue); color:var(--blue-light);">🏢 ASSOCIATE INVENTORY</span>` : ''}
               ${p.special_tags ? p.special_tags.split(',').map(tag => `<span class="chip chip-warm btn-sm" style="font-size:9px; font-weight:600;">🏷️ ${tag.trim()}</span>`).join(' ') : ''}
               ${p.sync_status && p.sync_status !== 'NOT_SYNCED' ? `<span class="portal-sync-badge"><i class="ti ti-world"></i> ${p.sync_status}</span>` : ''}
@@ -2224,7 +2228,7 @@ function renderRentalProperties(listings) {
             ${slicedListings.map(p => `
               <tr>
                 <td><input type="checkbox" class="row-checkbox-rental" value="${p.id}" onchange="updateBulkSelectionState('rental')"></td>
-                <td><span class="chip chip-cold btn-sm" style="font-size:9px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">${p.prop_id || 'N/A'}</span></td>
+                <td><span class="chip chip-cold btn-sm" style="font-size:9px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">${p.prop_id || '#' + p.id}</span></td>
                  <td style="cursor: text;">
                    <strong contenteditable="true" class="editable-cell" onblur="updatePropertyInline(${p.id}, 'society', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.society}</strong>
                    ${(!p.status || p.status.toUpperCase() === 'AVAILABLE') ? `<br><span class="chip ch-gold btn-sm" style="font-size:8px; font-weight:700; background:rgba(46, 204, 113, 0.2); border:0.5px solid var(--green); color:var(--green); margin-top:4px; display:inline-block;">🟢 AVAILABLE</span>` : ''}
@@ -2306,9 +2310,9 @@ function renderCommercialProperties(listings) {
           <div>
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
               <span class="inv-name" style="font-size: 16px; font-weight: 700; color:var(--gold-l);">${p.society}</span>
-              <span class="chip chip-cold btn-sm" style="font-size:9.5px; background:var(--purple-light); color:var(--purple); cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">ID: ${p.prop_id || 'N/A'}</span>
+              <span class="chip chip-cold btn-sm" style="font-size:9.5px; background:var(--purple-light); color:var(--purple); cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">ID: ${p.prop_id || '#' + p.id}</span>
               ${p.mandate_type === 'Exclusive' ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(184,134,11,0.2); border:0.5px solid var(--gold); color:var(--gold-l);">👑 EXCLUSIVE</span>` : ''}
-              ${(!p.status || p.status.toUpperCase() === 'AVAILABLE') ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(46, 204, 113, 0.2); border:0.5px solid var(--green); color:var(--green);">🟢 AVAILABLE</span>` : ''}
+              ${(()=>{ const s=(p.status||'AVAILABLE').toUpperCase(); if(s==='AVAILABLE') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(46,204,113,0.2);border:0.5px solid var(--green);color:var(--green);">🟢 AVAILABLE</span>`; if(s==='SOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.2);border:0.5px solid var(--red);color:var(--red);">🔴 SOLD</span>`; if(s==='ON HOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(230,126,34,0.2);border:0.5px solid #e67e22;color:#e67e22;">🟠 ON HOLD</span>`; if(s==='WITHDRAWN') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(127,140,141,0.2);border:0.5px solid #7f8c8d;color:#7f8c8d;">⚫ WITHDRAWN</span>`; if(s==='EXPIRED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.1);border:0.5px solid #c0392b;color:#c0392b;opacity:0.7;">🔕 EXPIRED</span>`; if(s==='RESERVED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(52,152,219,0.2);border:0.5px solid var(--blue);color:var(--blue-light);">🔵 RESERVED</span>`; return ''; })()}
               ${p.associate_id ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(52, 152, 219, 0.2); border:0.5px solid var(--blue); color:var(--blue-light);">🏢 ASSOCIATE INVENTORY</span>` : ''}
               ${p.special_tags ? p.special_tags.split(',').map(tag => `<span class="chip chip-warm btn-sm" style="font-size:9px; font-weight:600;">🏷️ ${tag.trim()}</span>`).join(' ') : ''}
               ${p.sync_status && p.sync_status !== 'NOT_SYNCED' ? `<span class="portal-sync-badge"><i class="ti ti-world"></i> ${p.sync_status}</span>` : ''}
@@ -2419,7 +2423,7 @@ function renderCommercialProperties(listings) {
             ${slicedListings.map(p => `
               <tr>
                 <td><input type="checkbox" class="row-checkbox-commercial" value="${p.id}" onchange="updateBulkSelectionState('commercial')"></td>
-                <td><span class="chip chip-cold btn-sm" style="font-size:9px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">${p.prop_id || 'N/A'}</span></td>
+                <td><span class="chip chip-cold btn-sm" style="font-size:9px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">${p.prop_id || '#' + p.id}</span></td>
                  <td style="cursor: text;">
                    <strong contenteditable="true" class="editable-cell" onblur="updatePropertyInline(${p.id}, 'society', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.society}</strong>
                    ${(!p.status || p.status.toUpperCase() === 'AVAILABLE') ? `<br><span class="chip ch-gold btn-sm" style="font-size:8px; font-weight:700; background:rgba(46, 204, 113, 0.2); border:0.5px solid var(--green); color:var(--green); margin-top:4px; display:inline-block;">🟢 AVAILABLE</span>` : ''}
@@ -6425,7 +6429,7 @@ window.showAssociateDetailsInline = async function(id) {
           <div style="font-weight:600; font-size:12.5px;">${p.society}</div>
           <div style="font-size:11px; color:var(--text-secondary);">📍 ${p.location} | ${p.configuration} | ${formatPriceToWords(p.price)}</div>
         </div>
-        <span class="chip chip-cold btn-sm" style="font-size:9.5px;">${p.prop_id || 'N/A'}</span>
+        <span class="chip chip-cold btn-sm" style="font-size:9.5px;">${p.prop_id || '#' + p.id}</span>
       </div>
     `).join('');
   }
