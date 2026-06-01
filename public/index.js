@@ -548,6 +548,8 @@ async function initApp() {
       if (typeof loadAssociates === 'function') loadAssociates();
     } else if (page === 'templates') {
       if (typeof loadTemplates === 'function') loadTemplates();
+    } else if (page === 'reports') {
+      if (typeof loadAdminReportsPage === 'function') loadAdminReportsPage();
     }
     if (typeof loadDashboardData === 'function') loadDashboardData();
     if (typeof loadFollowups === 'function') loadFollowups();
@@ -768,7 +770,8 @@ function navToPage(pageId) {
     team: 'Team Roster',
     finance: 'Finance Ledger',
     invoices: 'Tax Invoices',
-    social: 'Social Campaigns'
+    social: 'Social Campaigns',
+    reports: 'Performance Reports'
   };
   document.getElementById('page-header-title').innerText = titles[pageId] || 'REALPro CRM';
 
@@ -792,6 +795,7 @@ function navToPage(pageId) {
   else if (pageId === 'social') loadSocialHub();
   else if (pageId === 'sops') loadSOPs();
   else if (pageId === 'templates') loadTemplates();
+  else if (pageId === 'reports') loadAdminReportsPage();
   else if (pageId === 'analytics') {
     if (typeof loadTelephonyAnalytics === 'function') loadTelephonyAnalytics();
     if (typeof loadGTMAnalyticsDashboard === 'function') loadGTMAnalyticsDashboard();
@@ -10670,4 +10674,168 @@ window.importFromGoogleSheet = function() {
       });
     }
   });
+};
+
+// ============================================
+// ADMIN REPORTS MODULE
+// ============================================
+let currentReportTimeframe = 'Monthly';
+
+window.switchReportTimeframe = function(tf) {
+  currentReportTimeframe = tf;
+  document.querySelectorAll('.report-tf-pill').forEach(p => {
+    p.classList.toggle('active', p.getAttribute('data-tf') === tf);
+    if (p.getAttribute('data-tf') === tf) {
+      p.style.background = 'var(--gold)';
+      p.style.color = '#1a1714';
+      p.style.borderColor = 'var(--gold)';
+    } else {
+      p.style.background = 'rgba(255,255,255,0.05)';
+      p.style.color = '#fff';
+      p.style.borderColor = 'rgba(255,255,255,0.1)';
+    }
+  });
+  loadAdminReportsPage();
+};
+
+window.loadAdminReportsPage = async function() {
+  try {
+    const res = await fetch(`/api/reports/admin?timeframe=${currentReportTimeframe}`);
+    const data = await res.json();
+    if (!data.success) return;
+    
+    // Render KPI Grid
+    const kpiGrid = document.getElementById('report-kpi-grid');
+    if (kpiGrid) {
+      const s = data.summary;
+      const kpis = [
+        { label: 'Total Leads', value: s.totalLeads, color: 'var(--gold)', icon: 'ti-users' },
+        { label: 'New Leads', value: s.newLeads, color: 'var(--blue)', icon: 'ti-user-plus' },
+        { label: 'Conversions', value: s.convertedLeads, color: 'var(--green)', icon: 'ti-trophy' },
+        { label: 'Conv. Rate', value: s.conversionRate + '%', color: 'var(--amber)', icon: 'ti-percentage' },
+        { label: 'Revenue', value: '₹' + formatIndianNumber(s.totalRevenue), color: 'var(--gold-l)', icon: 'ti-currency-rupee' },
+        { label: 'Avg Deal', value: '₹' + formatIndianNumber(s.avgDealSize), color: 'var(--purple)', icon: 'ti-receipt' },
+        { label: 'Active Pipeline', value: s.activePipeline, color: 'var(--blue-light)', icon: 'ti-chart-dots-3' }
+      ];
+      kpiGrid.innerHTML = kpis.map(k => `
+        <div class="report-kpi-card" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); padding: 16px; border-radius: var(--radius-md); text-align: center; border-top: 3px solid ${k.color};">
+          <div style="font-size:10px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;"><i class="ti ${k.icon}" style="margin-right:4px;"></i>${k.label}</div>
+          <div style="font-size:24px; font-weight:800; color:${k.color}; margin-top:6px;">${k.value}</div>
+        </div>
+      `).join('');
+    }
+
+    // Render Source Chart (horizontal bars)
+    const sourceChart = document.getElementById('report-source-chart');
+    if (sourceChart && data.leadsBySource) {
+      const maxCount = Math.max(...data.leadsBySource.map(s => parseInt(s.count))) || 1;
+      const colors = ['var(--gold)', 'var(--blue)', 'var(--green)', 'var(--purple)', 'var(--amber)', 'var(--slate-light)'];
+      sourceChart.innerHTML = data.leadsBySource.length === 0 
+        ? '<div style="color:var(--text-muted);font-size:12px;padding:20px;text-align:center;">No lead source data for this period</div>'
+        : data.leadsBySource.map((s, i) => `
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px; cursor:pointer;" onclick="routeToSource('${s.source}')">
+          <span style="width:80px; font-size:11px; color:var(--text-secondary); text-align:right; flex-shrink:0;">${s.source || 'Other'}</span>
+          <div style="flex:1; height:22px; background:rgba(255,255,255,0.03); border-radius:4px; overflow:hidden;">
+            <div style="height:100%; width:${(parseInt(s.count)/maxCount*100)}%; background:${colors[i % colors.length]}; border-radius:4px; transition:width 0.5s ease;"></div>
+          </div>
+          <span style="font-size:12px; font-weight:700; color:var(--text-primary); width:30px;">${s.count}</span>
+        </div>
+      `).join('');
+    }
+
+    // Render Stage Chart (horizontal bars)
+    const stageChart = document.getElementById('report-stage-chart');
+    if (stageChart && data.leadsByStage) {
+      const stageColors = { New: 'var(--slate-light)', Contacted: 'var(--blue)', Qualified: 'var(--amber)', Proposal: 'var(--purple)', Won: 'var(--green)', Lost: 'var(--red)' };
+      const maxCount = Math.max(...data.leadsByStage.map(s => parseInt(s.count))) || 1;
+      stageChart.innerHTML = data.leadsByStage.length === 0
+        ? '<div style="color:var(--text-muted);font-size:12px;padding:20px;text-align:center;">No pipeline data for this period</div>'
+        : data.leadsByStage.map(s => `
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px; cursor:pointer;" onclick="routeToStage('${s.stage}')">
+          <span style="width:80px; font-size:11px; color:var(--text-secondary); text-align:right; flex-shrink:0;">${s.stage || 'Unknown'}</span>
+          <div style="flex:1; height:22px; background:rgba(255,255,255,0.03); border-radius:4px; overflow:hidden;">
+            <div style="height:100%; width:${(parseInt(s.count)/maxCount*100)}%; background:${stageColors[s.stage] || 'var(--slate-light)'}; border-radius:4px; transition:width 0.5s ease;"></div>
+          </div>
+          <span style="font-size:12px; font-weight:700; color:var(--text-primary); width:30px;">${s.count}</span>
+        </div>
+      `).join('');
+    }
+
+    // Render Agent Leaderboard table
+    const agentTable = document.getElementById('report-agent-table');
+    if (agentTable && data.agentPerformance) {
+      agentTable.innerHTML = data.agentPerformance.length === 0
+        ? '<div style="color:var(--text-muted);font-size:12px;padding:20px;text-align:center;">No agent data available</div>'
+        : `<table style="width:100%; border-collapse:collapse; font-size:12px;">
+          <thead><tr style="border-bottom:1px solid var(--border); text-align:left;">
+            <th style="padding:8px; color:var(--text-secondary); font-size:10px; text-transform:uppercase;">Rank</th>
+            <th style="padding:8px; color:var(--text-secondary); font-size:10px; text-transform:uppercase;">Agent</th>
+            <th style="padding:8px; color:var(--text-secondary); font-size:10px; text-transform:uppercase;">Leads</th>
+            <th style="padding:8px; color:var(--text-secondary); font-size:10px; text-transform:uppercase;">Closings</th>
+            <th style="padding:8px; color:var(--text-secondary); font-size:10px; text-transform:uppercase;">Revenue</th>
+            <th style="padding:8px; color:var(--text-secondary); font-size:10px; text-transform:uppercase;">Rating</th>
+          </tr></thead>
+          <tbody>
+            ${data.agentPerformance.sort((a,b) => b.deals_won - a.deals_won).map((a, i) => `
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${i===0 ? 'background:rgba(184,134,11,0.08);' : ''}">
+                <td style="padding:10px 8px; font-weight:700; color:${i===0?'var(--gold)':'var(--text-primary)'};">  ${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</td>
+                <td style="padding:10px 8px; font-weight:600; color:var(--text-primary);">${a.name}</td>
+                <td style="padding:10px 8px; color:var(--text-secondary);">${a.leads}</td>
+                <td style="padding:10px 8px; color:var(--green); font-weight:700;">${a.deals_won}</td>
+                <td style="padding:10px 8px; color:var(--gold-l); font-weight:600;">₹${formatIndianNumber(a.volume)}</td>
+                <td style="padding:10px 8px;">⭐ ${a.performance_rating}/10</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    // Render Activity Summary
+    const activitySummary = document.getElementById('report-activity-summary');
+    if (activitySummary && data.activityLog) {
+      const acts = [
+        { icon: 'ti-phone-call', label: 'Calls Made', value: data.activityLog.totalCalls, color: 'var(--blue)' },
+        { icon: 'ti-map-pin', label: 'Site Visits', value: data.activityLog.totalSiteVisits, color: 'var(--green)' },
+        { icon: 'ti-brand-whatsapp', label: 'WhatsApp', value: data.activityLog.totalWhatsApp, color: 'var(--green)' },
+        { icon: 'ti-mail', label: 'Emails', value: data.activityLog.totalEmails, color: 'var(--amber)' }
+      ];
+      activitySummary.innerHTML = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">${acts.map(a => `
+        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); padding:12px; border-radius:var(--radius-md); text-align:center; border-left:3px solid ${a.color};">
+          <div style="font-size:10px; color:var(--text-secondary); text-transform:uppercase;"><i class="ti ${a.icon}"></i> ${a.label}</div>
+          <div style="font-size:22px; font-weight:800; color:${a.color}; margin-top:4px;">${a.value}</div>
+        </div>
+      `).join('')}</div>`;
+    }
+
+    // Render Top Properties
+    const topProps = document.getElementById('report-top-properties');
+    if (topProps && data.topProperties) {
+      topProps.innerHTML = data.topProperties.length === 0
+        ? '<div style="color:var(--text-muted);font-size:12px;padding:20px;text-align:center;">No enquiry data available</div>'
+        : data.topProperties.map((p, i) => `
+        <div style="display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.03);">
+          <span style="font-size:14px; font-weight:800; color:var(--gold); width:24px;">${i+1}.</span>
+          <div style="flex:1;">
+            <div style="font-size:12px; font-weight:600; color:var(--text-primary);">${p.society || p.title || 'Property #'+p.property_id}</div>
+            <div style="font-size:10px; color:var(--text-secondary);">${p.location || 'N/A'}</div>
+          </div>
+          <span class="badge badge-amber" style="font-size:10px;">${p.enquiries} enquiries</span>
+        </div>
+      `).join('');
+    }
+
+  } catch(e) { console.error('Failed to load admin reports', e); }
+};
+
+function formatIndianNumber(num) {
+  if (!num || num === 0) return '0';
+  const n = parseFloat(num);
+  if (n >= 10000000) return (n / 10000000).toFixed(2) + ' Cr';
+  if (n >= 100000) return (n / 100000).toFixed(2) + ' L';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return n.toString();
+}
+
+window.exportAdminReport = function() {
+  window.print();
 };

@@ -4456,6 +4456,7 @@ const timeFilter = req.query.timeframe || 'All Time';
     res.json({
       success: true,
       stages: stagesMap,
+      sources: rawSources,
       locations: locationCounts,
       agents: agentsPerformance,
       ledger: commissionsList,
@@ -4809,6 +4810,139 @@ app.delete('/api/invoices/:id', async (req, res) => {
     res.status(500).json({
       error: err.message
     });
+  }
+});
+
+// Admin Reports API
+app.get('/api/reports/admin', async (req, res) => {
+  try {
+    const timeframe = req.query.timeframe || 'Monthly';
+    let dateConditionLeads = '';
+    let dateConditionCommissions = '';
+    let dateConditionCalls = '';
+    let dateConditionLogs = '';
+    let label = 'Last 30 Days';
+
+    if (timeframe === 'Daily') {
+      dateConditionLeads = "WHERE created_at >= NOW() - INTERVAL '1 day'";
+      dateConditionCommissions = "WHERE created_at >= NOW() - INTERVAL '1 day'";
+      dateConditionCalls = "WHERE call_time >= NOW() - INTERVAL '1 day'";
+      dateConditionLogs = "WHERE created_at >= NOW() - INTERVAL '1 day'";
+      label = 'Daily (Last 24 Hours)';
+    } else if (timeframe === 'Weekly') {
+      dateConditionLeads = "WHERE created_at >= NOW() - INTERVAL '7 days'";
+      dateConditionCommissions = "WHERE created_at >= NOW() - INTERVAL '7 days'";
+      dateConditionCalls = "WHERE call_time >= NOW() - INTERVAL '7 days'";
+      dateConditionLogs = "WHERE created_at >= NOW() - INTERVAL '7 days'";
+      label = 'Weekly (Last 7 Days)';
+    } else if (timeframe === 'Monthly') {
+      dateConditionLeads = "WHERE created_at >= NOW() - INTERVAL '30 days'";
+      dateConditionCommissions = "WHERE created_at >= NOW() - INTERVAL '30 days'";
+      dateConditionCalls = "WHERE call_time >= NOW() - INTERVAL '30 days'";
+      dateConditionLogs = "WHERE created_at >= NOW() - INTERVAL '30 days'";
+      label = 'Monthly (Last 30 Days)';
+    } else if (timeframe === 'Quarterly') {
+      dateConditionLeads = "WHERE created_at >= NOW() - INTERVAL '90 days'";
+      dateConditionCommissions = "WHERE created_at >= NOW() - INTERVAL '90 days'";
+      dateConditionCalls = "WHERE call_time >= NOW() - INTERVAL '90 days'";
+      dateConditionLogs = "WHERE created_at >= NOW() - INTERVAL '90 days'";
+      label = 'Quarterly (Last 90 Days)';
+    } else {
+      label = 'All Time';
+    }
+
+    // Leads summary
+    const totalLeadsRes = await db.query(`SELECT COUNT(*) as count FROM leads ${dateConditionLeads}`);
+    const totalLeads = parseInt(totalLeadsRes.rows[0]?.count || 0);
+
+    const newLeadsRes = await db.query(`SELECT COUNT(*) as count FROM leads ${dateConditionLeads} ${dateConditionLeads ? 'AND' : 'WHERE'} stage = 'New'`);
+    const newLeads = parseInt(newLeadsRes.rows[0]?.count || 0);
+
+    const convertedLeadsRes = await db.query(`SELECT COUNT(*) as count FROM leads ${dateConditionLeads} ${dateConditionLeads ? 'AND' : 'WHERE'} stage = 'Won'`);
+    const convertedLeads = parseInt(convertedLeadsRes.rows[0]?.count || 0);
+
+    const activePipelineRes = await db.query(`SELECT COUNT(*) as count FROM leads ${dateConditionLeads} ${dateConditionLeads ? 'AND' : 'WHERE'} stage NOT IN ('Won', 'Lost')`);
+    const activePipeline = parseInt(activePipelineRes.rows[0]?.count || 0);
+
+    const conversionRate = totalLeads > 0 ? Math.round((convertedLeads / totalLeads) * 100) : 0;
+
+    // Commissions/Revenue summary
+    const commissionsRes = await db.query(`SELECT deal_value, commission_percentage FROM commissions ${dateConditionCommissions}`);
+    let totalRevenue = 0;
+    commissionsRes.rows.forEach(c => {
+      totalRevenue += parseFloat(c.deal_value || 0) * (parseFloat(c.commission_percentage || 0) / 100);
+    });
+
+    const avgDealSizeRes = await db.query(`SELECT AVG(deal_value) as avg_deal FROM commissions ${dateConditionCommissions}`);
+    const avgDealSize = Math.round(parseFloat(avgDealSizeRes.rows[0]?.avg_deal || 0));
+
+    // Leads by source
+    const leadsBySourceRes = await db.query(`SELECT source, COUNT(*) as count FROM leads ${dateConditionLeads} GROUP BY source ORDER BY count DESC`);
+    
+    // Leads by stage
+    const leadsByStageRes = await db.query(`SELECT stage, COUNT(*) as count FROM leads ${dateConditionLeads} GROUP BY stage`);
+
+    // Agent performance
+    const agents = (await db.query("SELECT id, name, performance_rating FROM agents")).rows;
+    const agentPerformance = await Promise.all(agents.map(async a => {
+      const lCountRes = await db.query(`SELECT COUNT(*) as count FROM leads ${dateConditionLeads} ${dateConditionLeads ? 'AND' : 'WHERE'} agent_id = $1`, [a.id]);
+      const wCountRes = await db.query(`SELECT COUNT(*) as count FROM leads ${dateConditionLeads} ${dateConditionLeads ? 'AND' : 'WHERE'} agent_id = $1 AND stage = 'Won'`, [a.id]);
+      return {
+        id: a.id,
+        name: a.name,
+        leads: parseInt(lCountRes.rows[0]?.count || 0),
+        deals_won: parseInt(wCountRes.rows[0]?.count || 0),
+        volume: parseInt(wCountRes.rows[0]?.count || 0) * 15000000,
+        performance_rating: a.performance_rating || 5
+      };
+    }));
+
+    // Activities log
+    const callsRes = await db.query(`SELECT COUNT(*) as count FROM telephony_calls ${dateConditionCalls}`);
+    const visitsRes = await db.query(`SELECT COUNT(*) as count FROM leads ${dateConditionLeads} ${dateConditionLeads ? 'AND' : 'WHERE'} stage = 'Qualified' OR stage = 'Proposal'`);
+    const waRes = await db.query(`SELECT COUNT(*) as count FROM interaction_logs ${dateConditionLogs} ${dateConditionLogs ? 'AND' : 'WHERE'} type = 'WhatsApp'`);
+    const emailRes = await db.query(`SELECT COUNT(*) as count FROM interaction_logs ${dateConditionLogs} ${dateConditionLogs ? 'AND' : 'WHERE'} type = 'Email'`);
+
+    // Top properties
+    const topPropertiesRes = await db.query(`
+      SELECT p.id as property_id, p.society, p.title, p.location, COUNT(lpi.lead_id) as enquiries
+      FROM properties p
+      LEFT JOIN lead_property_interest lpi ON p.id = lpi.property_id
+      GROUP BY p.id, p.society, p.title, p.location
+      ORDER BY enquiries DESC
+      LIMIT 5
+    `);
+
+    res.json({
+      success: true,
+      period: {
+        label,
+        startDate: timeframe === 'All Time' ? 'Beginning' : new Date(Date.now() - (timeframe === 'Daily' ? 1 : timeframe === 'Weekly' ? 7 : timeframe === 'Monthly' ? 30 : 90) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        endDate: new Date().toISOString().split('T')[0]
+      },
+      summary: {
+        totalLeads,
+        newLeads,
+        convertedLeads,
+        conversionRate,
+        totalRevenue,
+        avgDealSize,
+        activePipeline
+      },
+      leadsBySource: leadsBySourceRes.rows,
+      leadsByStage: leadsByStageRes.rows,
+      agentPerformance,
+      activityLog: {
+        totalCalls: parseInt(callsRes.rows[0]?.count || 0),
+        totalSiteVisits: parseInt(visitsRes.rows[0]?.count || 0),
+        totalWhatsApp: parseInt(waRes.rows[0]?.count || 0),
+        totalEmails: parseInt(emailRes.rows[0]?.count || 0)
+      },
+      topProperties: topPropertiesRes.rows
+    });
+  } catch (err) {
+    console.error("Admin Report API Error:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

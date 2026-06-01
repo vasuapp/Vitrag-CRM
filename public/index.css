@@ -2641,3 +2641,35 @@ html, body {
     order: 3;
   }
 }
+
+/* ═══ ADMIN REPORTS MODULE ═══ */
+.report-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.report-kpi-card {
+  transition: all var(--transition);
+}
+.report-kpi-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(184, 134, 11, 0.35) !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+#page-reports .card {
+  border-top: none;
+}
+@media print {
+  #page-reports { background: #fff !important; color: #000 !important; }
+  #page-reports .card { background: #fff !important; border: 1px solid #ddd !important; box-shadow: none !important; }
+  #page-reports .report-kpi-card { border: 1px solid #ddd !important; }
+  #page-reports * { color: #000 !important; }
+  .sidebar, .topbar, .bottom-ribbon { display: none !important; }
+}
+@media (max-width: 768px) {
+  .report-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  #page-reports .grid2, #page-reports [style*="grid-template-columns:1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+}
