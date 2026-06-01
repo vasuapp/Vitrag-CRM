@@ -329,11 +329,11 @@ app.get('/api/export/:table', async (req, res) => {
       }
       if (tab) {
         if (tab === 'rental') {
-          query += ` AND (property_type ILIKE 'rental' OR price_raw ILIKE '%/mo%')`;
+          query += ` AND (COALESCE(property_type, '') ILIKE 'rental' OR COALESCE(price_raw, '') ILIKE '%/mo%')`;
         } else if (tab === 'commercial') {
-          query += ` AND (property_type ILIKE '%commercial%' OR property_type ILIKE '%office%' OR property_type ILIKE '%retail%' OR property_type ILIKE '%warehouse%' OR property_type ILIKE '%showroom%')`;
+          query += ` AND (COALESCE(property_type, '') ILIKE '%commercial%' OR COALESCE(property_type, '') ILIKE '%office%' OR COALESCE(property_type, '') ILIKE '%retail%' OR COALESCE(property_type, '') ILIKE '%warehouse%' OR COALESCE(property_type, '') ILIKE '%showroom%')`;
         } else if (tab === 'resale') {
-          query += ` AND NOT (property_type ILIKE 'rental' OR price_raw ILIKE '%/mo%' OR property_type ILIKE '%commercial%' OR property_type ILIKE '%office%' OR property_type ILIKE '%retail%' OR property_type ILIKE '%warehouse%' OR property_type ILIKE '%showroom%')`;
+          query += ` AND (property_type IS NULL OR (COALESCE(property_type, '') NOT ILIKE 'rental' AND COALESCE(price_raw, '') NOT ILIKE '%/mo%' AND COALESCE(property_type, '') NOT ILIKE '%commercial%' AND COALESCE(property_type, '') NOT ILIKE '%office%' AND COALESCE(property_type, '') NOT ILIKE '%retail%' AND COALESCE(property_type, '') NOT ILIKE '%warehouse%' AND COALESCE(property_type, '') NOT ILIKE '%showroom%'))`;
         }
       }
       if (configuration) {
