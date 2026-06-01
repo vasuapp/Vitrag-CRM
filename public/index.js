@@ -2646,6 +2646,7 @@ async function loadProjects() {
               <span class="tag" style="background:rgba(255,255,255,0.05); color:var(--gold-l); border: 0.5px solid var(--border);">${tag.trim()}</span>
             `).join('')}
             <span class="tag" style="background:rgba(184,134,11,0.15); color:var(--gold-l); border: 1.5px dashed var(--gold); cursor:pointer; font-weight:700;" onclick="event.stopPropagation(); promptAddTag(${p.id}, 'projects')">+ Tag</span>
+            <button class="btn btn-ghost btn-sm" style="padding: 2px 6px; font-size:10px; font-weight:700; color:var(--gold-l);" onclick="event.stopPropagation(); editProject(${p.id})"><i class="ti ti-edit"></i> Edit</button>
             <button class="btn btn-ghost btn-sm" style="padding: 2px 6px; font-size:10px; font-weight:700; color:var(--gold-l);" onclick="event.stopPropagation(); cloneProject(${p.id})">📋 Clone</button>
           </div>
         </div>
@@ -2694,6 +2695,7 @@ async function loadProjects() {
                   <td>
                     <div style="display:flex; gap:4px;">
                       <button class="btn btn-ghost btn-sm" style="color:var(--gold-l); font-size:10px; padding:2px 6px;" onclick="promptAddTag(${p.id}, 'projects')">+ Tag</button>
+                      <button class="btn btn-ghost btn-sm" style="color:var(--gold-l); font-size:10px; padding:2px 6px;" onclick="editProject(${p.id})"><i class="ti ti-edit"></i> Edit</button>
                       <button class="btn btn-ghost btn-sm" style="color:var(--gold-l); font-size:10px; padding:2px 6px;" onclick="cloneProject(${p.id})">📋 Clone</button>
                     </div>
                   </td>
@@ -4734,6 +4736,171 @@ window.cloneProperty = function(id) {
 
     const titleEl = document.querySelector('#modal-add-listing .mtitle');
     if (titleEl) titleEl.innerText = "Clone of " + (p.society || "Resale Listing");
+    
+    openModal('modal-add-listing');
+  }
+};
+
+window.editFullProperty = function(id) {
+  const p = state.properties.find(x => x.id === id);
+  if (!p) {
+    showToast('Property not found', 'error');
+    return;
+  }
+
+  const pType = (p.property_type || '').toLowerCase();
+  const isCommercial = pType.includes('commercial') || pType.includes('office') || pType.includes('retail') || pType.includes('warehouse') || pType.includes('showroom');
+  const isRental = pType === 'rental' || (p.available_for && p.available_for.toLowerCase().includes('rent')) || (p.available_for && p.available_for.toLowerCase().includes('lease')) || (p.price_raw || '').toLowerCase().includes('/mo');
+
+  const setVal = (fieldId, val) => {
+    const el = document.getElementById(fieldId);
+    if (el) el.value = val !== undefined && val !== null ? val : '';
+  };
+
+  if (isCommercial) {
+    document.getElementById('form-add-commercial').reset();
+    
+    setVal('edit-commercial-id', p.id);
+    setVal('comm-id', p.prop_id);
+    setVal('comm-mandate', p.mandate_type || 'Non Exclusive');
+    setVal('comm-society', p.society);
+    setVal('comm-location', p.location);
+    setVal('comm-available-for', p.available_for || 'Rent');
+    setVal('comm-plot-size', p.plot_size);
+    setVal('comm-area', p.area_sqft);
+    setVal('comm-interiors', p.interiors || 'Unfurnished');
+    setVal('comm-carpark', p.car_park);
+    setVal('comm-price', p.price);
+    setVal('comm-maintenance', p.maintenance);
+    setVal('comm-deposit', p.deposit);
+    setVal('comm-possession', p.possession);
+    setVal('comm-add-info', p.additional_info);
+    setVal('comm-video', p.video_link);
+    setVal('comm-photo', p.photo_link);
+    setVal('comm-brochure', p.brochure_link);
+    
+    setVal('comm-owner-name', p.owner_name);
+    setVal('comm-owner-phone', p.owner_phone);
+    setVal('comm-owner-email', p.owner_email);
+    setVal('comm-unit-no', p.unit_no);
+    
+    setVal('comm-registration', p.registration_status);
+    setVal('comm-source', p.source);
+    setVal('comm-sub-source', p.sub_source);
+    setVal('comm-comments', p.comments);
+
+    const titleEl = document.querySelector('#modal-add-commercial .mtitle');
+    if (titleEl) titleEl.innerText = "Edit Commercial Listing: " + (p.society || "Property");
+    
+    openModal('modal-add-commercial');
+  } else if (isRental) {
+    document.getElementById('form-add-rental').reset();
+
+    setVal('edit-rental-id', p.id);
+    setVal('rent-id', p.prop_id);
+    setVal('rental-mandate', p.mandate_type || 'Non Exclusive');
+    setVal('rental-type', p.property_type || 'Apartment');
+    setVal('rental-society', p.society);
+    setVal('rental-location', p.location);
+    setVal('rental-status', p.status || 'Available');
+    setVal('rental-site-area', p.site_area);
+    setVal('rental-area', p.area_sqft);
+    setVal('rental-config', p.configuration);
+    setVal('rental-floor-info', p.floor_info);
+    setVal('rental-interiors', p.interiors || 'Semi-Furnished');
+    setVal('rental-facing', p.facing || 'East');
+    setVal('rental-carpark', p.car_park);
+    setVal('rental-price', p.price);
+    setVal('rental-maintenance', p.maintenance);
+    setVal('rental-deposit', p.deposit);
+    setVal('rental-available-from', p.available_from);
+    setVal('rental-date-of-inventory', p.date_of_inventory);
+    setVal('rental-add-info', p.additional_info);
+    setVal('rental-video', p.video_link);
+    setVal('rental-photo', p.photo_link);
+    setVal('rental-brochure', p.brochure_link);
+    
+    setVal('rental-owner-name', p.owner_name);
+    setVal('rental-owner-phone', p.owner_phone);
+    setVal('rental-owner-email', p.owner_email);
+    setVal('rental-unit-no', p.unit_no);
+    
+    setVal('rental-registration', p.registration_status);
+    setVal('rental-source', p.source);
+    setVal('rental-sub-source', p.sub_source);
+    setVal('rental-comments', p.comments);
+
+    setVal('rental-plot-size', p.plot_size);
+    setVal('rental-sba', p.sba);
+    setVal('rental-plot-dimension', p.plot_dimension);
+    setVal('rental-plot-facing', p.plot_facing);
+    setVal('rental-house-facing', p.house_facing);
+
+    if (typeof window.toggleVillaFields === 'function') {
+      window.toggleVillaFields(p.property_type || '', 'rental');
+    }
+
+    const titleEl = document.querySelector('#modal-add-rental .mtitle');
+    if (titleEl) titleEl.innerText = "Edit Rental Listing: " + (p.society || "Property");
+    
+    openModal('modal-add-rental');
+  } else {
+    document.getElementById('form-add-listing').reset();
+
+    setVal('edit-resale-id', p.id);
+    setVal('prop-id', p.prop_id);
+    setVal('prop-type', p.property_type || 'Apartment');
+    setVal('prop-mandate', p.mandate_type || 'Non Exclusive');
+    setVal('prop-society', p.society);
+    setVal('prop-location', p.location);
+    setVal('prop-status', p.status || 'Available');
+    setVal('prop-site-area', p.site_area);
+    setVal('prop-area', p.area_sqft);
+    setVal('prop-config', p.configuration);
+    setVal('prop-floor-info', p.floor_info);
+    setVal('prop-floor-range', p.floor_range);
+    setVal('prop-interiors', p.interiors || 'Semi-Furnished');
+    setVal('prop-facing', p.facing || 'East');
+    setVal('prop-amenities', p.amenities);
+    setVal('prop-carpark', p.car_park);
+    setVal('prop-price', p.price);
+    setVal('prop-possession', p.possession);
+    setVal('prop-project-size', p.project_size);
+    setVal('prop-project-status', p.project_status);
+    setVal('prop-add-info', p.additional_info);
+    setVal('prop-video', p.video_link);
+    setVal('prop-photo', p.photo_link);
+    setVal('prop-brochure', p.brochure_link);
+    
+    setVal('prop-owner-name', p.owner_name);
+    setVal('prop-owner-phone', p.owner_phone);
+    setVal('prop-owner-email', p.owner_email);
+    setVal('prop-unit-no', p.unit_no);
+    
+    setVal('prop-registration', p.registration_status);
+    setVal('prop-source', p.source);
+    setVal('prop-sub-source', p.sub_source);
+    setVal('prop-comments', p.comments);
+    
+    setVal('prop-tags', p.special_tags);
+    setVal('prop-zone', p.zone || 'E');
+    setVal('prop-year', p.onboarded_year || new Date().getFullYear());
+    setVal('prop-available-for', p.available_for || 'Sale');
+    setVal('prop-maintenance', p.maintenance);
+    setVal('prop-deposit', p.deposit);
+
+    setVal('prop-plot-size', p.plot_size);
+    setVal('prop-sba', p.sba);
+    setVal('prop-plot-dimension', p.plot_dimension);
+    setVal('prop-plot-facing', p.plot_facing);
+    setVal('prop-house-facing', p.house_facing);
+
+    if (typeof window.toggleVillaFields === 'function') {
+      window.toggleVillaFields(p.property_type || '', 'resale');
+    }
+
+    const titleEl = document.querySelector('#modal-add-listing .mtitle');
+    if (titleEl) titleEl.innerText = "Edit Resale Listing: " + (p.society || "Property");
     
     openModal('modal-add-listing');
   }

@@ -821,7 +821,7 @@ app.get('/api/leads', async (req, res) => {
       params.push(user.id);
     }
     if (search) {
-      query += ' AND (name LIKE ? OR phone LIKE ? OR email LIKE ? OR notes LIKE ?)';
+      query += ' AND (name ILIKE ? OR phone ILIKE ? OR email ILIKE ? OR notes ILIKE ?)';
       const s = `%${search}%`;
       params.push(s, s, s, s);
     }
@@ -1541,15 +1541,15 @@ app.get('/api/properties', async (req, res) => {
       params.push(parseFloat(max_price));
     }
     if (configuration) {
-      query += ' AND configuration LIKE ?';
+      query += ' AND configuration ILIKE ?';
       params.push(`%${configuration}%`);
     }
     if (mandate_type) {
-      query += ' AND mandate_type LIKE ?';
+      query += ' AND mandate_type ILIKE ?';
       params.push(`%${mandate_type}%`);
     }
     if (property_type) {
-      query += ' AND property_type LIKE ?';
+      query += ' AND property_type ILIKE ?';
       params.push(`%${property_type}%`);
     }
     if (rera_checked !== undefined && rera_checked !== '') {
@@ -1557,7 +1557,7 @@ app.get('/api/properties', async (req, res) => {
       params.push(parseInt(rera_checked));
     }
     if (search) {
-      query += ' AND (society LIKE ? OR location LIKE ? OR property_type LIKE ? OR prop_id LIKE ?)';
+      query += ' AND (society ILIKE ? OR location ILIKE ? OR property_type ILIKE ? OR prop_id ILIKE ?)';
       const s = `%${search}%`;
       params.push(s, s, s, s);
     }
@@ -2051,7 +2051,7 @@ app.get('/api/projects', async (req, res) => {
     const params = [];
     
     if (search) {
-      query += ' AND (project_name LIKE ? OR builder_name LIKE ? OR location LIKE ?)';
+      query += ' AND (project_name ILIKE ? OR builder_name ILIKE ? OR location ILIKE ?)';
       const s = `%${search}%`;
       params.push(s, s, s);
     }

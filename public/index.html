@@ -758,7 +758,7 @@
               
               <!-- Property Search Filters -->
               <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; align-items:center;">
-                <input class="form-input" style="flex:2; min-width: 200px;" type="text" placeholder="🔍 Search society, project or location..." id="filter-prop-search">
+                <input class="form-input" style="flex:2; min-width: 200px;" type="text" placeholder="🔍 Search society, project or location..." id="filter-prop-search" oninput="loadProperties()">
                 <button class="btn btn-ghost" onclick="toggleAdvancedFilters()" id="btn-adv-filters" type="button"><i class="ti ti-adjustments-horizontal"></i> Advanced Filters</button>
                 <button class="btn btn-ghost" onclick="clearInventoryFilters()" type="button">Clear</button>
               </div>
