@@ -329,51 +329,46 @@ app.post('/api/import/:table', upload.single('file'), async (req, res) => {
       });
     }
     const headers = rows[0];
-    const insertRows = [];
     const info = (await db.query(`SELECT column_name AS name FROM information_schema.columns WHERE table_name = '${table}'`)).rows;
     const dbCols = info.map(i => i.name).filter(name => name !== 'id');
-    const insertStmt = { run: async (...args) => {
-        // If it's an INSERT, append RETURNING id
-        let q = `
-      INSERT INTO ${table} (${dbCols.join(', ')})
-      VALUES (${dbCols.map((_, i) => '$' + (i + 1)).join(', ')})
-    `;
-        if (q.trim().toUpperCase().startsWith('INSERT') && !q.includes('RETURNING')) {
-            q += ' RETURNING id';
-        }
-        const r = await db.query(q, args);
-        return { lastInsertRowid: r.rows[0] ? r.rows[0].id : null, changes: r.rowCount };
-   }};
-
     
     let importCount = 0;
-    for (let i = 1; i < rows.length; i++) {
-      const row = rows[i];
-      if (row.length < 1 || row.every(c => c === '')) continue;
-      const record = dbCols.map(col => {
-        const csvIdx = headers.findIndex(h => h.toLowerCase() === col.toLowerCase());
-        if (csvIdx !== -1) {
-          let val = row[csvIdx];
-          if (val === undefined || val === null || val === '') return null;
-          return val;
-        }
-        return null;
-      });
-      insertRows.push(record);
-      importCount++;
-    }
-    
     try {
       await db.query('BEGIN');
-      for (const record of insertRows) {
-        await insertStmt.run(record);
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (row.length < 1 || row.every(c => c === '')) continue;
+        
+        const activeCols = [];
+        const activeValues = [];
+        
+        dbCols.forEach(col => {
+          const csvIdx = headers.findIndex(h => h.toLowerCase() === col.toLowerCase());
+          if (csvIdx !== -1) {
+            let val = row[csvIdx];
+            if (val !== undefined && val !== null && val !== '') {
+              activeCols.push(col);
+              activeValues.push(val);
+            }
+          }
+        });
+
+        if (activeCols.length > 0) {
+          let q = `
+            INSERT INTO ${table} (${activeCols.join(', ')})
+            VALUES (${activeCols.map((_, idx) => '$' + (idx + 1)).join(', ')})
+            RETURNING id
+          `;
+          await db.query(q, activeValues);
+          importCount++;
+        }
       }
       await db.query('COMMIT');
     } catch (e) {
       await db.query('ROLLBACK');
       throw e;
     }
-
+    
     try {
       fs.unlinkSync(filePath);
     } catch (e) {}
@@ -411,31 +406,30 @@ app.post('/api/import-mapped/:table', async (req, res) => {
     }
     const info = (await db.query(`SELECT column_name AS name FROM information_schema.columns WHERE table_name = '${table}'`)).rows;
     const dbCols = info.map(i => i.name).filter(name => name !== 'id');
-    const insertStmt = { run: async (...args) => {
-        // If it's an INSERT, append RETURNING id
-        let q = `
-      INSERT INTO ${table} (${dbCols.join(', ')})
-      VALUES (${dbCols.map((_, i) => '$' + (i + 1)).join(', ')})
-    `;
-        if (q.trim().toUpperCase().startsWith('INSERT') && !q.includes('RETURNING')) {
-            q += ' RETURNING id';
-        }
-        const r = await db.query(q, args);
-        return { lastInsertRowid: r.rows[0] ? r.rows[0].id : null, changes: r.rowCount };
-   }};
 
     let importCount = 0;
     
     try {
       await db.query('BEGIN');
       for (const recordObj of data) {
-        const record = dbCols.map(col => {
+        const activeCols = [];
+        const activeValues = [];
+        for (const col of dbCols) {
           let val = recordObj[col];
-          if (val === undefined || val === null || val === '') return null;
-          return val;
-        });
-        await insertStmt.run(record);
-        importCount++;
+          if (val !== undefined && val !== null && val !== '') {
+            activeCols.push(col);
+            activeValues.push(val);
+          }
+        }
+        if (activeCols.length > 0) {
+          let q = `
+            INSERT INTO ${table} (${activeCols.join(', ')})
+            VALUES (${activeCols.map((_, idx) => '$' + (idx + 1)).join(', ')})
+            RETURNING id
+          `;
+          await db.query(q, activeValues);
+          importCount++;
+        }
       }
       await db.query('COMMIT');
     } catch (e) {

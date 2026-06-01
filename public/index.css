@@ -2307,6 +2307,16 @@ html, body {
 .nav-sub-item:hover i {
   color: var(--gold-l);
 }
+.nav-sub-item.active {
+  background: rgba(184, 134, 11, 0.15) !important;
+  color: var(--gold-l) !important;
+  font-weight: 700 !important;
+  border-left: 2.5px solid var(--gold) !important;
+  padding-left: 7.5px !important;
+}
+.nav-sub-item.active i {
+  color: var(--gold) !important;
+}
 
 /* ─── PRINT STYLES ─── */
 @media print {

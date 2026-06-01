@@ -8596,13 +8596,13 @@ window.filterSmartList = async function(filterId) {
   const projectFilters = ['all_projects', 'uc_projects', 'rtmi_projects'];
   const leadFilters = ['all_leads', 'hot_leads', 'missed_followups', 'missed_calls', 'not_interested', 'converted', 'fb_leads', 'budget_2cr', 'rental_renewals', 'warm_no_contact', 'commercial_inq'];
 
+  document.querySelectorAll('.nav-sub-item').forEach(el => el.classList.remove('active'));
+  const clickedSubItem = Array.from(document.querySelectorAll('.nav-sub-item')).find(el => el.getAttribute('onclick')?.includes(`'${filterId}'`));
+
   if (projectFilters.includes(filterId)) {
     window.navToPage('projects');
-    // If we wanted to filter the DOM projects grid, we would add that logic here.
-    // For now, it just routes.
   } else if (propertyFilters.includes(filterId)) {
     window.navToPage('inventory');
-    // Basic mock mapping for properties list
     if (filterId === 'comm_listings') {
       document.getElementById('tab-commercial').click();
     } else if (filterId === 'rental_listings') {
@@ -8610,7 +8610,6 @@ window.filterSmartList = async function(filterId) {
     } else {
       document.getElementById('tab-resale').click();
     }
-    // We would inject true filtering on the dataset here if we had detailed DB flags for all.
   } else if (leadFilters.includes(filterId)) {
     window.navToPage('pipeline');
     try {
@@ -8633,17 +8632,27 @@ window.filterSmartList = async function(filterId) {
 
       state.leads = leads;
       
-      // Because navToPage('pipeline') may execute AFTER we call this (if it has animations or async), 
-      // we need to set a small timeout or just let navToPage finish. But navToPage is synchronous. 
-      // However, navToPage calls loadPipeline() which overwrites state.leads!
-      // So we should NOT call navToPage('pipeline') BEFORE filtering if loadPipeline clears it.
-      // We will override loadPipeline's fetched data immediately.
       setTimeout(() => {
         renderPipeline(leads);
       }, 300);
 
     } catch (err) {
       console.error('Error filtering leads:', err);
+    }
+  }
+
+  // Restore the active state on the smart list UI elements since navToPage clears them
+  if (clickedSubItem) {
+    clickedSubItem.classList.add('active');
+    const parentDetails = clickedSubItem.closest('details');
+    if (parentDetails) {
+      const summary = parentDetails.querySelector('summary.nav-item');
+      if (summary) summary.classList.add('active');
+    }
+    const outerDetails = clickedSubItem.closest('nav > details');
+    if (outerDetails) {
+      const summary = outerDetails.querySelector('summary.nav-item');
+      if (summary) summary.classList.add('active');
     }
   }
 };
