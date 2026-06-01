@@ -49,7 +49,6 @@ const db = {
     associate_id INTEGER,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   , agent_id INTEGER, agent_name TEXT, special_tags TEXT, documents TEXT, location_preference TEXT, config_bhk TEXT, timeline_preference TEXT, rental_expiry_date TEXT, lead_score INTEGER DEFAULT 0, deleted_at TEXT, admin_comments TEXT, property_requirement TEXT);
-CREATE TABLE sqlite_sequence(name,seq);
 CREATE TABLE properties (
     id SERIAL PRIMARY KEY,
     prop_id TEXT,
