@@ -312,8 +312,8 @@ app.get('/api/export/:table', async (req, res) => {
         params.push(`%${facing}%`);
       }
       if (status) {
-        query += ` AND status ILIKE $${paramCounter++}`;
-        params.push(`%${status}%`);
+        query += ` AND COALESCE(UPPER(status), 'AVAILABLE') = UPPER($${paramCounter++})`;
+        params.push(status);
       }
       if (zone) {
         query += ` AND zone ILIKE $${paramCounter++}`;
@@ -5145,16 +5145,16 @@ app.get('/api/reports/admin', async (req, res) => {
 app.listen(PORT, async () => {
   console.log(`REALPro CRM server is listening running on port http://localhost:${PORT}`);
 
-  // --- One-time backfill: assign prop_id to all properties that have none ---
+  // --- One-time backfill: assign prop_id using the correct VJP format for all null prop_ids ---
   try {
+    // Format: {number}/{ZONE}-{YEAR} e.g. 151/N-2025 (matching calculateIDLogic prefix pattern)
     await db.query(`
       UPDATE properties
-      SET prop_id = 'VJP-' || TO_CHAR(COALESCE(created_at, NOW()), 'YYYY') || '-' || LPAD(id::text, 4, '0')
+      SET prop_id = id::text || '/' || COALESCE(zone, 'N') || '-' || TO_CHAR(COALESCE(created_at, NOW()), 'YYYY')
       WHERE prop_id IS NULL OR TRIM(prop_id) = ''
     `);
     console.log('[Migration] prop_id backfill complete.');
   } catch (err) {
-    console.warn('[Migration] prop_id backfill skipped (may not be needed):', err.message);
+    console.warn('[Migration] prop_id backfill skipped:', err.message);
   }
 });
-
