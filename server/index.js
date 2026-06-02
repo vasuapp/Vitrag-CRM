@@ -640,12 +640,12 @@ app.get('/api/dashboard/stats', async (req, res) => {
       totalLeads = (await db.query('SELECT COUNT(*) as count FROM leads WHERE deleted_at IS NULL')).rows[0].count;
       hotLeads = (await db.query("SELECT COUNT(*) as count FROM leads WHERE deleted_at IS NULL AND status = 'Hot'")).rows[0].count;
       dueFollowups = (await db.query("SELECT COUNT(*) as count FROM leads WHERE deleted_at IS NULL AND next_followup != '' AND next_followup <= $1", [todayStr])).rows[0].count;
-      activeListings = (await db.query("SELECT COUNT(*) as count FROM properties WHERE deleted_at IS NULL AND status = 'AVAILABLE'")).rows[0].count;
+      activeListings = (await db.query("SELECT COUNT(*) as count FROM properties WHERE deleted_at IS NULL AND COALESCE(UPPER(status), 'AVAILABLE') = 'AVAILABLE'")).rows[0].count;
     } else {
       totalLeads = (await db.query("SELECT COUNT(*) as count FROM leads WHERE deleted_at IS NULL AND agent_id = $1", [user.id])).rows[0].count;
       hotLeads = (await db.query("SELECT COUNT(*) as count FROM leads WHERE deleted_at IS NULL AND status = 'Hot' AND agent_id = $1", [user.id])).rows[0].count;
       dueFollowups = (await db.query("SELECT COUNT(*) as count FROM leads WHERE deleted_at IS NULL AND next_followup != '' AND next_followup <= $1 AND agent_id = $2", [todayStr, user.id])).rows[0].count;
-      activeListings = (await db.query("SELECT COUNT(*) as count FROM properties WHERE deleted_at IS NULL AND status = 'AVAILABLE' AND (agent_id IS NULL OR agent_id = $1)", [user.id])).rows[0].count;
+      activeListings = (await db.query("SELECT COUNT(*) as count FROM properties WHERE deleted_at IS NULL AND COALESCE(UPPER(status), 'AVAILABLE') = 'AVAILABLE' AND (agent_id IS NULL OR agent_id = $1)", [user.id])).rows[0].count;
     }
 
     // Financial calculations (Only admins see actual deal finances, standard agents get 0 or restricted if needed, but let's hide for non-admins)
@@ -5144,4 +5144,17 @@ app.get('/api/reports/admin', async (req, res) => {
 // Start Server
 app.listen(PORT, async () => {
   console.log(`REALPro CRM server is listening running on port http://localhost:${PORT}`);
+
+  // --- One-time backfill: assign prop_id to all properties that have none ---
+  try {
+    await db.query(`
+      UPDATE properties
+      SET prop_id = 'VJP-' || TO_CHAR(COALESCE(created_at, NOW()), 'YYYY') || '-' || LPAD(id::text, 4, '0')
+      WHERE prop_id IS NULL OR TRIM(prop_id) = ''
+    `);
+    console.log('[Migration] prop_id backfill complete.');
+  } catch (err) {
+    console.warn('[Migration] prop_id backfill skipped (may not be needed):', err.message);
+  }
 });
+

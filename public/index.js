@@ -149,19 +149,20 @@ window.changeLeadsPage = function(tab, pageNum) {
 
 
 function renderPaginationBar(tab, currentPage, totalPages, handlerName = 'changePropPage') {
-  if (totalPages <= 1) return '';
+  if (totalPages < 1) totalPages = 1;
   return `
     <div class="pagination-bar" style="display:flex; justify-content:center; align-items:center; gap:12px; margin-top:20px; padding:10px 0; border-top:1px solid var(--border);">
-      <button class="btn btn-ghost btn-sm" ${currentPage <= 1 ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : `onclick="${handlerName}('${tab}', ${currentPage - 1})"`}>
-        Prev
+      <button class="btn btn-ghost btn-sm" ${currentPage <= 1 ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : `onclick="${handlerName}('${tab}', ${currentPage - 1})"`}>
+        ← Prev
       </button>
       <span style="font-size:13px; color:var(--text-light);">Page <strong>${currentPage}</strong> of <strong>${totalPages}</strong></span>
-      <button class="btn btn-ghost btn-sm" ${currentPage >= totalPages ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : `onclick="${handlerName}('${tab}', ${currentPage + 1})"`}>
-        Next
+      <button class="btn btn-ghost btn-sm" ${currentPage >= totalPages ? 'disabled style="opacity:0.4; cursor:not-allowed;"' : `onclick="${handlerName}('${tab}', ${currentPage + 1})"`}>
+        Next →
       </button>
     </div>
   `;
 }
+
 
 function showDuplicateModal(message, existingId, addAnywayFn) {
   const overlay = document.createElement('div');
@@ -1810,7 +1811,7 @@ async function loadProperties(keepPages = false) {
       const facingMatch = !facing || (p.facing || '').toLowerCase() === facing.toLowerCase();
       
       // 8. Status (Availability) Match
-      const statusMatch = !status || (p.status || '').toLowerCase() === status.toLowerCase();
+      const statusMatch = !status || (p.status || 'AVAILABLE').toUpperCase() === status.toUpperCase();
       
       // 9. Registration Match
       const regMatch = !registration || (p.registration_status || '').toLowerCase() === registration.toLowerCase();
@@ -1850,7 +1851,7 @@ async function loadProperties(keepPages = false) {
 
     const disp = document.getElementById('inventory-count-display');
     if (disp) {
-      disp.innerHTML = `Currently showing <strong>${activeCount}</strong> matching listings in active segment (Total matched: ${filteredListings.length} of ${data.length})`;
+      disp.innerHTML = `Showing <strong>${activeCount}</strong> listings in this segment | <span style="color:var(--text-muted); font-size:11px;">${filteredListings.length} total matched filters</span>`;
     }
     
     renderResaleProperties(resaleListings);
@@ -4696,7 +4697,7 @@ window.cloneProperty = function(id) {
     setVal('rental-type', p.property_type || 'Apartment');
     setVal('rental-society', p.society);
     setVal('rental-location', p.location);
-    setVal('rental-status', p.status || 'Available');
+    setVal('rental-status', (p.status || 'AVAILABLE').toUpperCase());
     setVal('rental-site-area', p.site_area);
     setVal('rental-area', p.area_sqft);
     setVal('rental-config', p.configuration);
@@ -4746,7 +4747,7 @@ window.cloneProperty = function(id) {
     setVal('prop-mandate', p.mandate_type || 'Non Exclusive');
     setVal('prop-society', p.society);
     setVal('prop-location', p.location);
-    setVal('prop-status', p.status || 'Available');
+    setVal('prop-status', (p.status || 'AVAILABLE').toUpperCase());
     setVal('prop-site-area', p.site_area);
     setVal('prop-area', p.area_sqft);
     setVal('prop-config', p.configuration);
@@ -4860,7 +4861,7 @@ window.editFullProperty = function(id) {
     setVal('rental-type', p.property_type || 'Apartment');
     setVal('rental-society', p.society);
     setVal('rental-location', p.location);
-    setVal('rental-status', p.status || 'Available');
+    setVal('rental-status', (p.status || 'AVAILABLE').toUpperCase());
     setVal('rental-site-area', p.site_area);
     setVal('rental-area', p.area_sqft);
     setVal('rental-config', p.configuration);
@@ -4911,7 +4912,7 @@ window.editFullProperty = function(id) {
     setVal('prop-mandate', p.mandate_type || 'Non Exclusive');
     setVal('prop-society', p.society);
     setVal('prop-location', p.location);
-    setVal('prop-status', p.status || 'Available');
+    setVal('prop-status', (p.status || 'AVAILABLE').toUpperCase());
     setVal('prop-site-area', p.site_area);
     setVal('prop-area', p.area_sqft);
     setVal('prop-config', p.configuration);
@@ -6008,7 +6009,7 @@ const DEFAULT_CONFIGS = {
   propertyTypes: ['Villa', 'Row House', 'Penthouse', 'Duplex', 'Apartment', 'Independent House', 'Plot', 'Land', 'Office space', 'Commercial plot / land', 'Retail space', 'Warehouse', 'others'],
   leadStages: ['New', 'Contacted', 'Qualified', 'Proposal', 'Negotiation', 'Won', 'Lost'],
   mandateTypes: ['Open', 'Exclusive', 'Builder Direct', 'Sub-Broker', 'Joint Mandate'],
-  statusTypes: ['AVAILABLE', 'SOLD', 'RENTED', 'ON HOLD', 'WITHDRAWN'],
+  statusTypes: ['AVAILABLE', 'SOLD', 'ON HOLD', 'WITHDRAWN', 'EXPIRED', 'RESERVED'],
   interiorsTypes: ['Unfurnished', 'Semi-furnished', 'Fully Furnished', 'Raw/Bare Shell', 'Plug & Play']
 };
 
@@ -6017,6 +6018,14 @@ function initDropdownOptionsConfig() {
   if (!configs) {
     localStorage.setItem('realpro_field_configs', JSON.stringify(DEFAULT_CONFIGS));
     configs = JSON.stringify(DEFAULT_CONFIGS);
+  } else {
+    // Force-update statusTypes if old cache is missing EXPIRED/RESERVED
+    let parsed = JSON.parse(configs);
+    if (!parsed.statusTypes || !parsed.statusTypes.includes('EXPIRED')) {
+      parsed.statusTypes = DEFAULT_CONFIGS.statusTypes;
+      localStorage.setItem('realpro_field_configs', JSON.stringify(parsed));
+    }
+    configs = JSON.stringify(parsed);
   }
   
   // Populate all dropdown elements in the app
@@ -6058,7 +6067,8 @@ function populateAllDropdowns() {
   
   // 3. Populate Property Specifics
   populateSelectElement('prop-mandate', configs.mandateTypes || []);
-  populateSelectElement('prop-status', configs.statusTypes || []);
+  // prop-status is hardcoded in HTML with all 6 statuses — do NOT overwrite with localStorage cache
+  // Just ensure rental-status options are also correct
   populateSelectElement('prop-interiors', configs.interiorsTypes || []);
   populateSelectElement('filter-prop-mandate', configs.mandateTypes || []);
   populateSelectElement('filter-prop-interiors', configs.interiorsTypes || []);
