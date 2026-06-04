@@ -765,92 +765,22 @@
                 <button class="btn btn-ghost" onclick="clearInventoryFilters()" type="button">Clear</button>
               </div>
               
-              <!-- Premium Expanded Advanced Filters Panel -->
-              <div class="card hidden" id="advanced-filters-panel" style="background: rgba(0,0,0,0.25); border: 1px solid var(--border); margin-bottom: 15px; padding: 15px;">
-                <div class="grid3">
-                  <!-- Price Range Filter -->
-                  <div class="form-group">
-                    <label class="form-label" style="color:var(--gold-l);"><i class="ti ti-currency-rupee"></i> Asking Price Range (INR)</label>
-                    <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
-                      <input class="form-input" type="number" id="filter-prop-price-min" placeholder="Min Price" style="font-size:12px;" oninput="loadProperties()">
-                      <span style="color:var(--text-muted)">to</span>
-                      <input class="form-input" type="number" id="filter-prop-price-max" placeholder="Max Price" style="font-size:12px;" oninput="loadProperties()">
+              <!-- Compact Advanced Filters Panel (redesigned: 2-row grid) -->
+              <div class="card hidden" id="advanced-filters-panel" style="background:rgba(0,0,0,0.3); border:1px solid rgba(184,134,11,0.2); margin-bottom:12px; padding:12px 14px;">
+                <!-- Row 1: Price, Status, BHK, Type, Mandate -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap:10px; align-items:start;">
+                  <!-- Price Range -->
+                  <div>
+                    <label class="form-label" style="font-size:10.5px; color:var(--gold-l); display:flex; align-items:center; gap:4px; margin-bottom:4px;"><i class="ti ti-currency-rupee"></i> Price Range</label>
+                    <div style="display:flex; gap:4px;">
+                      <input class="form-input" type="number" id="filter-prop-price-min" placeholder="Min" style="font-size:11px; padding:4px 6px;" oninput="loadProperties()">
+                      <input class="form-input" type="number" id="filter-prop-price-max" placeholder="Max" style="font-size:11px; padding:4px 6px;" oninput="loadProperties()">
                     </div>
                   </div>
-                  
-                  <!-- BHK Checklist Configuration -->
-                  <div class="form-group">
-                    <label class="form-label" style="color:var(--gold-l);"><i class="ti ti-bed"></i> BHK Configurations Checklist</label>
-                    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:8px;">
-                      <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
-                        <input type="checkbox" class="filter-bhk-check" value="1 BHK" onchange="loadProperties()" style="accent-color:var(--gold);"> 1 BHK
-                      </label>
-                      <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
-                        <input type="checkbox" class="filter-bhk-check" value="2 BHK" onchange="loadProperties()" style="accent-color:var(--gold);"> 2 BHK
-                      </label>
-                      <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
-                        <input type="checkbox" class="filter-bhk-check" value="3 BHK" onchange="loadProperties()" style="accent-color:var(--gold);"> 3 BHK
-                      </label>
-                      <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer;">
-                        <input type="checkbox" class="filter-bhk-check" value="4 BHK" onchange="loadProperties()" style="accent-color:var(--gold);"> 4 BHK
-                      </label>
-                    </div>
-                  </div>
-                  
-                  <!-- Date Logged & Mandates -->
-                  <div class="form-group">
-                    <label class="form-label" style="color:var(--gold-l);"><i class="ti ti-calendar-time"></i> Inventory Logging Recency</label>
-                    <select class="form-select" id="filter-prop-recency" onchange="loadProperties()" style="font-size:12px; margin-top:6px;">
-                      <option value="">All Time / Any Date</option>
-                      <option value="today">Logged Today</option>
-                      <option value="7days">Last 7 Days</option>
-                      <option value="30days">Last 30 Days</option>
-                    </select>
-                  </div>
-                </div>
-                
-                <div class="grid3" style="margin-top:12px; border-top:1px solid rgba(255,255,255,0.05); padding-top:12px;">
-                  <!-- Typology Selection -->
-                  <div class="form-group">
-                    <label class="form-label" style="color:var(--text-secondary); font-size:11px;">Property Typology</label>
-                    <select class="form-select" id="filter-prop-type" onchange="loadProperties()" style="font-size:12px; margin-top:4px;">
-                      <option value="">All Typologies</option>
-                      <option value="Apartment">Apartments</option>
-                      <option value="Villa">Villas</option>
-                      <option value="Independent House">Independent Houses</option>
-                      <option value="Penthouse">Penthouses</option>
-                      <option value="Duplex">Duplexes</option>
-                      <option value="Plot / Land">Plots / Land</option>
-                    </select>
-                  </div>
-                  
-                  <!-- Mandates selection -->
-                  <div class="form-group">
-                    <label class="form-label" style="color:var(--text-secondary); font-size:11px;">Mandate Mode</label>
-                    <select class="form-select" id="filter-prop-mandate" onchange="loadProperties()" style="font-size:12px; margin-top:4px;">
-                      <option value="">All Mandates</option>
-                      <option value="Exclusive">Exclusive Mandates Only</option>
-                      <option value="Non Exclusive">Non-Exclusive Only</option>
-                    </select>
-                  </div>
-                  
-                  <!-- Furnished Status -->
-                  <div class="form-group">
-                    <label class="form-label" style="color:var(--text-secondary); font-size:11px;">Interiors / Furnishing</label>
-                    <select class="form-select" id="filter-prop-interiors" onchange="loadProperties()" style="font-size:12px; margin-top:4px;">
-                      <option value="">All Furnishing Status</option>
-                      <option value="Semi Furnished">Semi Furnished</option>
-                      <option value="Fully Furnished">Fully Furnished</option>
-                      <option value="Unfurnished">Unfurnished</option>
-                    </select>
-                  </div>
-                </div>
-                
-                <div class="grid3" style="margin-top:12px; border-top:1px solid rgba(255,255,255,0.05); padding-top:12px;">
-                  <!-- Availability Status Filter -->
-                  <div class="form-group">
-                    <label class="form-label" style="color:var(--text-secondary); font-size:11px;">Availability Status</label>
-                    <select class="form-select" id="filter-prop-status" onchange="loadProperties()" style="font-size:12px; margin-top:4px;">
+                  <!-- Availability Status -->
+                  <div>
+                    <label class="form-label" style="font-size:10.5px; color:var(--gold-l); margin-bottom:4px;">🔵 Status</label>
+                    <select class="form-select" id="filter-prop-status" onchange="loadProperties()" style="font-size:11px; padding:4px 6px;">
                       <option value="">All Statuses</option>
                       <option value="AVAILABLE">🟢 Available</option>
                       <option value="SOLD">🔴 Sold</option>
@@ -860,61 +790,105 @@
                       <option value="RESERVED">🔵 Reserved</option>
                     </select>
                   </div>
-
-                  <!-- Facing Filter -->
-                  <div class="form-group">
-                    <label class="form-label" style="color:var(--text-secondary); font-size:11px;">Property Facing</label>
-                    <select class="form-select" id="filter-prop-facing" onchange="loadProperties()" style="font-size:12px; margin-top:4px;">
+                  <!-- BHK -->
+                  <div>
+                    <label class="form-label" style="font-size:10.5px; color:var(--gold-l); margin-bottom:4px;"><i class="ti ti-bed"></i> BHK Config</label>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                      <label style="display:flex; align-items:center; gap:3px; font-size:11px; cursor:pointer; white-space:nowrap;"><input type="checkbox" class="filter-bhk-check" value="1 BHK" onchange="loadProperties()" style="accent-color:var(--gold);"> 1</label>
+                      <label style="display:flex; align-items:center; gap:3px; font-size:11px; cursor:pointer; white-space:nowrap;"><input type="checkbox" class="filter-bhk-check" value="2 BHK" onchange="loadProperties()" style="accent-color:var(--gold);"> 2</label>
+                      <label style="display:flex; align-items:center; gap:3px; font-size:11px; cursor:pointer; white-space:nowrap;"><input type="checkbox" class="filter-bhk-check" value="3 BHK" onchange="loadProperties()" style="accent-color:var(--gold);"> 3</label>
+                      <label style="display:flex; align-items:center; gap:3px; font-size:11px; cursor:pointer; white-space:nowrap;"><input type="checkbox" class="filter-bhk-check" value="4 BHK" onchange="loadProperties()" style="accent-color:var(--gold);"> 4</label>
+                      <label style="display:flex; align-items:center; gap:3px; font-size:11px; cursor:pointer; white-space:nowrap;"><input type="checkbox" class="filter-bhk-check" value="5 BHK" onchange="loadProperties()" style="accent-color:var(--gold);"> 5+</label>
+                    </div>
+                  </div>
+                  <!-- Type -->
+                  <div>
+                    <label class="form-label" style="font-size:10.5px; color:var(--gold-l); margin-bottom:4px;"><i class="ti ti-building"></i> Typology</label>
+                    <select class="form-select" id="filter-prop-type" onchange="loadProperties()" style="font-size:11px; padding:4px 6px;">
+                      <option value="">All Types</option>
+                      <option value="Apartment">Apartment</option>
+                      <option value="Villa">Villa</option>
+                      <option value="Independent House">Ind. House</option>
+                      <option value="Penthouse">Penthouse</option>
+                      <option value="Duplex">Duplex</option>
+                      <option value="Rowhouse">Rowhouse</option>
+                      <option value="Plot">Plot</option>
+                      <option value="Land / Agricultural">Land</option>
+                      <option value="Farmhouse">Farmhouse</option>
+                    </select>
+                  </div>
+                  <!-- Mandate -->
+                  <div>
+                    <label class="form-label" style="font-size:10.5px; color:var(--gold-l); margin-bottom:4px;">📋 Mandate</label>
+                    <select class="form-select" id="filter-prop-mandate" onchange="loadProperties()" style="font-size:11px; padding:4px 6px;">
+                      <option value="">All Mandates</option>
+                      <option value="Exclusive">Exclusive Only</option>
+                      <option value="Non Exclusive">Non-Exclusive</option>
+                    </select>
+                  </div>
+                </div>
+                <!-- Row 2: Furnishing, Facing, Registration, Zone, Holder, Recency -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap:10px; align-items:start; margin-top:8px; padding-top:8px; border-top:1px solid rgba(255,255,255,0.06);">
+                  <div>
+                    <label class="form-label" style="font-size:10.5px; color:rgba(255,255,255,0.5); margin-bottom:4px;">🛋️ Furnishing</label>
+                    <select class="form-select" id="filter-prop-interiors" onchange="loadProperties()" style="font-size:11px; padding:4px 6px;">
+                      <option value="">All</option>
+                      <option value="Semi Furnished">Semi Furnished</option>
+                      <option value="Fully Furnished">Fully Furnished</option>
+                      <option value="Unfurnished">Unfurnished</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="form-label" style="font-size:10.5px; color:rgba(255,255,255,0.5); margin-bottom:4px;">🧭 Facing</label>
+                    <select class="form-select" id="filter-prop-facing" onchange="loadProperties()" style="font-size:11px; padding:4px 6px;">
                       <option value="">All Facings</option>
                       <option value="East">East</option>
                       <option value="West">West</option>
                       <option value="North">North</option>
                       <option value="South">South</option>
-                      <option value="North-East">North-East</option>
-                      <option value="North-West">North-West</option>
-                      <option value="South-East">South-East</option>
-                      <option value="South-West">South-West</option>
+                      <option value="North-East">N-East</option>
+                      <option value="North-West">N-West</option>
                     </select>
                   </div>
-
-                  <!-- Registration Status Filter -->
-                  <div class="form-group">
-                    <label class="form-label" style="color:var(--text-secondary); font-size:11px;">Registration Staging</label>
-                    <select class="form-select" id="filter-prop-registration" onchange="loadProperties()" style="font-size:12px; margin-top:4px;">
-                      <option value="">All Registration Status</option>
+                  <div>
+                    <label class="form-label" style="font-size:10.5px; color:rgba(255,255,255,0.5); margin-bottom:4px;">📝 Registration</label>
+                    <select class="form-select" id="filter-prop-registration" onchange="loadProperties()" style="font-size:11px; padding:4px 6px;">
+                      <option value="">All</option>
                       <option value="Registered">Registered</option>
                       <option value="Unregistered">Unregistered</option>
                       <option value="Verified">Verified</option>
                     </select>
                   </div>
-                </div>
-
-                <div class="grid3" style="margin-top:12px; border-top:1px solid rgba(255,255,255,0.05); padding-top:12px;">
-                  <!-- Zone Filter -->
-                  <div class="form-group">
-                    <label class="form-label" style="color:var(--text-secondary); font-size:11px;">Micro-Market Zone</label>
-                    <select class="form-select" id="filter-prop-zone" onchange="loadProperties()" style="font-size:12px; margin-top:4px;">
+                  <div>
+                    <label class="form-label" style="font-size:10.5px; color:rgba(255,255,255,0.5); margin-bottom:4px;">📍 Zone</label>
+                    <select class="form-select" id="filter-prop-zone" onchange="loadProperties()" style="font-size:11px; padding:4px 6px;">
                       <option value="">All Zones</option>
-                      <option value="East">East Zone</option>
-                      <option value="West">West Zone</option>
-                      <option value="North">North Zone</option>
-                      <option value="South">South Zone</option>
-                      <option value="Central">Central Zone</option>
+                      <option value="East">East</option>
+                      <option value="West">West</option>
+                      <option value="North">North</option>
+                      <option value="South">South</option>
+                      <option value="Central">Central</option>
                     </select>
                   </div>
-
-                  <!-- Holder Type Filter -->
-                  <div class="form-group">
-                    <label class="form-label" style="color:var(--text-secondary); font-size:11px;">Listing Holder Type</label>
-                    <select class="form-select" id="filter-prop-holder-type" onchange="loadProperties()" style="font-size:12px; margin-top:4px;">
-                      <option value="">All Holder Types</option>
-                      <option value="Owner">Owner Direct</option>
-                      <option value="Co-Broker">Co-Broker / Associate</option>
-                      <option value="Developer">Developer Direct</option>
+                  <div>
+                    <label class="form-label" style="font-size:10.5px; color:rgba(255,255,255,0.5); margin-bottom:4px;">📅 Recency</label>
+                    <select class="form-select" id="filter-prop-recency" onchange="loadProperties()" style="font-size:11px; padding:4px 6px;">
+                      <option value="">All Time</option>
+                      <option value="today">Today</option>
+                      <option value="7days">Last 7 Days</option>
+                      <option value="30days">Last 30 Days</option>
                     </select>
                   </div>
                 </div>
+                <!-- Hidden: Holder Type (still functional via JS) -->
+                <select id="filter-prop-holder-type" style="display:none;" onchange="loadProperties()">
+                  <option value="">All</option>
+                  <option value="Owner">Owner</option>
+                  <option value="Co-Broker">Co-Broker</option>
+                  <option value="Developer">Developer</option>
+                </select>
               </div>
+
               
               <div id="stale-properties-warning" class="info-red" style="display:none;">
                 ⚠️ <strong>Stale Listings Found:</strong> Properties highlighted below have not had their pricing, owner contact or availability checked in 7+ days. Verify details before pitches!
@@ -932,12 +906,14 @@
               <div class="chr">
                 <div class="card-title"><i class="ti ti-home-check"></i> Rental Listings</div>
                 <div style="display:flex; gap:8px; align-items:center;">
-                  <div class="toggle-group" style="display:flex; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow:hidden; margin-right:8px; background: rgba(0,0,0,0.2);">
-                    <button class="btn btn-primary btn-sm" style="background: var(--gold); border: none; margin-right: 10px;" onclick="toggleSelectAllButton('rental', this)">☑️ Select All</button>
-                    <button class="btn btn-ghost btn-sm active" id="toggle-rental-card" onclick="setViewMode('rental', 'card')">🎴 Card View</button>
-                    <button class="btn btn-ghost btn-sm" id="toggle-rental-table" onclick="setViewMode('rental', 'table')">📊 Table View</button>
-                  </div>
-                  <button class="btn btn-primary btn-sm" onclick="showAddRentalModal()">+ Add Rental Listing</button>
+                   <div class="toggle-group" style="display:flex; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow:hidden; margin-right:8px; background: rgba(0,0,0,0.2);">
+                     <button class="btn btn-primary btn-sm" style="background: var(--gold); border: none; margin-right: 10px;" onclick="toggleSelectAllButton('rental', this)">☑️ Select All</button>
+                     <button class="btn btn-ghost btn-sm active" id="toggle-rental-card" onclick="setViewMode('rental', 'card')">🎴 Card View</button>
+                     <button class="btn btn-ghost btn-sm" id="toggle-rental-table" onclick="setViewMode('rental', 'table')">📊 Table View</button>
+                   </div>
+                   <button onclick="triggerSecureExport('properties')" class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export CSV</button>
+                   <button class="btn btn-ghost btn-sm" onclick="triggerImport('properties')"><i class="ti ti-upload"></i> Import</button>
+                   <button class="btn btn-primary btn-sm" onclick="showAddRentalModal()">+ Add Rental Listing</button>
                 </div>
               </div>
               <div class="card-sub">Active lease contracts, maintenance and deposit details</div>
@@ -953,12 +929,14 @@
               <div class="chr">
                 <div class="card-title"><i class="ti ti-building-store"></i> Commercial Listings</div>
                 <div style="display:flex; gap:8px; align-items:center;">
-                  <div class="toggle-group" style="display:flex; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow:hidden; margin-right:8px; background: rgba(0,0,0,0.2);">
-                    <button class="btn btn-primary btn-sm" style="background: var(--gold); border: none; margin-right: 10px;" onclick="toggleSelectAllButton('commercial', this)">☑️ Select All</button>
-                    <button class="btn btn-ghost btn-sm active" id="toggle-commercial-card" onclick="setViewMode('commercial', 'card')">🎴 Card View</button>
-                    <button class="btn btn-ghost btn-sm" id="toggle-commercial-table" onclick="setViewMode('commercial', 'table')">📊 Table View</button>
-                  </div>
-                  <button class="btn btn-primary btn-sm" onclick="showAddCommercialModal()">+ Add Commercial Listing</button>
+                   <div class="toggle-group" style="display:flex; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow:hidden; margin-right:8px; background: rgba(0,0,0,0.2);">
+                     <button class="btn btn-primary btn-sm" style="background: var(--gold); border: none; margin-right: 10px;" onclick="toggleSelectAllButton('commercial', this)">☑️ Select All</button>
+                     <button class="btn btn-ghost btn-sm active" id="toggle-commercial-card" onclick="setViewMode('commercial', 'card')">🎴 Card View</button>
+                     <button class="btn btn-ghost btn-sm" id="toggle-commercial-table" onclick="setViewMode('commercial', 'table')">📊 Table View</button>
+                   </div>
+                   <button onclick="triggerSecureExport('properties')" class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export CSV</button>
+                   <button class="btn btn-ghost btn-sm" onclick="triggerImport('properties')"><i class="ti ti-upload"></i> Import</button>
+                   <button class="btn btn-primary btn-sm" onclick="showAddCommercialModal()">+ Add Commercial Listing</button>
                 </div>
               </div>
               <div class="card-sub">Commercial spaces, warehouse structures, and outright sales</div>
@@ -3144,6 +3122,7 @@
         <div class="ribbon-actions">
           <button class="btn btn-ghost btn-sm" onclick="navToPage('capture')" title="Quick Capture Lead"><i class="ti ti-user-plus"></i> Capture Lead</button>
           <button class="btn btn-ghost btn-sm" onclick="navToPage('inventory'); showAddListingModal();" title="Register Secondary Listing"><i class="ti ti-building-plus"></i> Add Property</button>
+          <button class="btn btn-ghost btn-sm" onclick="showAddAssociateModal()" title="Register Co-Broker"><i class="ti ti-users"></i> Add Associate</button>
           <button class="btn btn-ghost btn-sm" onclick="navToPage('proposals')" title="Curate Outbound AI WhatsApp Pitch"><i class="ti ti-file-text"></i> Outbound Pitch</button>
           <button class="btn btn-ghost btn-sm" onclick="triggerSheetsSyncManual()" title="Force Google Sheets Sync Sweep"><i class="ti ti-refresh"></i> Sheets Sync</button>
         </div>
@@ -3265,6 +3244,12 @@
                 <option value="Independent House"></option>
                 <option value="Penthouse"></option>
                 <option value="Plot"></option>
+                <option value="Land / Agricultural"></option>
+                <option value="Rowhouse"></option>
+                <option value="Duplex"></option>
+                <option value="Farmhouse"></option>
+                <option value="Studio Apartment"></option>
+                <option value="Serviced Apartment"></option>
               </datalist>
             </div>
             <div class="form-group">
@@ -3397,13 +3382,31 @@
             </div>
             <div class="form-group">
               <label class="form-label">Special Tags (comma separated)</label>
-              <input class="form-input" type="text" id="prop-tags" placeholder="e.g. Luxury, Distress Sale">
+              <input class="form-input" type="text" id="prop-tags" placeholder="e.g. Luxury, Corner Unit">
             </div>
             <div class="form-group">
               <label class="form-label">Additional Info</label>
               <input class="form-input" type="text" id="prop-add-info" placeholder="e.g. Lake view premium unit">
             </div>
           </div>
+          <!-- Special Listing Categories -->
+          <div class="form-row" style="margin-top:4px; padding:10px; background:rgba(192,57,43,0.06); border:1px solid rgba(192,57,43,0.2); border-radius:var(--radius-sm);">
+            <div class="form-group" style="flex:none;">
+              <label class="form-label" style="color:var(--gold-l); font-size:11px; margin-bottom:8px;">⚡ Special Listing Categories</label>
+              <div style="display:flex; gap:16px; flex-wrap:wrap;">
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;">
+                  <input type="checkbox" id="prop-flag-distress" style="accent-color:#e74c3c;" onchange="syncSpecialFlags()"> 🔴 Distress Sale
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;">
+                  <input type="checkbox" id="prop-flag-bank" style="accent-color:#e67e22;" onchange="syncSpecialFlags()"> 🏦 Bank Auction
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;">
+                  <input type="checkbox" id="prop-flag-belowmkt" style="accent-color:#27ae60;" onchange="syncSpecialFlags()"> 📉 Below Market Value
+                </label>
+              </div>
+            </div>
+          </div>
+
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Video Link</label>
@@ -3444,7 +3447,7 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Owner Email Id</label>
-              <input class="form-input" type="email" id="prop-owner-email" placeholder="Owner Email address">
+              <input class="form-input" type="text" id="prop-owner-email" placeholder="Owner Email address">
             </div>
             <div class="form-group">
               <label class="form-label">Unit No. (Private)</label>

@@ -5145,16 +5145,53 @@ app.get('/api/reports/admin', async (req, res) => {
 app.listen(PORT, async () => {
   console.log(`REALPro CRM server is listening running on port http://localhost:${PORT}`);
 
-  // --- One-time backfill: assign prop_id using the correct VJP format for all null prop_ids ---
+  // --- Migration 1: Backfill null prop_ids ---
   try {
-    // Format: {number}/{ZONE}-{YEAR} e.g. 151/N-2025 (matching calculateIDLogic prefix pattern)
     await db.query(`
       UPDATE properties
       SET prop_id = id::text || '/' || COALESCE(zone, 'N') || '-' || TO_CHAR(COALESCE(created_at, NOW()), 'YYYY')
       WHERE prop_id IS NULL OR TRIM(prop_id) = ''
     `);
-    console.log('[Migration] prop_id backfill complete.');
+    console.log('[Migration 1] prop_id backfill complete.');
   } catch (err) {
-    console.warn('[Migration] prop_id backfill skipped:', err.message);
+    console.warn('[Migration 1] prop_id backfill skipped:', err.message);
+  }
+
+  // --- Migration 2: Sync sequence_counters to MAX actual prop_id number ---
+  // This ensures new IDs continue from the last used number, not reset to 151
+  try {
+    // Get distinct category_keys that exist in sequence_counters
+    const categories = [
+      { key_pattern: 'prop_residential_resale', year: new Date().getFullYear().toString() },
+      { key_pattern: 'prop_residential_rental', year: new Date().getFullYear().toString() },
+      { key_pattern: 'prop_commercial_sale', year: new Date().getFullYear().toString() },
+      { key_pattern: 'prop_commercial_rental', year: new Date().getFullYear().toString() },
+    ];
+
+    for (const cat of categories) {
+      const counterKey = `${cat.key_pattern}_${cat.year}`;
+      // Find MAX numeric prefix from prop_ids (format: NUMBER/ZONE-YEAR)
+      const result = await db.query(`
+        SELECT MAX(
+          CASE WHEN prop_id ~ '^[0-9]+/' THEN CAST(split_part(prop_id, '/', 1) AS INTEGER)
+          ELSE 150 END
+        ) as max_val
+        FROM properties WHERE deleted_at IS NULL AND prop_id IS NOT NULL
+      `);
+      const maxVal = parseInt(result.rows[0]?.max_val || 150);
+      if (maxVal >= 151) {
+        // Upsert: update if exists, insert if not
+        await db.query(`
+          INSERT INTO sequence_counters (category_key, last_value)
+          VALUES ($1, $2)
+          ON CONFLICT (category_key) DO UPDATE
+          SET last_value = GREATEST(sequence_counters.last_value, $2)
+        `, [counterKey, maxVal]);
+        console.log(`[Migration 2] Synced ${counterKey} to max=${maxVal}`);
+      }
+    }
+  } catch (err) {
+    console.warn('[Migration 2] sequence_counters sync skipped:', err.message);
   }
 });
+

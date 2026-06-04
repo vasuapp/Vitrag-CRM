@@ -1730,11 +1730,14 @@ window.setViewMode = function(pane, mode) {
 };
 
 async function loadProperties(keepPages = false) {
+  // Debounce lock — prevents simultaneous double-render (duplicate display fix)
+  if (state._propLoading) return;
+  state._propLoading = true;
   if (!keepPages) {
     state.propPages = { resale: 1, rental: 1, commercial: 1 };
   }
   try {
-    const search = (document.getElementById('filter-prop-search')?.value || '').toLowerCase().trim();
+    const search = (document.getElementById('filter-prop-search')?.value || '').trim();
     
     // Advanced Filters inputs
     const minPriceInput = document.getElementById('filter-prop-price-min')?.value;
@@ -1760,11 +1763,11 @@ async function loadProperties(keepPages = false) {
       checkedBHKs.push(cb.value);
     });
     
-    // Fetch all properties from server
-    let url = `/api/properties`;
-    if (search) {
-      url += `?search=${encodeURIComponent(search)}`;
-    }
+    // Build URL — pass status to server for server-side filtering
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (status) params.set('status', status);
+    const url = `/api/properties${params.toString() ? '?' + params.toString() : ''}`;
     
     const res = await fetch(url);
     const data = await res.json();
@@ -1859,6 +1862,8 @@ async function loadProperties(keepPages = false) {
     renderCommercialProperties(commercialListings);
   } catch (err) {
     console.error(err);
+  } finally {
+    state._propLoading = false;
   }
 }
 
@@ -1955,6 +1960,7 @@ function renderResaleProperties(listings) {
           <button class="btn btn-primary btn-sm" onclick="showShareModal(${p.id})">📢 Share Pitch</button>
           <button class="btn btn-ghost btn-sm" onclick="cloneProperty(${p.id})">📋 Clone</button>
           ${p.video_link ? `<a class="btn btn-ghost btn-sm" href="${p.video_link}" target="_blank">🔗 Video Link</a>` : ''}
+          ${(!p.status || p.status.toUpperCase() === 'AVAILABLE' || p.status.toUpperCase() === 'ON HOLD') ? `<button class="btn btn-sm" style="background:rgba(46,204,113,0.15);border:1px solid var(--green);color:var(--green);font-size:11px;padding:4px 10px;" onclick="closureDeal(${p.id},'${(p.society || '').replace(/'/g,"\\'")}','${p.property_type || ''}')">🏁 Close Deal</button>` : ''}
           <button class="btn btn-d btn-sm" onclick="deletePropertyListing(${p.id})" style="padding: 4px 10px; font-size:11px;">✕ Delete</button>
         </div>
 
@@ -2518,6 +2524,120 @@ function clearInventoryFilters() {
   loadProperties();
   showToast('Filters cleared.');
 }
+
+// ─── SPECIAL FLAGS: Sync Distress/Bank/BelowMkt checkboxes with prop-tags ───
+function syncSpecialFlags() {
+  const tagsInput = document.getElementById('prop-tags');
+  if (!tagsInput) return;
+  const existing = tagsInput.value.split(',').map(t => t.trim()).filter(t =>
+    t !== 'Distress Sale' && t !== 'Bank Auction' && t !== 'Below Market Value' && t
+  );
+  if (document.getElementById('prop-flag-distress')?.checked) existing.push('Distress Sale');
+  if (document.getElementById('prop-flag-bank')?.checked) existing.push('Bank Auction');
+  if (document.getElementById('prop-flag-belowmkt')?.checked) existing.push('Below Market Value');
+  tagsInput.value = existing.join(', ');
+}
+
+// ─── CLOSURE JOURNEY: Mark inventory as Sold / Rented ───
+function closureDeal(propId, propName, propType) {
+  const isRental = propType && propType.toLowerCase().includes('rental');
+  const closureHTML = `
+    <div class="mbg" id="modal-closure-journey" style="display:flex; z-index:200000;">
+      <div class="modal" style="max-width:480px; width:90%;">
+        <div class="mhdr">
+          <div class="mtitle">🏁 ${isRental ? 'Mark as Rented Out' : 'Close Deal — Mark as Sold'}</div>
+          <button class="mclose" onclick="closeModal('modal-closure-journey')">&times;</button>
+        </div>
+        <div class="mbdy" style="padding:20px; display:flex; flex-direction:column; gap:14px;">
+          <div style="padding:10px; background:rgba(46,204,113,0.08); border:1px solid rgba(46,204,113,0.2); border-radius:var(--radius-sm); font-size:12px; color:rgba(255,255,255,0.7);">
+            📍 Property: <strong style="color:var(--gold-l);">${propName}</strong>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">${isRental ? 'Tenant Name' : 'Buyer Name'} *</label>
+              <input class="form-input" id="closure-buyer" placeholder="${isRental ? 'e.g. Rahul Sharma' : 'e.g. Anita Singh'}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">${isRental ? 'Tenant Phone' : 'Buyer Phone'}</label>
+              <input class="form-input" id="closure-buyer-phone" type="tel" placeholder="e.g. 9876543210">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Deal Value (₹) *</label>
+              <input class="form-input" id="closure-deal-value" type="number" placeholder="${isRental ? 'Monthly Rent' : 'e.g. 8500000'}">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Commission % *</label>
+              <input class="form-input" id="closure-commission" type="number" step="0.1" placeholder="e.g. 2">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Deal Date</label>
+            <input class="form-input" id="closure-date" type="date" value="${new Date().toISOString().split('T')[0]}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Deal Notes</label>
+            <textarea class="form-input" id="closure-notes" rows="2" placeholder="Registry date, key handover, etc."></textarea>
+          </div>
+          <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:8px;">
+            <button class="btn btn-ghost" onclick="closeModal('modal-closure-journey')">Cancel</button>
+            <button class="btn btn-primary" style="background:var(--green); border:none;" onclick="submitClosureDeal(${propId}, '${isRental ? 'RENTED OUT' : 'SOLD'}')">
+              ✅ Confirm ${isRental ? 'Rental Closure' : 'Sale Closure'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  // Remove existing if any
+  const existing2 = document.getElementById('modal-closure-journey');
+  if (existing2) existing2.remove();
+  document.body.insertAdjacentHTML('beforeend', closureHTML);
+}
+
+async function submitClosureDeal(propId, finalStatus) {
+  const buyer = document.getElementById('closure-buyer')?.value?.trim();
+  const dealValue = parseFloat(document.getElementById('closure-deal-value')?.value || 0);
+  const commission = parseFloat(document.getElementById('closure-commission')?.value || 0);
+  if (!buyer || !dealValue) { showToast('Please fill Buyer Name and Deal Value.', true); return; }
+  
+  try {
+    // Update property status
+    await fetch(`/api/properties/${propId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        status: finalStatus,
+        admin_comments: `Closed: ${buyer} | Deal: ₹${dealValue.toLocaleString('en-IN')} | Notes: ${document.getElementById('closure-notes')?.value || ''}`
+      })
+    });
+    // Record commission entry
+    await fetch('/api/commissions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        property_id: propId,
+        buyer_name: buyer,
+        buyer_phone: document.getElementById('closure-buyer-phone')?.value || '',
+        deal_value: dealValue,
+        commission_percentage: commission,
+        deal_date: document.getElementById('closure-date')?.value || new Date().toISOString().split('T')[0],
+        payment_status: 'Pending',
+        notes: document.getElementById('closure-notes')?.value || ''
+      })
+    });
+    closeModal('modal-closure-journey');
+    document.getElementById('modal-closure-journey')?.remove();
+    showToast(`🏁 Deal closed! Property marked as ${finalStatus}.`);
+    loadProperties();
+    loadDashboardData();
+  } catch (err) {
+    console.error(err);
+    showToast('Error closing deal. Please try again.', true);
+  }
+}
+
 
 async function deletePropertyListing(id) {
   try {
@@ -4068,7 +4188,14 @@ async function submitAddListing(e) {
     sub_source: document.getElementById('prop-sub-source').value,
     comments: document.getElementById('prop-comments').value,
     admin_comments: document.getElementById('prop-admin-comments').value,
-    special_tags: document.getElementById('prop-tags').value,
+    special_tags: (() => {
+      // Merge checkbox flags into special_tags
+      const base = (document.getElementById('prop-tags').value || '').split(',').map(t => t.trim()).filter(Boolean);
+      if (document.getElementById('prop-flag-distress')?.checked && !base.includes('Distress Sale')) base.push('Distress Sale');
+      if (document.getElementById('prop-flag-bank')?.checked && !base.includes('Bank Auction')) base.push('Bank Auction');
+      if (document.getElementById('prop-flag-belowmkt')?.checked && !base.includes('Below Market Value')) base.push('Below Market Value');
+      return base.join(', ');
+    })(),
     zone: document.getElementById('prop-zone').value,
     onboarded_year: document.getElementById('prop-year').value,
     available_for: document.getElementById('prop-available-for').value,
@@ -4081,6 +4208,7 @@ async function submitAddListing(e) {
     house_facing: document.getElementById('prop-house-facing').value,
     project_id: document.getElementById('prop-project-link').value || null
   };
+
 
   try {
     const editId = document.getElementById('edit-resale-id').value;
