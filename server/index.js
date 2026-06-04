@@ -1465,6 +1465,106 @@ app.patch('/api/leads/:id/associate', async (req, res) => {
   }
 });
 
+// Update Closure Journey for Lead
+app.patch('/api/leads/:id/closure', async (req, res) => {
+  try {
+    const {
+      closure_site_visit,
+      closure_negotiation,
+      closure_agreement,
+      closure_registration,
+      closure_closed,
+      closure_prop_id,
+      closure_commission_amt,
+      closure_notes
+    } = req.body;
+    
+    await db.query(`
+      UPDATE leads
+      SET closure_site_visit = $1,
+          closure_negotiation = $2,
+          closure_agreement = $3,
+          closure_registration = $4,
+          closure_closed = $5,
+          closure_prop_id = $6,
+          closure_commission_amt = $7,
+          closure_notes = $8
+      WHERE id = $9
+    `, [
+      closure_site_visit === true || closure_site_visit === 'true',
+      closure_negotiation === true || closure_negotiation === 'true',
+      closure_agreement === true || closure_agreement === 'true',
+      closure_registration === true || closure_registration === 'true',
+      closure_closed === true || closure_closed === 'true',
+      closure_prop_id || null,
+      closure_commission_amt ? parseFloat(closure_commission_amt) : null,
+      closure_notes || null,
+      req.params.id
+    ]);
+
+    // If deal is closed, automatically log a closed deal activity
+    if (closure_closed === true || closure_closed === 'true') {
+      await db.query("INSERT INTO lead_activities (lead_id, type, description) VALUES ($1, 'Deal Closed', $2)", 
+        [req.params.id, `Closed deal on Property ${closure_prop_id || 'N/A'} for commission ₹${closure_commission_amt || 0}`]);
+      
+      // Also update lead pipeline stage to 'Sale Closed' / 'Closed'
+      await db.query("UPDATE leads SET stage = 'Sale Closed', status = 'Closed' WHERE id = $1", [req.params.id]);
+    }
+    
+    res.json({
+      success: true,
+      id: req.params.id
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+});
+
+// GET /api/admin/today-activity
+app.get('/api/admin/today-activity', async (req, res) => {
+  try {
+    const todayStart = new Date();
+    todayStart.setHours(0,0,0,0);
+    const todayStartStr = todayStart.toISOString();
+
+    const leadsQuery = `
+      SELECT id, name, created_at, agent_name, source, project_type 
+      FROM leads 
+      WHERE deleted_at IS NULL 
+        AND created_at IS NOT NULL
+        AND created_at::timestamptz >= $1
+    `;
+    const propsQuery = `
+      SELECT id, prop_id, last_updated as created_at, society, location, price, property_type 
+      FROM properties 
+      WHERE deleted_at IS NULL 
+        AND last_updated IS NOT NULL
+        AND last_updated::timestamptz >= $1
+    `;
+    const projsQuery = `
+      SELECT id, project_name, builder_name, created_at, location 
+      FROM builder_projects 
+      WHERE deleted_at IS NULL 
+        AND created_at IS NOT NULL
+        AND created_at::timestamptz >= $1
+    `;
+
+    const leads = (await db.query(leadsQuery, [todayStartStr])).rows;
+    const properties = (await db.query(propsQuery, [todayStartStr])).rows;
+    const projects = (await db.query(projsQuery, [todayStartStr])).rows;
+
+    res.json({
+      leads,
+      properties,
+      projects
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Bulk Delete Leads
 app.post('/api/leads/bulk-delete', async (req, res) => {
   try {
@@ -1737,7 +1837,9 @@ app.post('/api/properties', async (req, res) => {
       holder_type,
       admin_comments,
       associate_id,
-      project_id
+      project_id,
+      commission_agreed,
+      google_map_url
     } = req.body;
     const user = getRequestUser(req);
     const agentId = user ? user.id : null;
@@ -1808,9 +1910,9 @@ app.post('/api/properties', async (req, res) => {
         registration_status, source, sub_source, comments,
         maintenance, deposit, available_from, date_of_inventory, available_for,
         plot_size, sba, special_tags, zone, onboarded_year,
-        plot_dimension, plot_facing, house_facing, holder_type, admin_comments, associate_id, project_id, agent_id, last_updated
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, CURRENT_TIMESTAMP)
-     RETURNING id`, [pId, mandate_type || 'Open', property_type || 'Resale', society, location || '', status || 'AVAILABLE', site_area || '', parseFloat(area_sqft || 0), configuration || '', floor_info || '', floor_range || '', interiors || 'Unfurnished', facing || '', amenities || '', car_park || '', parseFloat(price || 0), pRaw, possession || '', project_size || '', project_status || '', additional_info || '', video_link || '', photo_link || '', brochure_link || '', owner_name || '', owner_phone || '', owner_email || '', unit_no || '', registration_status || '', source || '', sub_source || '', comments || '', parseFloat(maintenance || 0), parseFloat(deposit || 0), available_from || '', date_of_inventory || '', available_for || 'Sale', plot_size || '', sba || '', special_tags || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), plot_dimension || '', plot_facing || '', house_facing || '', holder_type || '', admin_comments || '', associate_id ? parseInt(associate_id) : null, project_id ? parseInt(project_id) : null, agentId]);
+        plot_dimension, plot_facing, house_facing, holder_type, admin_comments, associate_id, project_id, agent_id, commission_agreed, google_map_url, last_updated
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, CURRENT_TIMESTAMP)
+     RETURNING id`, [pId, mandate_type || 'Open', property_type || 'Resale', society, location || '', status || 'AVAILABLE', site_area || '', parseFloat(area_sqft || 0), configuration || '', floor_info || '', floor_range || '', interiors || 'Unfurnished', facing || '', amenities || '', car_park || '', parseFloat(price || 0), pRaw, possession || '', project_size || '', project_status || '', additional_info || '', video_link || '', photo_link || '', brochure_link || '', owner_name || '', owner_phone || '', owner_email || '', unit_no || '', registration_status || '', source || '', sub_source || '', comments || '', parseFloat(maintenance || 0), parseFloat(deposit || 0), available_from || '', date_of_inventory || '', available_for || 'Sale', plot_size || '', sba || '', special_tags || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), plot_dimension || '', plot_facing || '', house_facing || '', holder_type || '', admin_comments || '', associate_id ? parseInt(associate_id) : null, project_id ? parseInt(project_id) : null, agentId, commission_agreed || '', google_map_url || '']);
       return {
         lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
         changes: r.rowCount
@@ -1904,7 +2006,9 @@ app.put('/api/properties/:id', async (req, res) => {
       holder_type,
       admin_comments,
       associate_id,
-      project_id
+      project_id,
+      commission_agreed,
+      google_map_url
     } = req.body;
 
     // Optional duplicate detection check ignoring self
@@ -1947,9 +2051,9 @@ app.put('/api/properties/:id', async (req, res) => {
         maintenance = $32, deposit = $33, available_from = $34, date_of_inventory = $35, available_for = $36,
         plot_size = $37, sba = $38, special_tags = $39, zone = $40, onboarded_year = $41,
         plot_dimension = $42, plot_facing = $43, house_facing = $44, holder_type = $45, admin_comments = $46, 
-        associate_id = $47, project_id = $48, last_updated = CURRENT_TIMESTAMP
-      WHERE id = $49
-    `, [mandate_type || 'Open', property_type || 'Resale', society, location || '', status || 'AVAILABLE', site_area || '', parseFloat(area_sqft || 0), configuration || '', floor_info || '', floor_range || '', interiors || 'Unfurnished', facing || '', amenities || '', car_park || '', parseFloat(price || 0), pRaw, possession || '', project_size || '', project_status || '', additional_info || '', video_link || '', photo_link || '', brochure_link || '', owner_name || '', owner_phone || '', owner_email || '', unit_no || '', registration_status || '', source || '', sub_source || '', comments || '', parseFloat(maintenance || 0), parseFloat(deposit || 0), available_from || '', date_of_inventory || '', available_for || 'Sale', plot_size || '', sba || '', special_tags || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), plot_dimension || '', plot_facing || '', house_facing || '', holder_type || '', admin_comments || '', associate_id ? parseInt(associate_id) : null, project_id ? parseInt(project_id) : null, req.params.id]);
+        associate_id = $47, project_id = $48, commission_agreed = $49, google_map_url = $50, last_updated = CURRENT_TIMESTAMP
+      WHERE id = $51
+    `, [mandate_type || 'Open', property_type || 'Resale', society, location || '', status || 'AVAILABLE', site_area || '', parseFloat(area_sqft || 0), configuration || '', floor_info || '', floor_range || '', interiors || 'Unfurnished', facing || '', amenities || '', car_park || '', parseFloat(price || 0), pRaw, possession || '', project_size || '', project_status || '', additional_info || '', video_link || '', photo_link || '', brochure_link || '', owner_name || '', owner_phone || '', owner_email || '', unit_no || '', registration_status || '', source || '', sub_source || '', comments || '', parseFloat(maintenance || 0), parseFloat(deposit || 0), available_from || '', date_of_inventory || '', available_for || 'Sale', plot_size || '', sba || '', special_tags || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), plot_dimension || '', plot_facing || '', house_facing || '', holder_type || '', admin_comments || '', associate_id ? parseInt(associate_id) : null, project_id ? parseInt(project_id) : null, commission_agreed || '', google_map_url || '', req.params.id]);
       return {
         lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
         changes: r.rowCount

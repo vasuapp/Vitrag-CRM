@@ -646,6 +646,10 @@ html, body {
 .chip-closed { background: var(--green-light); color: var(--green-dark); }
 .chip-dead   { background: rgba(255, 255, 255, 0.06); color: var(--text-muted); }
 
+/* Prominent Glowing Chips for Available / Exclusive */
+.ch-gold { box-shadow: 0 0 12px rgba(184, 134, 11, 0.5); }
+.chip-available { box-shadow: 0 0 12px rgba(46, 204, 113, 0.5); font-size:10px !important; }
+
 /* ─── FILTERS ─── */
 .tabs {
   display: flex;

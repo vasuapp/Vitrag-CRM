@@ -100,7 +100,20 @@ let state = {
   associates: [],
   commissions: [],
   habits: [],
-  propPages: { resale: 1, rental: 1, commercial: 1 }
+  propPages: { resale: 1, rental: 1, commercial: 1, land: 1 },
+  projPage: 1,
+  leadsPage: 1,
+  assocPage: 1,
+  columnConfig: (() => {
+    const saved = localStorage.getItem('crm_column_config');
+    return saved ? JSON.parse(saved) : {
+      resale: { bhk: true, size: true, price: true, mandate: true, interiors: true, facing: true, staging: true },
+      rental: { type: true, area: true, rent: true, deposit: true, maintenance: true, available: true },
+      commercial: { type: true, available: true, area: true, price: true, deposit: true, maintenance: true, handover: true },
+      land: { type: true, zoning: true, area: true, price: true, dimensions: true, facing: true },
+      leads: { phone: true, source: true, stage: true, type: true, budget: true, followup: true }
+    };
+  })()
 };
 
 // Global Utilities
@@ -137,6 +150,126 @@ function changePropPage(tab, pageNum) {
 }
 window.changePropPage = changePropPage;
 
+function showCol(tab, colKey) {
+  if (!state.columnConfig || !state.columnConfig[tab]) return true;
+  return state.columnConfig[tab][colKey] !== false;
+}
+window.showCol = showCol;
+
+window.toggleColumnDropdown = function(tab, event) {
+  event.stopPropagation();
+  let existing = document.getElementById('column-configurator-dropdown');
+  if (existing) {
+    existing.remove();
+    return;
+  }
+  
+  const columns = {
+    resale: [
+      { key: 'bhk', label: 'BHK' },
+      { key: 'size', label: 'Size (Sqft)' },
+      { key: 'price', label: 'Price' },
+      { key: 'mandate', label: 'Mandate' },
+      { key: 'interiors', label: 'Interiors' },
+      { key: 'facing', label: 'Facing' },
+      { key: 'staging', label: 'Staging' }
+    ],
+    rental: [
+      { key: 'type', label: 'Property Type' },
+      { key: 'area', label: 'Area' },
+      { key: 'rent', label: 'Rent' },
+      { key: 'deposit', label: 'Deposit' },
+      { key: 'maintenance', label: 'Maintenance' },
+      { key: 'available', label: 'Available From' }
+    ],
+    commercial: [
+      { key: 'type', label: 'Property Type' },
+      { key: 'available', label: 'Available For' },
+      { key: 'area', label: 'Super Area' },
+      { key: 'price', label: 'Rent / Price' },
+      { key: 'deposit', label: 'Deposit' },
+      { key: 'maintenance', label: 'Maintenance' },
+      { key: 'handover', label: 'Handover' }
+    ],
+    land: [
+      { key: 'type', label: 'Plot Type' },
+      { key: 'zoning', label: 'Zoning' },
+      { key: 'area', label: 'Area (Sqft)' },
+      { key: 'price', label: 'Asking Price' },
+      { key: 'dimensions', label: 'Dimensions' },
+      { key: 'facing', label: 'Facing' }
+    ],
+    leads: [
+      { key: 'phone', label: 'Phone / Email' },
+      { key: 'source', label: 'Source' },
+      { key: 'stage', label: 'Pipeline Stage' },
+      { key: 'type', label: 'Property Type' },
+      { key: 'budget', label: 'Budget' },
+      { key: 'followup', label: 'Next Follow-up' }
+    ]
+  };
+
+  const currentCols = columns[tab] || [];
+  const dropdown = document.createElement('div');
+  dropdown.id = 'column-configurator-dropdown';
+  dropdown.style.cssText = `
+    position: absolute;
+    background: #2c2c2c;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    z-index: 10000;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 160px;
+  `;
+  
+  const rect = event.currentTarget.getBoundingClientRect();
+  dropdown.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+  dropdown.style.left = (rect.left + window.scrollX) + 'px';
+  
+  dropdown.innerHTML = `
+    <div style="font-weight:700; font-size:12px; color:var(--gold-l); margin-bottom:4px; display:flex; justify-content:space-between; align-items:center;">
+      <span>Toggle Columns</span>
+      <span style="cursor:pointer;" onclick="this.parentElement.parentElement.remove()">✕</span>
+    </div>
+  ` + currentCols.map(col => {
+    const isChecked = state.columnConfig[tab][col.key] !== false;
+    return `
+      <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer; color:var(--text-light);">
+        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleColumnOption('${tab}', '${col.key}', this.checked)">
+        ${col.label}
+      </label>
+    `;
+  }).join('');
+  
+  document.body.appendChild(dropdown);
+  
+  const closeHandler = (e) => {
+    if (!dropdown.contains(e.target) && e.target !== event.currentTarget) {
+      dropdown.remove();
+      document.removeEventListener('click', closeHandler);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', closeHandler), 0);
+};
+
+window.toggleColumnOption = function(tab, colKey, checked) {
+  if (!state.columnConfig) state.columnConfig = {};
+  if (!state.columnConfig[tab]) state.columnConfig[tab] = {};
+  state.columnConfig[tab][colKey] = checked;
+  
+  localStorage.setItem('crm_column_config', JSON.stringify(state.columnConfig));
+  
+  if (tab === 'leads') {
+    if (typeof window.loadEnquiries === 'function') window.loadEnquiries();
+  } else {
+    loadProperties(true);
+  }
+};
+
 window.changeProjPage = function(tab, pageNum) {
   state.projPage = pageNum;
   loadProjects();
@@ -145,6 +278,11 @@ window.changeProjPage = function(tab, pageNum) {
 window.changeLeadsPage = function(tab, pageNum) {
   state.leadsPage = pageNum;
   loadEnquiries();
+};
+
+window.changeAssocPage = function(tab, pageNum) {
+  state.assocPage = pageNum;
+  loadAssociates();
 };
 
 
@@ -953,6 +1091,7 @@ async function loadDashboardData() {
     renderCalendar();
     renderPropertyTimelines();
     hydrateSegmentPreviews();
+    loadTodayActivityFeed();
     renderDynamicCharts();
     loadAdminReport();
   } catch (err) {
@@ -1702,6 +1841,7 @@ if (!state.viewModes) {
     resale: 'card',
     rental: 'card',
     commercial: 'card',
+    land: 'card',
     projects: 'card'
   };
 }
@@ -1716,9 +1856,11 @@ window.setViewMode = function(pane, mode) {
     if (mode === 'card') {
       cardBtn.classList.add('active');
       tableBtn.classList.remove('active');
+      document.getElementById(`cols-btn-${pane}`)?.classList.add('hidden');
     } else {
       tableBtn.classList.add('active');
       cardBtn.classList.remove('active');
+      document.getElementById(`cols-btn-${pane}`)?.classList.remove('hidden');
     }
   }
   
@@ -1734,7 +1876,7 @@ async function loadProperties(keepPages = false) {
   if (state._propLoading) return;
   state._propLoading = true;
   if (!keepPages) {
-    state.propPages = { resale: 1, rental: 1, commercial: 1 };
+    state.propPages = { resale: 1, rental: 1, commercial: 1, land: 1 };
   }
   try {
     const search = (document.getElementById('filter-prop-search')?.value || '').trim();
@@ -1831,16 +1973,20 @@ async function loadProperties(keepPages = false) {
     const resaleListings = [];
     const rentalListings = [];
     const commercialListings = [];
+    const landListings = [];
     
     filteredListings.forEach(p => {
       const pType = (p.property_type || '').toLowerCase();
       const isCommercial = pType.includes('commercial') || pType.includes('office') || pType.includes('retail') || pType.includes('warehouse') || pType.includes('showroom');
       const isRental = pType === 'rental' || (p.price_raw || '').toLowerCase().includes('/mo');
+      const isLand = pType === 'land' || pType === 'plot' || pType.includes('land') || pType.includes('plot');
       
       if (isCommercial) {
         commercialListings.push(p);
       } else if (isRental) {
         rentalListings.push(p);
+      } else if (isLand) {
+        landListings.push(p);
       } else {
         resaleListings.push(p);
       }
@@ -1851,6 +1997,7 @@ async function loadProperties(keepPages = false) {
     if (state.inventoryTab === 'resale') activeCount = resaleListings.length;
     else if (state.inventoryTab === 'rental') activeCount = rentalListings.length;
     else if (state.inventoryTab === 'commercial') activeCount = commercialListings.length;
+    else if (state.inventoryTab === 'land') activeCount = landListings.length;
 
     const disp = document.getElementById('inventory-count-display');
     if (disp) {
@@ -1860,6 +2007,7 @@ async function loadProperties(keepPages = false) {
     renderResaleProperties(resaleListings);
     renderRentalProperties(rentalListings);
     renderCommercialProperties(commercialListings);
+    renderLandProperties(landListings);
   } catch (err) {
     console.error(err);
   } finally {
@@ -1896,7 +2044,7 @@ function renderResaleProperties(listings) {
               <span class="chip chip-cold btn-sm" style="font-size:9.5px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">ID: ${p.prop_id || '#' + p.id}</span>
               ${p.is_stale ? `<span class="chip chip-hot btn-sm" style="font-size:9px; font-weight:700;">⚠️ STALE LISTING</span>` : ''}
               ${p.mandate_type === 'Exclusive' ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(184,134,11,0.2); border:0.5px solid var(--gold); color:var(--gold-l);">👑 EXCLUSIVE</span>` : ''}
-              ${(()=>{ const s=(p.status||'AVAILABLE').toUpperCase(); if(s==='AVAILABLE') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(46,204,113,0.2);border:0.5px solid var(--green);color:var(--green);">🟢 AVAILABLE</span>`; if(s==='SOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.2);border:0.5px solid var(--red);color:var(--red);">🔴 SOLD</span>`; if(s==='ON HOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(230,126,34,0.2);border:0.5px solid #e67e22;color:#e67e22;">🟠 ON HOLD</span>`; if(s==='WITHDRAWN') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(127,140,141,0.2);border:0.5px solid #7f8c8d;color:#7f8c8d;">⚫ WITHDRAWN</span>`; if(s==='EXPIRED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.1);border:0.5px solid #c0392b;color:#c0392b;opacity:0.7;">🔕 EXPIRED</span>`; if(s==='RESERVED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(52,152,219,0.2);border:0.5px solid var(--blue);color:var(--blue-light);">🔵 RESERVED</span>`; return ''; })()}
+              ${(()=>{ const s=(p.status||'AVAILABLE').toUpperCase(); if(s==='AVAILABLE') return `<span class="chip chip-available btn-sm" style="font-size:9px;font-weight:700;background:rgba(46,204,113,0.2);border:0.5px solid var(--green);color:var(--green);">🟢 AVAILABLE</span>`; if(s==='SOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.2);border:0.5px solid var(--red);color:var(--red);">🔴 SOLD</span>`; if(s==='ON HOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(230,126,34,0.2);border:0.5px solid #e67e22;color:#e67e22;">🟠 ON HOLD</span>`; if(s==='WITHDRAWN') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(127,140,141,0.2);border:0.5px solid #7f8c8d;color:#7f8c8d;">⚫ WITHDRAWN</span>`; if(s==='EXPIRED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.1);border:0.5px solid #c0392b;color:#c0392b;opacity:0.7;">🔕 EXPIRED</span>`; if(s==='RESERVED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(52,152,219,0.2);border:0.5px solid var(--blue);color:var(--blue-light);">🔵 RESERVED</span>`; return ''; })()}
               ${p.associate_id ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(52, 152, 219, 0.2); border:0.5px solid var(--blue); color:var(--blue-light);">🏢 ASSOCIATE INVENTORY</span>` : ''}
               ${p.special_tags ? p.special_tags.split(',').map(tag => `<span class="chip chip-warm btn-sm" style="font-size:9px; font-weight:600;">🏷️ ${tag.trim()}</span>`).join(' ') : ''}
               ${p.sync_status && p.sync_status !== 'NOT_SYNCED' ? `<span class="portal-sync-badge"><i class="ti ti-world"></i> ${p.sync_status}</span>` : ''}
@@ -1959,7 +2107,9 @@ function renderResaleProperties(listings) {
           <button class="btn btn-ghost btn-sm" style="color:var(--gold-l);" onclick="editFullProperty(${p.id})"><i class="ti ti-edit"></i> Edit</button>
           <button class="btn btn-primary btn-sm" onclick="showShareModal(${p.id})">📢 Share Pitch</button>
           <button class="btn btn-ghost btn-sm" onclick="cloneProperty(${p.id})">📋 Clone</button>
+          <button class="btn btn-ghost btn-sm" onclick="printPropertyCard(${p.id})">🖨️ Print</button>
           ${p.video_link ? `<a class="btn btn-ghost btn-sm" href="${p.video_link}" target="_blank">🔗 Video Link</a>` : ''}
+          ${p.google_map_url ? `<a class="btn btn-ghost btn-sm" href="${p.google_map_url}" target="_blank" style="color:#3498db;">🗺️ Map</a>` : ''}
           ${(!p.status || p.status.toUpperCase() === 'AVAILABLE' || p.status.toUpperCase() === 'ON HOLD') ? `<button class="btn btn-sm" style="background:rgba(46,204,113,0.15);border:1px solid var(--green);color:var(--green);font-size:11px;padding:4px 10px;" onclick="closureDeal(${p.id},'${(p.society || '').replace(/'/g,"\\'")}','${p.property_type || ''}')">🏁 Close Deal</button>` : ''}
           <button class="btn btn-d btn-sm" onclick="deletePropertyListing(${p.id})" style="padding: 4px 10px; font-size:11px;">✕ Delete</button>
         </div>
@@ -1975,6 +2125,7 @@ function renderResaleProperties(listings) {
             <div>Khata Staging: <strong>${p.registration_status || 'Verified'}</strong></div>
             <div>Unit No: <strong>${p.unit_no || 'N/A'}</strong></div>
             <div>Source: <strong>${p.source || 'N/A'}</strong></div>
+            <div style="color:var(--gold-l);">Commission: <strong>${p.commission_agreed || 'N/A'}</strong></div>
           </div>
           
           <!-- Co-Broker associate linking select -->
@@ -2019,13 +2170,13 @@ function renderResaleProperties(listings) {
               <th>ID</th>
               <th>Society / Project</th>
               <th>Location</th>
-              <th>BHK</th>
-              <th>Size (Sqft)</th>
-              <th>Price</th>
-              <th>Mandate</th>
-              <th>Interiors</th>
-              <th>Facing</th>
-              <th>Staging</th>
+              ${showCol('resale', 'bhk') ? `<th>BHK</th>` : ''}
+              ${showCol('resale', 'size') ? `<th>Size (Sqft)</th>` : ''}
+              ${showCol('resale', 'price') ? `<th>Price</th>` : ''}
+              ${showCol('resale', 'mandate') ? `<th>Mandate</th>` : ''}
+              ${showCol('resale', 'interiors') ? `<th>Interiors</th>` : ''}
+              ${showCol('resale', 'facing') ? `<th>Facing</th>` : ''}
+              ${showCol('resale', 'staging') ? `<th>Staging</th>` : ''}
               <th>Actions</th>
             </tr>
           </thead>
@@ -2041,14 +2192,14 @@ function renderResaleProperties(listings) {
                    ${p.sync_status && p.sync_status !== 'NOT_SYNCED' ? `<br><span class="portal-sync-badge" style="margin-top:4px;"><i class="ti ti-world"></i> ${p.sync_status}</span>` : ''}
                  </td>
                  <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'location', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.location}</td>
-                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'configuration', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.configuration}</td>
-                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'area_sqft', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.area_sqft}</td>
-                 <td contenteditable="true" class="editable-cell" style="color:var(--green); font-weight:600; cursor: text;" onblur="updatePropertyInline(${p.id}, 'price', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${formatPriceToWords(p.price)}</td>
-                <td><span class="tag tag-primary" style="font-size:9.5px;">${p.mandate_type || 'Open'}</span></td>
-                <td>${p.interiors}</td>
-                <td>${p.facing || 'East'}</td>
-                <td>${p.project_status || 'RTMI'}</td>
-                <td>
+                 ${showCol('resale', 'bhk') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'configuration', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.configuration}</td>` : ''}
+                 ${showCol('resale', 'size') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'area_sqft', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.area_sqft}</td>` : ''}
+                 ${showCol('resale', 'price') ? `<td contenteditable="true" class="editable-cell" style="color:var(--green); font-weight:600; cursor: text;" onblur="updatePropertyInline(${p.id}, 'price', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${formatPriceToWords(p.price)}</td>` : ''}
+                 ${showCol('resale', 'mandate') ? `<td><span class="tag tag-primary" style="font-size:9.5px;">${p.mandate_type || 'Open'}</span></td>` : ''}
+                 ${showCol('resale', 'interiors') ? `<td>${p.interiors}</td>` : ''}
+                 ${showCol('resale', 'facing') ? `<td>${p.facing || 'East'}</td>` : ''}
+                 ${showCol('resale', 'staging') ? `<td>${p.project_status || 'RTMI'}</td>` : ''}
+                 <td>
                   <div style="display:flex; gap:4px;">
                     ${state.systemSettings.showMaskedFields ? 
                       `<button class="btn btn-ghost btn-sm" style="font-size:9.5px; padding:2px 6px;" onclick="togglePrivateContact(${p.id})">📞 Contacts</button>` : 
@@ -2124,7 +2275,7 @@ function renderRentalProperties(listings) {
               <span class="inv-name" style="font-size: 16px; font-weight: 700; color:var(--gold-l);">${p.society}</span>
               <span class="chip chip-cold btn-sm" style="font-size:9.5px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">ID: ${p.prop_id || '#' + p.id}</span>
               ${p.mandate_type === 'Exclusive' ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(184,134,11,0.2); border:0.5px solid var(--gold); color:var(--gold-l);">👑 EXCLUSIVE</span>` : ''}
-              ${(()=>{ const s=(p.status||'AVAILABLE').toUpperCase(); if(s==='AVAILABLE') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(46,204,113,0.2);border:0.5px solid var(--green);color:var(--green);">🟢 AVAILABLE</span>`; if(s==='SOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.2);border:0.5px solid var(--red);color:var(--red);">🔴 RENTED OUT</span>`; if(s==='ON HOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(230,126,34,0.2);border:0.5px solid #e67e22;color:#e67e22;">🟠 ON HOLD</span>`; if(s==='WITHDRAWN') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(127,140,141,0.2);border:0.5px solid #7f8c8d;color:#7f8c8d;">⚫ WITHDRAWN</span>`; if(s==='EXPIRED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.1);border:0.5px solid #c0392b;color:#c0392b;opacity:0.7;">🔕 EXPIRED</span>`; if(s==='RESERVED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(52,152,219,0.2);border:0.5px solid var(--blue);color:var(--blue-light);">🔵 RESERVED</span>`; return ''; })()}
+              ${(()=>{ const s=(p.status||'AVAILABLE').toUpperCase(); if(s==='AVAILABLE') return `<span class="chip chip-available btn-sm" style="font-size:9px;font-weight:700;background:rgba(46,204,113,0.2);border:0.5px solid var(--green);color:var(--green);">🟢 AVAILABLE</span>`; if(s==='SOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.2);border:0.5px solid var(--red);color:var(--red);">🔴 RENTED OUT</span>`; if(s==='ON HOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(230,126,34,0.2);border:0.5px solid #e67e22;color:#e67e22;">🟠 ON HOLD</span>`; if(s==='WITHDRAWN') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(127,140,141,0.2);border:0.5px solid #7f8c8d;color:#7f8c8d;">⚫ WITHDRAWN</span>`; if(s==='EXPIRED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.1);border:0.5px solid #c0392b;color:#c0392b;opacity:0.7;">🔕 EXPIRED</span>`; if(s==='RESERVED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(52,152,219,0.2);border:0.5px solid var(--blue);color:var(--blue-light);">🔵 RESERVED</span>`; return ''; })()}
               ${p.associate_id ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(52, 152, 219, 0.2); border:0.5px solid var(--blue); color:var(--blue-light);">🏢 ASSOCIATE INVENTORY</span>` : ''}
               ${p.special_tags ? p.special_tags.split(',').map(tag => `<span class="chip chip-warm btn-sm" style="font-size:9px; font-weight:600;">🏷️ ${tag.trim()}</span>`).join(' ') : ''}
               ${p.sync_status && p.sync_status !== 'NOT_SYNCED' ? `<span class="portal-sync-badge"><i class="ti ti-world"></i> ${p.sync_status}</span>` : ''}
@@ -2183,6 +2334,10 @@ function renderRentalProperties(listings) {
           <button class="btn btn-ghost btn-sm" style="color:var(--gold-l);" onclick="editFullProperty(${p.id})"><i class="ti ti-edit"></i> Edit</button>
           <button class="btn btn-primary btn-sm" onclick="showShareModal(${p.id})">📢 Share Pitch</button>
           <button class="btn btn-ghost btn-sm" onclick="cloneProperty(${p.id})">📋 Clone</button>
+          <button class="btn btn-ghost btn-sm" onclick="printPropertyCard(${p.id})">🖨️ Print</button>
+          ${p.video_link ? `<a class="btn btn-ghost btn-sm" href="${p.video_link}" target="_blank">🔗 Video Link</a>` : ''}
+          ${p.google_map_url ? `<a class="btn btn-ghost btn-sm" href="${p.google_map_url}" target="_blank" style="color:#3498db;">🗺️ Map</a>` : ''}
+          ${(!p.status || p.status.toUpperCase() === 'AVAILABLE' || p.status.toUpperCase() === 'ON HOLD') ? `<button class="btn btn-sm" style="background:rgba(46,204,113,0.15);border:1px solid var(--green);color:var(--green);font-size:11px;padding:4px 10px;" onclick="closureDeal(${p.id},'${(p.society || '').replace(/'/g,"\\'")}','${p.property_type || ''}')">🏁 Close Deal</button>` : ''}
           <button class="btn btn-d btn-sm" onclick="deletePropertyListing(${p.id})" style="padding: 4px 10px; font-size:11px;">✕ Delete</button>
         </div>
 
@@ -2196,6 +2351,7 @@ function renderRentalProperties(listings) {
             <div>Owner Email: <strong>${p.owner_email || 'N/A'}</strong></div>
             <div>Khata Staging: <strong>${p.registration_status || 'Verified'}</strong></div>
             <div>Unit No: <strong>${p.unit_no || 'N/A'}</strong></div>
+            <div style="color:var(--gold-l);">Commission: <strong>${p.commission_agreed || 'N/A'}</strong></div>
           </div>
           
           <!-- Co-Broker associate linking select -->
@@ -2221,12 +2377,12 @@ function renderRentalProperties(listings) {
               <th>ID</th>
               <th>Society / Project</th>
               <th>Location</th>
-              <th>BHK</th>
-              <th>Size (Sqft)</th>
-              <th>Rent</th>
-              <th>Deposit</th>
-              <th>Maintenance</th>
-              <th>Available From</th>
+              ${showCol('rental', 'type') ? `<th>BHK</th>` : ''}
+              ${showCol('rental', 'area') ? `<th>Size (Sqft)</th>` : ''}
+              ${showCol('rental', 'rent') ? `<th>Rent</th>` : ''}
+              ${showCol('rental', 'deposit') ? `<th>Deposit</th>` : ''}
+              ${showCol('rental', 'maintenance') ? `<th>Maintenance</th>` : ''}
+              ${showCol('rental', 'available') ? `<th>Available From</th>` : ''}
               <th>Interiors</th>
               <th>Actions</th>
             </tr>
@@ -2243,14 +2399,14 @@ function renderRentalProperties(listings) {
                    ${p.sync_status && p.sync_status !== 'NOT_SYNCED' ? `<br><span class="portal-sync-badge" style="margin-top:4px;"><i class="ti ti-world"></i> ${p.sync_status}</span>` : ''}
                  </td>
                  <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'location', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.location}</td>
-                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'configuration', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.configuration}</td>
-                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'area_sqft', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.area_sqft}</td>
-                 <td contenteditable="true" class="editable-cell" style="color:var(--green); font-weight:600; cursor: text;" onblur="updatePropertyInline(${p.id}, 'price', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${formatPriceToWords(p.price)}</td>
-                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'deposit', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.deposit || 0}</td>
-                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'maintenance', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.maintenance || 0}</td>
-                <td>${p.available_from || 'Immediate'}</td>
-                <td>${p.interiors}</td>
-                <td>
+                 ${showCol('rental', 'type') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'configuration', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.configuration}</td>` : ''}
+                 ${showCol('rental', 'area') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'area_sqft', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.area_sqft}</td>` : ''}
+                 ${showCol('rental', 'rent') ? `<td contenteditable="true" class="editable-cell" style="color:var(--green); font-weight:600; cursor: text;" onblur="updatePropertyInline(${p.id}, 'price', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${formatPriceToWords(p.price)}</td>` : ''}
+                 ${showCol('rental', 'deposit') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'deposit', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.deposit || 0}</td>` : ''}
+                 ${showCol('rental', 'maintenance') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'maintenance', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.maintenance || 0}</td>` : ''}
+                 ${showCol('rental', 'available') ? `<td>${p.available_from || 'Immediate'}</td>` : ''}
+                 <td>${p.interiors}</td>
+                 <td>
                   <div style="display:flex; gap:4px;">
                     ${state.systemSettings.showMaskedFields ? 
                       `<button class="btn btn-ghost btn-sm" style="font-size:9.5px; padding:2px 6px;" onclick="togglePrivateContact(${p.id})">📞 Contacts</button>` : 
@@ -2319,7 +2475,7 @@ function renderCommercialProperties(listings) {
               <span class="inv-name" style="font-size: 16px; font-weight: 700; color:var(--gold-l);">${p.society}</span>
               <span class="chip chip-cold btn-sm" style="font-size:9.5px; background:var(--purple-light); color:var(--purple); cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">ID: ${p.prop_id || '#' + p.id}</span>
               ${p.mandate_type === 'Exclusive' ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(184,134,11,0.2); border:0.5px solid var(--gold); color:var(--gold-l);">👑 EXCLUSIVE</span>` : ''}
-              ${(()=>{ const s=(p.status||'AVAILABLE').toUpperCase(); if(s==='AVAILABLE') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(46,204,113,0.2);border:0.5px solid var(--green);color:var(--green);">🟢 AVAILABLE</span>`; if(s==='SOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.2);border:0.5px solid var(--red);color:var(--red);">🔴 SOLD</span>`; if(s==='ON HOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(230,126,34,0.2);border:0.5px solid #e67e22;color:#e67e22;">🟠 ON HOLD</span>`; if(s==='WITHDRAWN') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(127,140,141,0.2);border:0.5px solid #7f8c8d;color:#7f8c8d;">⚫ WITHDRAWN</span>`; if(s==='EXPIRED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.1);border:0.5px solid #c0392b;color:#c0392b;opacity:0.7;">🔕 EXPIRED</span>`; if(s==='RESERVED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(52,152,219,0.2);border:0.5px solid var(--blue);color:var(--blue-light);">🔵 RESERVED</span>`; return ''; })()}
+              ${(()=>{ const s=(p.status||'AVAILABLE').toUpperCase(); if(s==='AVAILABLE') return `<span class="chip chip-available btn-sm" style="font-size:9px;font-weight:700;background:rgba(46,204,113,0.2);border:0.5px solid var(--green);color:var(--green);">🟢 AVAILABLE</span>`; if(s==='SOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.2);border:0.5px solid var(--red);color:var(--red);">🔴 SOLD</span>`; if(s==='ON HOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(230,126,34,0.2);border:0.5px solid #e67e22;color:#e67e22;">🟠 ON HOLD</span>`; if(s==='WITHDRAWN') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(127,140,141,0.2);border:0.5px solid #7f8c8d;color:#7f8c8d;">⚫ WITHDRAWN</span>`; if(s==='EXPIRED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.1);border:0.5px solid #c0392b;color:#c0392b;opacity:0.7;">🔕 EXPIRED</span>`; if(s==='RESERVED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(52,152,219,0.2);border:0.5px solid var(--blue);color:var(--blue-light);">🔵 RESERVED</span>`; return ''; })()}
               ${p.associate_id ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(52, 152, 219, 0.2); border:0.5px solid var(--blue); color:var(--blue-light);">🏢 ASSOCIATE INVENTORY</span>` : ''}
               ${p.special_tags ? p.special_tags.split(',').map(tag => `<span class="chip chip-warm btn-sm" style="font-size:9px; font-weight:600;">🏷️ ${tag.trim()}</span>`).join(' ') : ''}
               ${p.sync_status && p.sync_status !== 'NOT_SYNCED' ? `<span class="portal-sync-badge"><i class="ti ti-world"></i> ${p.sync_status}</span>` : ''}
@@ -2378,6 +2534,10 @@ function renderCommercialProperties(listings) {
           <button class="btn btn-ghost btn-sm" style="color:var(--gold-l);" onclick="editFullProperty(${p.id})"><i class="ti ti-edit"></i> Edit</button>
           <button class="btn btn-primary btn-sm" onclick="showShareModal(${p.id})">📢 Share Pitch</button>
           <button class="btn btn-ghost btn-sm" onclick="cloneProperty(${p.id})">📋 Clone</button>
+          <button class="btn btn-ghost btn-sm" onclick="printPropertyCard(${p.id})">🖨️ Print</button>
+          ${p.video_link ? `<a class="btn btn-ghost btn-sm" href="${p.video_link}" target="_blank">🔗 Video Link</a>` : ''}
+          ${p.google_map_url ? `<a class="btn btn-ghost btn-sm" href="${p.google_map_url}" target="_blank" style="color:#3498db;">🗺️ Map</a>` : ''}
+          ${(!p.status || p.status.toUpperCase() === 'AVAILABLE' || p.status.toUpperCase() === 'ON HOLD') ? `<button class="btn btn-sm" style="background:rgba(46,204,113,0.15);border:1px solid var(--green);color:var(--green);font-size:11px;padding:4px 10px;" onclick="closureDeal(${p.id},'${(p.society || '').replace(/'/g,"\\'")}','${p.property_type || ''}')">🏁 Close Deal</button>` : ''}
           <button class="btn btn-d btn-sm" onclick="deletePropertyListing(${p.id})" style="padding: 4px 10px; font-size:11px;">✕ Delete</button>
         </div>
 
@@ -2391,6 +2551,7 @@ function renderCommercialProperties(listings) {
             <div>Owner Email: <strong>${p.owner_email || 'N/A'}</strong></div>
             <div>Khata Staging: <strong>${p.registration_status || 'Verified'}</strong></div>
             <div>Unit No: <strong>${p.unit_no || 'N/A'}</strong></div>
+            <div style="color:var(--gold-l);">Commission: <strong>${p.commission_agreed || 'N/A'}</strong></div>
           </div>
           
           <!-- Co-Broker associate linking select -->
@@ -2416,13 +2577,13 @@ function renderCommercialProperties(listings) {
               <th>ID</th>
               <th>Building / Society</th>
               <th>Location</th>
-              <th>Type</th>
-              <th>Available For</th>
-              <th>Super Area</th>
-              <th>Rent / Price</th>
-              <th>Deposit</th>
-              <th>Maintenance</th>
-              <th>Handover</th>
+              ${showCol('commercial', 'type') ? `<th>Type</th>` : ''}
+              ${showCol('commercial', 'available') ? `<th>Available For</th>` : ''}
+              ${showCol('commercial', 'area') ? `<th>Super Area</th>` : ''}
+              ${showCol('commercial', 'price') ? `<th>Rent / Price</th>` : ''}
+              ${showCol('commercial', 'deposit') ? `<th>Deposit</th>` : ''}
+              ${showCol('commercial', 'maintenance') ? `<th>Maintenance</th>` : ''}
+              ${showCol('commercial', 'handover') ? `<th>Handover</th>` : ''}
               <th>Actions</th>
             </tr>
           </thead>
@@ -2438,14 +2599,14 @@ function renderCommercialProperties(listings) {
                    ${p.sync_status && p.sync_status !== 'NOT_SYNCED' ? `<br><span class="portal-sync-badge" style="margin-top:4px;"><i class="ti ti-world"></i> ${p.sync_status}</span>` : ''}
                  </td>
                  <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'location', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.location}</td>
-                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'property_type', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.property_type}</td>
-                 <td contenteditable="true" class="editable-cell" style="color:var(--purple); font-weight:600; cursor: text;" onblur="updatePropertyInline(${p.id}, 'available_for', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.available_for || 'Lease'}</td>
-                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'area_sqft', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.area_sqft} Sqft</td>
-                 <td contenteditable="true" class="editable-cell" style="color:var(--green); font-weight:600; cursor: text;" onblur="updatePropertyInline(${p.id}, 'price', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${formatPriceToWords(p.price)}</td>
-                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'deposit', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.deposit || 0}</td>
-                 <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'maintenance', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.maintenance || 0}</td>
-                <td>${p.possession || 'Immediate'}</td>
-                <td>
+                 ${showCol('commercial', 'type') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'property_type', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.property_type}</td>` : ''}
+                 ${showCol('commercial', 'available') ? `<td contenteditable="true" class="editable-cell" style="color:var(--purple); font-weight:600; cursor: text;" onblur="updatePropertyInline(${p.id}, 'available_for', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.available_for || 'Lease'}</td>` : ''}
+                 ${showCol('commercial', 'area') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'area_sqft', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.area_sqft} Sqft</td>` : ''}
+                 ${showCol('commercial', 'price') ? `<td contenteditable="true" class="editable-cell" style="color:var(--green); font-weight:600; cursor: text;" onblur="updatePropertyInline(${p.id}, 'price', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${formatPriceToWords(p.price)}</td>` : ''}
+                 ${showCol('commercial', 'deposit') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'deposit', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.deposit || 0}</td>` : ''}
+                 ${showCol('commercial', 'maintenance') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'maintenance', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.maintenance || 0}</td>` : ''}
+                 ${showCol('commercial', 'handover') ? `<td>${p.possession || 'Immediate'}</td>` : ''}
+                 <td>
                   <div style="display:flex; gap:4px;">
                     ${state.systemSettings.showMaskedFields ? 
                       `<button class="btn btn-ghost btn-sm" style="font-size:9.5px; padding:2px 6px;" onclick="togglePrivateContact(${p.id})">📞 Contacts</button>` : 
@@ -2488,6 +2649,200 @@ function renderCommercialProperties(listings) {
       `;
     }
   container.innerHTML += renderPaginationBar('commercial', commercialPage, commercialTotalPages);
+}
+
+function renderLandProperties(listings) {
+  const container = document.getElementById('inventory-land-container');
+  if (!container) return;
+
+  if (listings.length === 0) {
+    container.innerHTML = `<div class="empty"><div class="empty-txt">No active land / plot listings matched.</div></div>`;
+    return;
+  }
+
+  const itemsPerPage = 50;
+  const landPage = state.propPages.land || 1;
+  const landTotalPages = Math.ceil(listings.length / itemsPerPage) || 1;
+  const landStart = (landPage - 1) * itemsPerPage;
+  const slicedListings = listings.slice(landStart, landStart + itemsPerPage);
+
+  if (state.viewModes.land === 'card') {
+    container.innerHTML = slicedListings.map(p => `
+      <div class="inv-item" style="border-left: 3.5px solid var(--green) !important;">
+        <div style="position: absolute; top: 12px; right: 12px; z-index: 10;"><input type="checkbox" class="row-checkbox-land" value="${p.id}" onchange="updateBulkSelectionState('land')" style="transform: scale(1.3); cursor: pointer;" onclick="event.stopPropagation()"></div>
+        <div class="inv-row">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span class="inv-name" style="font-size: 16px; font-weight: 700; color:var(--gold-l);">${p.society}</span>
+              <span class="chip chip-cold btn-sm" style="font-size:9.5px; background:rgba(46,204,113,0.15); color:var(--green); cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">ID: ${p.prop_id || '#' + p.id}</span>
+              ${p.mandate_type === 'Exclusive' ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(184,134,11,0.2); border:0.5px solid var(--gold); color:var(--gold-l);">👑 EXCLUSIVE</span>` : ''}
+              ${(()=>{ const s=(p.status||'AVAILABLE').toUpperCase(); if(s==='AVAILABLE') return `<span class="chip chip-available btn-sm" style="font-size:9px;font-weight:700;background:rgba(46,204,113,0.2);border:0.5px solid var(--green);color:var(--green);">🟢 AVAILABLE</span>`; if(s==='SOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.2);border:0.5px solid var(--red);color:var(--red);">🔴 SOLD</span>`; if(s==='ON HOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(230,126,34,0.2);border:0.5px solid #e67e22;color:#e67e22;">🟠 ON HOLD</span>`; if(s==='WITHDRAWN') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(127,140,141,0.2);border:0.5px solid #7f8c8d;color:#7f8c8d;">⚫ WITHDRAWN</span>`; return ''; })()}
+              ${p.associate_id ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(52, 152, 219, 0.2); border:0.5px solid var(--blue); color:var(--blue-light);">🏢 ASSOCIATE INVENTORY</span>` : ''}
+              ${p.special_tags ? p.special_tags.split(',').map(tag => `<span class="chip chip-warm btn-sm" style="font-size:9px; font-weight:600;">🏷️ ${tag.trim()}</span>`).join(' ') : ''}
+            </div>
+            <div class="inv-loc" style="margin-top:6px; font-size:12px;">📍 Location: <strong>${p.location}</strong> · Type: <strong>${p.property_type || 'Land / Plot'}</strong></div>
+          </div>
+          <div style="text-align:right; padding-right: 35px;">
+            <div class="inv-price" style="font-size:18px; color:var(--green); font-weight:800;">${formatPriceToWords(p.price)}</div>
+            <div class="inv-upd" style="font-size:11px; color:var(--text-muted);">Updated: ${new Date(p.last_updated).toLocaleDateString()}</div>
+          </div>
+        </div>
+        
+        <!-- Land Metrics Grid -->
+        <div class="metadata-grid-3" style="margin-top: 10px;">
+          <div class="metadata-item">
+            <span class="metadata-label">📐 Area (Sqft)</span>
+            <span class="metadata-value">${p.area_sqft} Sqft</span>
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label">📏 Dimensions</span>
+            <span class="metadata-value">${p.plot_dimension || p.plot_size || 'N/A'}</span>
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label">🧱 Zoning</span>
+            <span class="metadata-value">${p.configuration || 'N/A'}</span>
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label">🚪 Facing</span>
+            <span class="metadata-value">${p.plot_facing || 'N/A'}</span>
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label">📜 Approval Status</span>
+            <span class="metadata-value">${p.registration_status || 'N/A'}</span>
+          </div>
+          <div class="metadata-item">
+            <span class="metadata-label">🏷️ Plot / Survey No</span>
+            <span class="metadata-value">${p.unit_no || 'N/A'}</span>
+          </div>
+        </div>
+
+        <div class="inv-tags" style="margin-top:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div style="display:flex; gap:6px;">
+            <span class="tag tag-primary">${p.mandate_type || 'Open'} Mandate</span>
+            <span class="tag tag-avail">RERA checked</span>
+            ${p.commission_agreed ? `<span class="tag tag-secondary" style="color:var(--gold-l);">Commission: ${p.commission_agreed}</span>` : ''}
+          </div>
+          <div style="display:flex; gap:6px;">
+            ${p.google_map_url ? `<a class="btn btn-ghost btn-sm" href="${p.google_map_url}" target="_blank" style="color:#3498db; font-size:11px; padding:2px 6px;">🗺️ Map</a>` : ''}
+            <button class="btn btn-ghost btn-sm" style="font-size:11px; padding:2px 6px;" onclick="printPropertyCard(${p.id})">🖨️ Print</button>
+          </div>
+        </div>
+
+        <div style="border-top: 1px solid var(--border); margin-top: 12px; padding-top: 10px; display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; gap:6px;">
+            ${state.systemSettings.showMaskedFields ? 
+              `<button class="btn btn-ghost btn-sm" style="font-size:11px;" onclick="togglePrivateContact(${p.id})"><i class="ti ti-phone"></i> Contacts</button>` : 
+              `<button class="btn btn-ghost btn-sm" style="font-size:11px; opacity:0.5;" disabled>🔒 Masked Owner</button>`
+            }
+            <button class="btn btn-ghost btn-sm" style="color:var(--gold-l); font-size:11px;" onclick="editFullProperty(${p.id})"><i class="ti ti-edit"></i> Edit</button>
+            <button class="btn btn-primary btn-sm" style="font-size:11px;" onclick="showShareModal(${p.id})">📢 Share</button>
+            <button class="btn btn-ghost btn-sm" style="font-size:11px;" onclick="cloneProperty(${p.id})"><i class="ti ti-copy"></i> Clone</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--gold-l); font-size:11px;" onclick="promptAddTag(${p.id}, 'properties')">+ Tag</button>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="color:var(--red); font-size:11px; border:1px solid rgba(192,57,43,0.3);" onclick="deletePropertyListing(${p.id})"><i class="ti ti-trash"></i> Delete</button>
+        </div>
+
+        ${state.systemSettings.showMaskedFields ? `
+        <div id="private-contact-${p.id}" class="private-info" style="display:none; background:rgba(184, 134, 11, 0.04); margin-top:10px; padding:10px; border-radius:var(--radius-sm); border:1px solid var(--border);">
+          <div style="display:flex; justify-content:space-between; gap:15px; flex-wrap:wrap; align-items:center;">
+            <div>
+              🔐 <strong>Owner Details:</strong> ${p.owner_name || 'N/A'} &nbsp;|&nbsp; 
+              Phone: <strong>${p.owner_phone || 'N/A'}</strong> &nbsp;|&nbsp;
+              Email: <strong>${p.owner_email || 'N/A'}</strong> &nbsp;|&nbsp;
+              Plot No: <strong>${p.unit_no || 'N/A'}</strong>
+            </div>
+            <div>
+              🤝 <strong>Link Associate:</strong>
+              <select class="form-select btn-sm" style="display:inline-block; font-size:11px; padding: 2px 6px; width: 160px;" onchange="linkAssociateToProperty(${p.id}, this.value)">
+                <option value="">-- Link Co-Broker --</option>
+                ${state.associates.map(a => `<option value="${a.id}" ${p.associate_id === a.id ? 'selected' : ''}>${a.name}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+          ${p.admin_comments ? `<div style="margin-top:6px; font-size:11px; color:#ff7675;"><strong>Admin Comments:</strong> ${p.admin_comments}</div>` : ''}
+          ${p.comments ? `<div style="margin-top:4px; font-size:11px; color:var(--text-muted);"><strong>Private Comments:</strong> ${p.comments}</div>` : ''}
+        </div>
+        ` : ''}
+      </div>
+    `).join('');
+  } else {
+    container.innerHTML = `
+      <div class="tw">
+        <table class="tbl">
+        <thead>
+          <tr>
+            <th><input type="checkbox" onchange="toggleSelectAllRows('land', this)"></th>
+            <th>Prop ID</th>
+            <th>Society / Layout</th>
+            <th>Location</th>
+            ${showCol('land', 'type') ? `<th>Type</th>` : ''}
+            ${showCol('land', 'zoning') ? `<th>Zoning</th>` : ''}
+            ${showCol('land', 'area') ? `<th>Area (Sqft)</th>` : ''}
+            ${showCol('land', 'price') ? `<th>Price</th>` : ''}
+            ${showCol('land', 'dimensions') ? `<th>Dimensions</th>` : ''}
+            ${showCol('land', 'facing') ? `<th>Facing</th>` : ''}
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${slicedListings.map(p => `
+            <tr>
+              <td><input type="checkbox" class="row-checkbox-land" value="${p.id}" onchange="updateBulkSelectionState('land')"></td>
+              <td><span class="chip chip-cold btn-sm" style="font-size:9px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">${p.prop_id || '#' + p.id}</span></td>
+              <td style="cursor: text;">
+                <strong contenteditable="true" class="editable-cell" onblur="updatePropertyInline(${p.id}, 'society', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.society}</strong>
+                ${(!p.status || p.status.toUpperCase() === 'AVAILABLE') ? `<br><span class="chip chip-available btn-sm" style="font-size:8px; font-weight:700; background:rgba(46, 204, 113, 0.2); border:0.5px solid var(--green); color:var(--green); margin-top:4px; display:inline-block;">🟢 AVAILABLE</span>` : ''}
+              </td>
+              <td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'location', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.location}</td>
+              ${showCol('land', 'type') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'property_type', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.property_type}</td>` : ''}
+              ${showCol('land', 'zoning') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'configuration', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.configuration || 'Residential'}</td>` : ''}
+              ${showCol('land', 'area') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'area_sqft', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.area_sqft} Sqft</td>` : ''}
+              ${showCol('land', 'price') ? `<td contenteditable="true" class="editable-cell" style="color:var(--green); font-weight:600; cursor: text;" onblur="updatePropertyInline(${p.id}, 'price', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${formatPriceToWords(p.price)}</td>` : ''}
+              ${showCol('land', 'dimensions') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'plot_dimension', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.plot_dimension || 'N/A'}</td>` : ''}
+              ${showCol('land', 'facing') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'plot_facing', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.plot_facing || 'N/A'}</td>` : ''}
+              <td>
+                <div style="display:flex; gap:4px;">
+                  ${state.systemSettings.showMaskedFields ? 
+                    `<button class="btn btn-ghost btn-sm" style="font-size:9.5px; padding:2px 6px;" onclick="togglePrivateContact(${p.id})">📞 Contacts</button>` : 
+                    `<button class="btn btn-ghost btn-sm" style="font-size:9.5px; padding:2px 6px; opacity:0.5;" disabled>🔒 Locked</button>`
+                  }
+                  <button class="btn btn-ghost btn-sm" style="font-size:9.5px; padding:2px 6px; color:var(--gold-l);" onclick="editFullProperty(${p.id})"><i class="ti ti-edit"></i> Edit</button>
+                  <button class="btn btn-primary btn-sm" style="font-size:9.5px; padding:2px 6px;" onclick="showShareModal(${p.id})">📢 Share</button>
+                  <button class="btn btn-ghost btn-sm" style="font-size:9.5px; padding:2px 6px;" onclick="cloneProperty(${p.id})">📋 Clone</button>
+                  <button class="btn btn-ghost btn-sm" style="color:var(--gold-l); font-size:9.5px; padding:2px 6px;" onclick="promptAddTag(${p.id}, 'properties')">+ Tag</button>
+                  <button class="btn btn-d btn-sm" style="font-size:9.5px; padding:2px 6px; color:var(--red);" onclick="deletePropertyListing(${p.id})">✕</button>
+                </div>
+              </td>
+            </tr>
+            ${state.systemSettings.showMaskedFields ? `
+            <tr id="private-contact-row-${p.id}" style="display:none; background: rgba(184, 134, 11, 0.04);">
+              <td colspan="12" style="padding:10px;">
+                <div style="display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; align-items:center;">
+                  <div>
+                    🔐 <strong>Direct Contact Details:</strong>
+                    &nbsp;&nbsp;|&nbsp;&nbsp;Owner: <strong>${p.owner_name}</strong>
+                    &nbsp;&nbsp;|&nbsp;&nbsp;Phone: <strong>${p.owner_phone}</strong>
+                    &nbsp;&nbsp;|&nbsp;&nbsp;Email: <strong>${p.owner_email || 'N/A'}</strong>
+                    &nbsp;&nbsp;|&nbsp;&nbsp;Plot No: <strong>${p.unit_no || 'N/A'}</strong>
+                  </div>
+                  <div>
+                    🤝 <strong>Link Associate:</strong>
+                    <select class="form-select btn-sm" style="display:inline-block; font-size:11px; padding: 2px 6px; width: 160px; margin-left:8px;" onchange="linkAssociateToProperty(${p.id}, this.value)">
+                      <option value="">-- Link Co-Broker --</option>
+                      ${state.associates.map(a => `<option value="${a.id}" ${p.associate_id === a.id ? 'selected' : ''}>${a.name}</option>`).join('')}
+                    </select>
+                  </div>
+                </div>
+              </td>
+            </tr>
+            ` : ''}
+          `).join('')}
+        </tbody>
+        </table>
+      </div>
+    `;
+  }
+  container.innerHTML += renderPaginationBar('land', landPage, landTotalPages);
 }
 
 function togglePrivateContact(id) {
@@ -2915,10 +3270,20 @@ async function loadAssociates() {
     const tbody = document.getElementById('associates-list-container');
     if (displayData.length === 0) {
       tbody.innerHTML = `<tr><td colspan="7" class="empty">No co-brokers logged or matched criteria. Click Register Associate to begin!</td></tr>`;
+      const pagWrapper = document.getElementById('associates-pagination-wrapper');
+      if (pagWrapper) pagWrapper.innerHTML = '';
       return;
     }
 
-    tbody.innerHTML = displayData.map(a => `
+    const itemsPerPage = 50;
+    const totalPages = Math.ceil(displayData.length / itemsPerPage) || 1;
+    const startIdx = (state.assocPage - 1) * itemsPerPage;
+    const pagedData = displayData.slice(startIdx, startIdx + itemsPerPage);
+    
+    const pagWrapper = document.getElementById('associates-pagination-wrapper');
+    if (pagWrapper) pagWrapper.innerHTML = renderPaginationBar('associates', state.assocPage, totalPages, 'changeAssocPage');
+
+    tbody.innerHTML = pagedData.map(a => `
       <tr style="cursor:pointer;" onclick="showAssociateDetails(${a.id})" class="assoc-row">
         <td><strong>${a.name}</strong> ${a.is_inner_circle ? '<span class="badge badge-amber" style="font-size:9px; padding:2px 6px;">⭐ Inner Circle</span>' : ''}</td>
         <td>${a.company || 'Private Brokerage'}</td>
@@ -3475,9 +3840,11 @@ async function loadEnquiries() {
     const data = await res.json();
     state.leads = data;
 
-    const tbody = document.getElementById('enquiry-log-list-container');
+    const wrapper = document.getElementById('enquiry-log-table-wrapper');
+    if (!wrapper) return;
+
     if (data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="9" class="empty">No client requirement logs found.</td></tr>`;
+      wrapper.innerHTML = `<div class="empty"><div class="empty-txt">No client requirement logs found.</div></div>`;
       return;
     }
 
@@ -3489,41 +3856,60 @@ async function loadEnquiries() {
     const pagWrapper = document.getElementById('enquiry-pagination-wrapper');
     if (pagWrapper) pagWrapper.innerHTML = renderPaginationBar('leads', state.leadsPage, totalPages, 'changeLeadsPage');
     
-    tbody.innerHTML = pagedData.map(l => {
-      let tempClass = 'chip-warm';
-      if (l.status === 'Hot') tempClass = 'chip-hot';
-      if (l.status === 'Cold') tempClass = 'chip-cold';
+    wrapper.innerHTML = `
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th style="width: 40px;"><input type="checkbox" id="check-all-leads" onchange="toggleAllRowCheckboxes('leads', this.checked)"></th>
+            <th>Lead Name</th>
+            ${showCol('leads', 'source') ? `<th>Source</th>` : ''}
+            ${showCol('leads', 'stage') ? `<th>Staging Stage</th>` : ''}
+            <th>Temp</th>
+            ${showCol('leads', 'type') ? `<th>Property Type</th>` : ''}
+            ${showCol('leads', 'budget') ? `<th>Budget Range</th>` : ''}
+            ${showCol('leads', 'followup') ? `<th>Follow-up Date</th>` : ''}
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="enquiry-log-list-container">
+          ${pagedData.map(l => {
+            let tempClass = 'chip-warm';
+            if (l.status === 'Hot') tempClass = 'chip-hot';
+            if (l.status === 'Cold') tempClass = 'chip-cold';
 
-      return `
-        <tr>
-          <td><input type="checkbox" class="row-checkbox-leads" value="${l.id}" onchange="updateBulkSelectionState('leads')"></td>
-          <td>
-            <strong style="cursor:pointer; text-decoration:underline;" onclick="showLeadDetails(${l.id})">${l.name}</strong><br>
-            <span style="font-size:10px; color:var(--text-muted)">${l.phone}</span>
-            <span onclick="triggerClickToCall(${l.id}, '${l.name.replace(/'/g, "\\'")}', '${l.phone}')" style="cursor:pointer; color:var(--gold-l); font-size:11px; margin-left:4px;" title="Click-to-Call"><i class="ti ti-phone"></i></span>
-            ${l.agent_name ? `<br><span class="badge" style="background:rgba(201, 153, 26, 0.08); color:var(--gold-l); font-size:9px; padding:1.5px 5px; font-weight:700; margin-top:4px; display:inline-block;"><i class="ti ti-user"></i> ${l.agent_name}</span>` : ''}
-            <div style="margin-top:6px;">
-              <select class="form-select btn-sm" style="font-size:9.5px; padding:2px 4px; width:130px; border: 0.5px solid var(--border);" onchange="linkAssociateToLead(${l.id}, this.value)">
-                <option value="">-- Link Co-Broker --</option>
-                ${state.associates.map(a => `<option value="${a.id}" ${l.associate_id === a.id ? 'selected' : ''}>🤝 ${a.name}</option>`).join('')}
-              </select>
-            </div>
-          </td>
-          <td>${l.source}</td>
-          <td><span class="chip ch-gold">${l.stage}</span></td>
-          <td><span class="chip ${tempClass}">${l.status}</span></td>
-          <td>${l.project_type}</td>
-          <td>₹${(l.budget_min/100000).toFixed(0)}L - ₹${(l.budget_max/100000).toFixed(0)}L</td>
-          <td>${l.next_followup || 'Not scheduled'}</td>
-          <td>
-            <div style="display:flex; flex-direction:column; gap:4px;">
-              <button class="btn btn-ghost btn-sm" style="color:var(--gold-l); font-size:10px; padding:2px 6px;" onclick="editID('leads', ${l.id})"><i class="ti ti-edit"></i> Edit</button>
-              <button class="btn btn-ghost btn-sm" style="color:var(--red); font-size:10px; padding:2px 6px;" onclick="deleteLead(${l.id})">✕ Remove</button>
-            </div>
-          </td>
-        </tr>
-      `;
-    }).join('');
+            return `
+              <tr>
+                <td><input type="checkbox" class="row-checkbox-leads" value="${l.id}" onchange="updateBulkSelectionState('leads')"></td>
+                <td>
+                  <strong style="cursor:pointer; text-decoration:underline;" onclick="showLeadDetails(${l.id})">${l.name}</strong><br>
+                  ${showCol('leads', 'phone') ? `<span style="font-size:10px; color:var(--text-muted)">${l.phone}</span>` : ''}
+                  <span onclick="triggerClickToCall(${l.id}, '${l.name.replace(/'/g, "\\'")}', '${l.phone}')" style="cursor:pointer; color:var(--gold-l); font-size:11px; margin-left:4px;" title="Click-to-Call"><i class="ti ti-phone"></i></span>
+                  ${l.agent_name ? `<br><span class="badge" style="background:rgba(201, 153, 26, 0.08); color:var(--gold-l); font-size:9px; padding:1.5px 5px; font-weight:700; margin-top:4px; display:inline-block;"><i class="ti ti-user"></i> ${l.agent_name}</span>` : ''}
+                  <div style="margin-top:6px;">
+                    <select class="form-select btn-sm" style="font-size:9.5px; padding:2px 4px; width:130px; border: 0.5px solid var(--border);" onchange="linkAssociateToLead(${l.id}, this.value)">
+                      <option value="">-- Link Co-Broker --</option>
+                      ${state.associates.map(a => `<option value="${a.id}" ${l.associate_id === a.id ? 'selected' : ''}>🤝 ${a.name}</option>`).join('')}
+                    </select>
+                  </div>
+                </td>
+                ${showCol('leads', 'source') ? `<td>${l.source}</td>` : ''}
+                ${showCol('leads', 'stage') ? `<td><span class="chip ch-gold">${l.stage}</span></td>` : ''}
+                <td><span class="chip ${tempClass}">${l.status}</span></td>
+                ${showCol('leads', 'type') ? `<td>${l.project_type}</td>` : ''}
+                ${showCol('leads', 'budget') ? `<td>₹${(l.budget_min/100000).toFixed(0)}L - ₹${(l.budget_max/100000).toFixed(0)}L</td>` : ''}
+                ${showCol('leads', 'followup') ? `<td>${l.next_followup || 'Not scheduled'}</td>` : ''}
+                <td>
+                  <div style="display:flex; flex-direction:column; gap:4px;">
+                    <button class="btn btn-ghost btn-sm" style="color:var(--gold-l); font-size:10px; padding:2px 6px;" onclick="editID('leads', ${l.id})"><i class="ti ti-edit"></i> Edit</button>
+                    <button class="btn btn-ghost btn-sm" style="color:var(--red); font-size:10px; padding:2px 6px;" onclick="deleteLead(${l.id})">✕ Remove</button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
   } catch (err) {
     console.error(err);
   }
@@ -4186,6 +4572,8 @@ async function submitAddListing(e) {
     registration_status: document.getElementById('prop-registration').value,
     source: sourceVal,
     sub_source: document.getElementById('prop-sub-source').value,
+    commission_agreed: document.getElementById('prop-commission-agreed').value,
+    google_map_url: document.getElementById('prop-google-map-url').value,
     comments: document.getElementById('prop-comments').value,
     admin_comments: document.getElementById('prop-admin-comments').value,
     special_tags: (() => {
@@ -4291,6 +4679,8 @@ async function submitAddRental(e) {
     registration_status: document.getElementById('rental-registration').value,
     source: document.getElementById('rental-source').value,
     sub_source: document.getElementById('rental-sub-source').value,
+    commission_agreed: document.getElementById('rental-commission-agreed').value,
+    google_map_url: document.getElementById('rental-google-map-url').value,
     comments: document.getElementById('rental-comments').value,
     admin_comments: document.getElementById('rental-admin-comments').value,
     plot_size: document.getElementById('rental-plot-size').value,
@@ -4299,6 +4689,8 @@ async function submitAddRental(e) {
     plot_facing: document.getElementById('rental-plot-facing').value,
     house_facing: document.getElementById('rental-house-facing').value,
     available_for: 'Rent / Lease',
+    zone: document.getElementById('rent-zone').value,
+    onboarded_year: document.getElementById('rent-year').value,
     project_id: document.getElementById('rental-project-link').value || null
   };
 
@@ -4381,8 +4773,12 @@ async function submitAddCommercial(e) {
     registration_status: document.getElementById('comm-registration').value,
     source: document.getElementById('comm-source').value,
     sub_source: document.getElementById('comm-sub-source').value,
+    commission_agreed: document.getElementById('comm-commission-agreed').value,
+    google_map_url: document.getElementById('comm-google-map-url').value,
     comments: document.getElementById('comm-comments').value,
     admin_comments: document.getElementById('comm-admin-comments').value,
+    zone: document.getElementById('comm-zone').value,
+    onboarded_year: document.getElementById('comm-year').value,
     project_id: document.getElementById('comm-project-link').value || null
   };
 
@@ -4408,6 +4804,85 @@ async function submitAddCommercial(e) {
     console.error(err);
   }
 }
+
+window.submitAddLand = async function(e) {
+  e.preventDefault();
+  const data = {
+    prop_id: document.getElementById('land-id').value,
+    mandate_type: document.getElementById('land-mandate').value,
+    property_type: document.getElementById('land-type').value,
+    society: document.getElementById('land-society').value,
+    location: document.getElementById('land-location').value,
+    status: document.getElementById('land-status').value,
+    area_sqft: parseFloat(document.getElementById('land-area').value || 0),
+    configuration: document.getElementById('land-zoning').value,
+    plot_size: document.getElementById('land-size').value,
+    plot_dimension: document.getElementById('land-dimensions').value,
+    plot_facing: document.getElementById('land-facing').value,
+    price: parseFloat(document.getElementById('land-price').value || 0),
+    unit_no: document.getElementById('land-unit-no').value,
+    registration_status: document.getElementById('land-registration').value,
+    owner_name: document.getElementById('land-owner-name').value,
+    owner_phone: document.getElementById('land-owner-phone').value,
+    owner_email: document.getElementById('land-owner-email').value,
+    source: document.getElementById('land-source').value,
+    sub_source: document.getElementById('land-sub-source').value,
+    commission_agreed: document.getElementById('land-commission-agreed').value,
+    google_map_url: document.getElementById('land-google-map-url').value,
+    comments: document.getElementById('land-comments').value,
+    admin_comments: document.getElementById('land-admin-comments').value,
+    zone: document.getElementById('land-zone').value,
+    onboarded_year: document.getElementById('land-year').value,
+    project_id: document.getElementById('land-project-link').value || null,
+    available_for: 'Sale'
+  };
+
+  try {
+    const editId = document.getElementById('edit-land-id').value;
+    const url = editId ? `/api/properties/${editId}` : `/api/properties`;
+    const method = editId ? 'PUT' : 'POST';
+    const res = await fetch(url, {
+      method: method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    if (res.status === 409) {
+      const respData = await res.json();
+      showDuplicateModal(respData.error, respData.existingId, async () => {
+        const forceRes = await fetch(editId ? `/api/properties/${editId}?force=true` : '/api/properties?force=true', {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (forceRes.ok) {
+          showToast(editId ? 'Land listing updated.' : 'Land listing saved.');
+          document.getElementById('form-add-land').reset();
+          closeModal('modal-add-land');
+          loadProperties();
+          loadDashboardData();
+        } else {
+          showToast('Failed to save listing.', 'error');
+        }
+      });
+      return;
+    }
+
+    if (!res.ok) {
+      const errData = await res.json();
+      throw new Error(errData.error || 'Failed to save listing');
+    }
+
+    showToast(editId ? 'Land listing updated successfully.' : 'Land listing saved successfully.');
+    document.getElementById('form-add-land').reset();
+    closeModal('modal-add-land');
+    loadProperties();
+    loadDashboardData();
+  } catch (err) {
+    console.error(err);
+    showToast(err.message, 'error');
+  }
+};
 
 let editingProjectId = null;
 
@@ -4765,6 +5240,14 @@ window.showAddCommercialModal = () => {
   if (titleEl) titleEl.innerText = '🏢 Register Commercial Segment Property';
   openModal('modal-add-commercial');
 };
+window.showAddLandModal = () => {
+  document.getElementById('form-add-land').reset();
+  const titleEl = document.querySelector('#modal-add-land .mtitle');
+  if (titleEl) titleEl.innerText = '🏢 Register Land / Plot Listing';
+  const configs = getStoredConfigs();
+  populateSelectElement('land-source', configs.propertySources);
+  openModal('modal-add-land');
+};
 
 window.cloneProperty = function(id) {
   const p = state.properties.find(x => x.id == id);
@@ -4867,6 +5350,38 @@ window.cloneProperty = function(id) {
     if (titleEl) titleEl.innerText = "Clone of " + (p.society || "Rental Listing");
     
     openModal('modal-add-rental');
+  } else if (isLand) {
+    document.getElementById('form-add-land').reset();
+
+    setVal('land-id', '');
+    setVal('land-mandate', p.mandate_type || 'Non Exclusive');
+    setVal('land-type', p.property_type || 'Residential Plot');
+    setVal('land-society', p.society);
+    setVal('land-location', p.location);
+    setVal('land-status', p.status || 'AVAILABLE');
+    setVal('land-zoning', p.configuration);
+    setVal('land-area', p.area_sqft);
+    setVal('land-size', p.plot_size);
+    setVal('land-dimensions', p.plot_dimension);
+    setVal('land-facing', p.plot_facing);
+    setVal('land-price', p.price);
+    setVal('land-unit-no', '');
+    setVal('land-registration', p.registration_status);
+    setVal('land-owner-name', '');
+    setVal('land-owner-phone', '');
+    setVal('land-owner-email', '');
+    setVal('land-source', p.source);
+    setVal('land-sub-source', p.sub_source);
+    setVal('land-commission-agreed', p.commission_agreed);
+    setVal('land-google-map-url', p.google_map_url);
+    setVal('land-comments', '');
+    setVal('land-admin-comments', '');
+    setVal('land-project-link', p.project_id);
+
+    const titleEl = document.querySelector('#modal-add-land .mtitle');
+    if (titleEl) titleEl.innerText = "Clone of " + (p.society || "Land Listing");
+
+    openModal('modal-add-land');
   } else {
     document.getElementById('form-add-listing').reset();
 
@@ -4938,6 +5453,7 @@ window.editFullProperty = function(id) {
   const pType = (p.property_type || '').toLowerCase();
   const isCommercial = pType.includes('commercial') || pType.includes('office') || pType.includes('retail') || pType.includes('warehouse') || pType.includes('showroom');
   const isRental = pType === 'rental' || (p.available_for && p.available_for.toLowerCase().includes('rent')) || (p.available_for && p.available_for.toLowerCase().includes('lease')) || (p.price_raw || '').toLowerCase().includes('/mo');
+  const isLand = pType === 'land' || pType === 'plot' || pType.includes('land') || pType.includes('plot');
 
   const setVal = (fieldId, val) => {
     const el = document.getElementById(fieldId);
@@ -4949,6 +5465,8 @@ window.editFullProperty = function(id) {
     
     setVal('edit-commercial-id', p.id);
     setVal('comm-id', p.prop_id);
+    setVal('comm-zone', p.zone || 'N');
+    setVal('comm-year', p.onboarded_year || new Date().getFullYear());
     setVal('comm-mandate', p.mandate_type || 'Non Exclusive');
     setVal('comm-society', p.society);
     setVal('comm-location', p.location);
@@ -4974,6 +5492,8 @@ window.editFullProperty = function(id) {
     setVal('comm-registration', p.registration_status);
     setVal('comm-source', p.source);
     setVal('comm-sub-source', p.sub_source);
+    setVal('comm-commission-agreed', p.commission_agreed);
+    setVal('comm-google-map-url', p.google_map_url);
     setVal('comm-comments', p.comments);
 
     const titleEl = document.querySelector('#modal-add-commercial .mtitle');
@@ -4985,6 +5505,8 @@ window.editFullProperty = function(id) {
 
     setVal('edit-rental-id', p.id);
     setVal('rent-id', p.prop_id);
+    setVal('rent-zone', p.zone || 'N');
+    setVal('rent-year', p.onboarded_year || new Date().getFullYear());
     setVal('rental-mandate', p.mandate_type || 'Non Exclusive');
     setVal('rental-type', p.property_type || 'Apartment');
     setVal('rental-society', p.society);
@@ -5015,6 +5537,8 @@ window.editFullProperty = function(id) {
     setVal('rental-registration', p.registration_status);
     setVal('rental-source', p.source);
     setVal('rental-sub-source', p.sub_source);
+    setVal('rental-commission-agreed', p.commission_agreed);
+    setVal('rental-google-map-url', p.google_map_url);
     setVal('rental-comments', p.comments);
 
     setVal('rental-plot-size', p.plot_size);
@@ -5031,6 +5555,41 @@ window.editFullProperty = function(id) {
     if (titleEl) titleEl.innerText = "Edit Rental Listing: " + (p.society || "Property");
     
     openModal('modal-add-rental');
+  } else if (isLand) {
+    document.getElementById('form-add-land').reset();
+
+    setVal('edit-land-id', p.id);
+    setVal('land-id', p.prop_id);
+    setVal('land-zone', p.zone || 'N');
+    setVal('land-year', p.onboarded_year || new Date().getFullYear());
+    setVal('land-mandate', p.mandate_type || 'Non Exclusive');
+    setVal('land-type', p.property_type || 'Residential Plot');
+    setVal('land-society', p.society);
+    setVal('land-location', p.location);
+    setVal('land-status', p.status || 'AVAILABLE');
+    setVal('land-zoning', p.configuration);
+    setVal('land-area', p.area_sqft);
+    setVal('land-size', p.plot_size);
+    setVal('land-dimensions', p.plot_dimension);
+    setVal('land-facing', p.plot_facing);
+    setVal('land-price', p.price);
+    setVal('land-unit-no', p.unit_no);
+    setVal('land-registration', p.registration_status);
+    setVal('land-owner-name', p.owner_name);
+    setVal('land-owner-phone', p.owner_phone);
+    setVal('land-owner-email', p.owner_email);
+    setVal('land-source', p.source);
+    setVal('land-sub-source', p.sub_source);
+    setVal('land-commission-agreed', p.commission_agreed);
+    setVal('land-google-map-url', p.google_map_url);
+    setVal('land-comments', p.comments);
+    setVal('land-admin-comments', p.admin_comments);
+    setVal('land-project-link', p.project_id);
+
+    const titleEl = document.querySelector('#modal-add-land .mtitle');
+    if (titleEl) titleEl.innerText = "Edit Land Listing: " + (p.society || "Property");
+
+    openModal('modal-add-land');
   } else {
     document.getElementById('form-add-listing').reset();
 
@@ -5067,6 +5626,8 @@ window.editFullProperty = function(id) {
     setVal('prop-registration', p.registration_status);
     setVal('prop-source', p.source);
     setVal('prop-sub-source', p.sub_source);
+    setVal('prop-commission-agreed', p.commission_agreed);
+    setVal('prop-google-map-url', p.google_map_url);
     setVal('prop-comments', p.comments);
     
     setVal('prop-tags', p.special_tags);
@@ -6187,6 +6748,7 @@ function populateAllDropdowns() {
   populateSelectElement('prop-source', configs.propertySources);
   populateSelectElement('rental-source', configs.propertySources);
   populateSelectElement('comm-source', configs.propertySources);
+  populateSelectElement('land-source', configs.propertySources);
   
   // 2. Populate Typologies
   populateSelectElement('lead-type', configs.propertyTypes);
@@ -7606,6 +8168,22 @@ async function showLeadDetails(leadId) {
     document.getElementById('lbl-score-clarity').innerText = `${score.clarity} / 5`;
 
     recalculateTotalScore();
+
+    // Populate Closure Checklist & Info
+    document.getElementById('chk-site-visit').checked = lead.closure_site_visit || false;
+    document.getElementById('chk-negotiation').checked = lead.closure_negotiation || false;
+    document.getElementById('chk-agreement').checked = lead.closure_agreement || false;
+    document.getElementById('chk-registration').checked = lead.closure_registration || false;
+    document.getElementById('chk-closed').checked = lead.closure_closed || false;
+
+    document.getElementById('closure-prop-id').value = lead.closure_prop_id || '';
+    document.getElementById('closure-commission-amt').value = lead.closure_commission_amt || '';
+    document.getElementById('closure-notes').value = lead.closure_notes || '';
+
+    // Update Highlights UI
+    if (typeof window.updateClosureFlowUI === 'function') {
+      window.updateClosureFlowUI();
+    }
   } catch (e) {
     console.error(e);
   }
@@ -11352,3 +11930,250 @@ window.updatePropertyInline = async function(id, field, el) {
   `;
   document.head.appendChild(style);
 })();
+
+function printPropertyCard(id) {
+  const p = state.properties.find(x => x.id === id);
+  if (!p) return;
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Property Pitch - ${p.prop_id || p.id}</title>
+        <style>
+          body { font-family: 'Inter', sans-serif; color: #333; padding: 40px; margin: 0; background: #fff; }
+          .header { text-align: center; border-bottom: 2px solid #b8860b; padding-bottom: 20px; margin-bottom: 30px; }
+          .header img { max-height: 80px; }
+          .title { font-size: 24px; font-weight: 800; color: #111; margin: 10px 0 5px 0; }
+          .loc { font-size: 16px; color: #555; }
+          .price { font-size: 28px; font-weight: 800; color: #2ecc71; margin-top: 20px; text-align: center; }
+          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
+          .card { background: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #eee; }
+          .label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+          .val { font-size: 16px; font-weight: 600; color: #222; margin-top: 4px; }
+          .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
+          @media print {
+            body { -webkit-print-color-adjust: exact; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1 style="color: #b8860b; margin:0;">SUBH HOMES</h1>
+          <div style="color: #555;">Premium Real Estate Consultancy</div>
+        </div>
+        <div class="title">${p.society}</div>
+        <div class="loc">${p.location} ${p.zone ? ' | Zone: ' + p.zone : ''}</div>
+        <div class="price">${p.price_raw || 'Price on Request'}</div>
+        
+        <div class="grid">
+          <div class="card">
+            <div class="label">Property Type</div>
+            <div class="val">${p.property_type || 'N/A'}</div>
+          </div>
+          <div class="card">
+            <div class="label">Configuration</div>
+            <div class="val">${p.configuration || 'N/A'}</div>
+          </div>
+          <div class="card">
+            <div class="label">Super Built-up Area</div>
+            <div class="val">${p.area_sqft || 'N/A'} Sqft</div>
+          </div>
+          <div class="card">
+            <div class="label">Furnishing</div>
+            <div class="val">${p.interiors || 'N/A'}</div>
+          </div>
+          <div class="card">
+            <div class="label">Facing</div>
+            <div class="val">${p.facing || 'N/A'}</div>
+          </div>
+          <div class="card">
+            <div class="label">Possession Status</div>
+            <div class="val">${p.possession || p.project_status || 'N/A'}</div>
+          </div>
+        </div>
+        
+        ${p.additional_info ? `
+        <div style="margin-top: 30px;">
+          <div class="label">Description & Amenities</div>
+          <p style="line-height: 1.6; color: #444;">${p.additional_info}</p>
+        </div>` : ''}
+
+        <div class="footer">
+          For inquiries, please contact us.<br>
+          Generated by Subh Homes CRM System
+        </div>
+        <script>
+          setTimeout(() => {
+            window.print();
+            window.close();
+          }, 500);
+        </script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+}
+
+window.updateClosureFlowUI = function() {
+  const steps = [
+    { id: 'step-site-visit', chkId: 'chk-site-visit', label: 'Site Visit' },
+    { id: 'step-negotiation', chkId: 'chk-negotiation', label: 'Negotiation' },
+    { id: 'step-agreement', chkId: 'chk-agreement', label: 'Agreement' },
+    { id: 'step-registration', chkId: 'chk-registration', label: 'Registration' },
+    { id: 'step-closed', chkId: 'chk-closed', label: 'Deal Closed' }
+  ];
+
+  let currentStage = 'New Requirement';
+  steps.forEach(step => {
+    const el = document.getElementById(step.id);
+    const checked = document.getElementById(step.chkId)?.checked;
+    if (el) {
+      if (checked) {
+        el.style.background = 'rgba(46, 204, 113, 0.2)';
+        el.style.borderColor = 'var(--green)';
+        el.style.color = 'var(--green)';
+        currentStage = step.label;
+      } else {
+        el.style.background = 'rgba(255, 255, 255, 0.03)';
+        el.style.borderColor = 'var(--border)';
+        el.style.color = 'var(--text-light)';
+      }
+    }
+  });
+
+  const statusEl = document.getElementById('closure-current-status');
+  if (statusEl) {
+    statusEl.innerText = currentStage;
+    statusEl.style.color = currentStage === 'Deal Closed' ? 'var(--green)' : 'var(--gold-l)';
+  }
+};
+
+window.updateClosureChecklist = function(stepKey, checked) {
+  updateClosureFlowUI();
+};
+
+window.saveClosureDetails = async function() {
+  const leadId = document.getElementById('detail-lead-id').value;
+  if (!leadId) return;
+
+  const payload = {
+    closure_site_visit: document.getElementById('chk-site-visit').checked,
+    closure_negotiation: document.getElementById('chk-negotiation').checked,
+    closure_agreement: document.getElementById('chk-agreement').checked,
+    closure_registration: document.getElementById('chk-registration').checked,
+    closure_closed: document.getElementById('chk-closed').checked,
+    closure_prop_id: document.getElementById('closure-prop-id').value,
+    closure_commission_amt: document.getElementById('closure-commission-amt').value,
+    closure_notes: document.getElementById('closure-notes').value
+  };
+
+  try {
+    const res = await fetch(`/api/leads/${leadId}/closure`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+    if (res.ok) {
+      showToast('Closure Journey transaction details saved successfully.', 'success');
+      if (payload.closure_closed) {
+        if (typeof window.loadEnquiries === 'function') window.loadEnquiries();
+        if (typeof window.loadPipelineBoard === 'function') window.loadPipelineBoard();
+      }
+    } else {
+      showToast(result.error || 'Failed to save closure details.', 'error');
+    }
+  } catch (err) {
+    console.error('Error saving closure details:', err);
+    showToast('Network error saving closure details.', 'error');
+  }
+};
+
+async function loadTodayActivityFeed() {
+  try {
+    const res = await fetch('/api/admin/today-activity');
+    const data = await res.json();
+    
+    const feed = document.getElementById('today-activity-feed');
+    const badge = document.getElementById('today-alerts-count');
+    if (!feed) return;
+
+    const items = [];
+    
+    // Process new properties
+    if (data.properties && data.properties.length > 0) {
+      data.properties.forEach(p => {
+        items.push({
+          type: 'property',
+          time: new Date(p.created_at),
+          html: `
+            <div style="display:flex; align-items:center; gap:8px; padding:6px; background:rgba(46, 204, 113, 0.08); border-radius:4px; border-left:3px solid var(--green); font-size:12px;">
+              <span style="font-size:16px;">🏠</span>
+              <div style="flex:1;">
+                <strong>New Property Listing Added:</strong> ${p.society} (${p.property_type}) in <strong>${p.location}</strong>
+                <span class="chip chip-cold btn-sm" style="font-size:9.5px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">ID: ${p.prop_id || '#' + p.id}</span>
+                <span style="color:var(--green); font-weight:700; margin-left:8px;">${formatPriceToWords(p.price)}</span>
+              </div>
+            </div>
+          `
+        });
+      });
+    }
+
+    // Process new leads
+    if (data.leads && data.leads.length > 0) {
+      data.leads.forEach(l => {
+        items.push({
+          type: 'lead',
+          time: new Date(l.created_at),
+          html: `
+            <div style="display:flex; align-items:center; gap:8px; padding:6px; background:rgba(52, 152, 219, 0.08); border-radius:4px; border-left:3px solid var(--blue); font-size:12px;">
+              <span style="font-size:16px;">👥</span>
+              <div style="flex:1;">
+                <strong>New Client Lead Requirement:</strong> <strong style="cursor:pointer; text-decoration:underline;" onclick="showLeadDetails(${l.id})">${l.name}</strong> seeks <strong>${l.project_type}</strong>
+                <span class="badge" style="background:rgba(201, 153, 26, 0.08); color:var(--gold-l); font-size:9px; padding:1.5px 5px; font-weight:700; margin-left:8px;"><i class="ti ti-user"></i> Assigned: ${l.agent_name || 'Unassigned'}</span>
+              </div>
+            </div>
+          `
+        });
+      });
+    }
+
+    // Process new projects
+    if (data.projects && data.projects.length > 0) {
+      data.projects.forEach(p => {
+        items.push({
+          type: 'project',
+          time: new Date(p.created_at),
+          html: `
+            <div style="display:flex; align-items:center; gap:8px; padding:6px; background:rgba(230, 126, 34, 0.08); border-radius:4px; border-left:3px solid #e67e22; font-size:12px;">
+              <span style="font-size:16px;">🏢</span>
+              <div style="flex:1;">
+                <strong>New Primary Builder Project Launched:</strong> <strong>${p.project_name}</strong> by ${p.builder_name} in <strong>${p.location}</strong>
+                <button class="btn btn-ghost btn-sm" onclick="editID('builder_projects', ${p.id}, '')" style="font-size:10px; padding:2px 4px; border:0.5px solid var(--border); margin-left:8px;">View Project</button>
+              </div>
+            </div>
+          `
+        });
+      });
+    }
+
+    // Sort items newest first
+    items.sort((a,b) => b.time - a.time);
+
+    if (badge) {
+      badge.innerText = `${items.length} alerts`;
+      badge.className = items.length > 0 ? 'badge badge-red' : 'badge badge-blue';
+    }
+
+    if (items.length === 0) {
+      feed.innerHTML = `<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:15px;">No activity logged yet today.</div>`;
+    } else {
+      feed.innerHTML = items.map(it => it.html).join('');
+    }
+  } catch (err) {
+    console.error('Error loading today activity feed:', err);
+  }
+}
+window.loadTodayActivityFeed = loadTodayActivityFeed;
+

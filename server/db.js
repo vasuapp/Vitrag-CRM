@@ -93,7 +93,7 @@ CREATE TABLE properties (
     associate_id INTEGER,
     special_tags TEXT,
     last_updated TEXT DEFAULT CURRENT_TIMESTAMP
-  , sync_status TEXT DEFAULT 'NOT_SYNCED', zone TEXT, onboarded_year TEXT, plot_dimension TEXT, house_facing TEXT, plot_facing TEXT, holder_type TEXT, deleted_at TEXT, admin_comments TEXT, project_id INTEGER, agent_id INTEGER);
+    sync_status TEXT DEFAULT 'NOT_SYNCED', zone TEXT, onboarded_year TEXT, plot_dimension TEXT, house_facing TEXT, plot_facing TEXT, holder_type TEXT, deleted_at TEXT, admin_comments TEXT, project_id INTEGER, agent_id INTEGER, commission_agreed TEXT, google_map_url TEXT);
 CREATE TABLE builder_projects (
     id SERIAL PRIMARY KEY,
     builder_name TEXT NOT NULL,
@@ -325,6 +325,26 @@ CREATE TABLE communication_templates (
 
       `);
     console.log("PostgreSQL tables verified/created successfully.");
+    
+    // Seamless migrations for new columns
+    try {
+      await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS commission_agreed TEXT;');
+      await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS google_map_url TEXT;');
+      
+      await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS closure_site_visit BOOLEAN DEFAULT false;');
+      await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS closure_negotiation BOOLEAN DEFAULT false;');
+      await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS closure_agreement BOOLEAN DEFAULT false;');
+      await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS closure_registration BOOLEAN DEFAULT false;');
+      await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS closure_closed BOOLEAN DEFAULT false;');
+      await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS closure_prop_id TEXT;');
+      await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS closure_commission_amt NUMERIC;');
+      await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS closure_notes TEXT;');
+      
+      console.log("Migration: Added new columns to properties and leads tables successfully.");
+    } catch (migErr) {
+      console.log("Migration skipped or failed:", migErr.message);
+    }
+
     
     // Also seed templates if empty
       const tempCount = (await pool.query("SELECT COUNT(*) FROM communication_templates")).rows[0].count;

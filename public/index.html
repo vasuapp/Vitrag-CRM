@@ -372,6 +372,19 @@
               </div>
             </div>
           </div>
+
+          <!-- Today's Activity Feed & Admin Alerts Segment (Phase C) -->
+          <div class="card" style="margin-bottom: 20px; border-top: 3px solid var(--purple);">
+            <div class="chr">
+              <div class="card-title" style="color: var(--gold-l);"><i class="ti ti-bell"></i> Today's Activity Feed & Admin Alerts</div>
+              <span class="badge badge-blue" id="today-alerts-count">0 alerts</span>
+            </div>
+            <div class="card-sub">Daily report: New property listings, client requirements, and projects registered today</div>
+            
+            <div id="today-activity-feed" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+              <div style="font-size:12px; color:var(--text-muted); text-align:center; padding:15px;">No activity logged yet today.</div>
+            </div>
+          </div>
           
           <div class="grid-asymmetric-1">
             <!-- Card 1: To-Do Console -->
@@ -738,6 +751,7 @@
             <div class="tab active" id="tab-resale" onclick="switchInventoryTab('resale')">Resale</div>
             <div class="tab" id="tab-rental" onclick="switchInventoryTab('rental')">Rental</div>
             <div class="tab" id="tab-commercial" onclick="switchInventoryTab('commercial')">Commercial</div>
+            <div class="tab" id="tab-land" onclick="switchInventoryTab('land')">Land / Plots</div>
             <div class="tab" id="tab-masked" onclick="switchInventoryTab('masked')">Masked Fields</div>
           </div>
           
@@ -751,6 +765,7 @@
                     <button class="btn btn-ghost btn-sm active" id="toggle-resale-card" onclick="setViewMode('resale', 'card')">🎴 Card View</button>
                     <button class="btn btn-ghost btn-sm" id="toggle-resale-table" onclick="setViewMode('resale', 'table')">📊 Table View</button>
                   </div>
+                  <button class="btn btn-ghost btn-sm hidden" id="cols-btn-resale" onclick="toggleColumnDropdown('resale', event)">⚙️ Columns</button>
                   <button onclick="triggerSecureExport('properties')" class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export CSV</button>
                   <button class="btn btn-ghost btn-sm" onclick="triggerImport('properties')"><i class="ti ti-upload"></i> Import Dataset</button>
                   <button class="btn btn-primary btn-sm" onclick="showAddListingModal()">+ Add Resale Listing</button>
@@ -911,6 +926,7 @@
                      <button class="btn btn-ghost btn-sm active" id="toggle-rental-card" onclick="setViewMode('rental', 'card')">🎴 Card View</button>
                      <button class="btn btn-ghost btn-sm" id="toggle-rental-table" onclick="setViewMode('rental', 'table')">📊 Table View</button>
                    </div>
+                   <button class="btn btn-ghost btn-sm hidden" id="cols-btn-rental" onclick="toggleColumnDropdown('rental', event)">⚙️ Columns</button>
                    <button onclick="triggerSecureExport('properties')" class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export CSV</button>
                    <button class="btn btn-ghost btn-sm" onclick="triggerImport('properties')"><i class="ti ti-upload"></i> Import</button>
                    <button class="btn btn-primary btn-sm" onclick="showAddRentalModal()">+ Add Rental Listing</button>
@@ -934,6 +950,7 @@
                      <button class="btn btn-ghost btn-sm active" id="toggle-commercial-card" onclick="setViewMode('commercial', 'card')">🎴 Card View</button>
                      <button class="btn btn-ghost btn-sm" id="toggle-commercial-table" onclick="setViewMode('commercial', 'table')">📊 Table View</button>
                    </div>
+                   <button class="btn btn-ghost btn-sm hidden" id="cols-btn-commercial" onclick="toggleColumnDropdown('commercial', event)">⚙️ Columns</button>
                    <button onclick="triggerSecureExport('properties')" class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export CSV</button>
                    <button class="btn btn-ghost btn-sm" onclick="triggerImport('properties')"><i class="ti ti-upload"></i> Import</button>
                    <button class="btn btn-primary btn-sm" onclick="showAddCommercialModal()">+ Add Commercial Listing</button>
@@ -945,7 +962,31 @@
               </div>
             </div>
           </div>
-          
+
+          <!-- Land / Plots Pane -->
+          <div id="inventory-land-pane" style="display:none;">
+            <div class="card">
+              <div class="chr">
+                <div class="card-title"><i class="ti ti-map"></i> Land & Plots Listings</div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                   <div class="toggle-group" style="display:flex; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow:hidden; margin-right:8px; background: rgba(0,0,0,0.2);">
+                     <button class="btn btn-primary btn-sm" style="background: var(--gold); border: none; margin-right: 10px;" onclick="toggleSelectAllButton('land', this)">☑️ Select All</button>
+                     <button class="btn btn-ghost btn-sm active" id="toggle-land-card" onclick="setViewMode('land', 'card')">🎴 Card View</button>
+                     <button class="btn btn-ghost btn-sm" id="toggle-land-table" onclick="setViewMode('land', 'table')">📊 Table View</button>
+                   </div>
+                   <button class="btn btn-ghost btn-sm hidden" id="cols-btn-land" onclick="toggleColumnDropdown('land', event)">⚙️ Columns</button>
+                   <button onclick="triggerSecureExport('properties')" class="btn btn-ghost btn-sm"><i class="ti ti-download"></i> Export CSV</button>
+                   <button class="btn btn-ghost btn-sm" onclick="triggerImport('properties')"><i class="ti ti-upload"></i> Import</button>
+                   <button class="btn btn-primary btn-sm" onclick="showAddLandModal()">+ Add Land Listing</button>
+                </div>
+              </div>
+              <div class="card-sub">Agricultural land, industrial zones, and residential layout plots</div>
+              <div id="inventory-land-container">
+                <!-- Land dynamically matching property_type = land -->
+              </div>
+            </div>
+          </div>
+
           <!-- Employee Field Masking Pane -->
           <div id="inventory-masked-pane" style="display:none;">
             <div class="card" style="border-color:var(--amber); background:var(--amber-light);">
@@ -1078,6 +1119,7 @@
                 </tbody>
               </table>
             </div>
+            <div id="associates-pagination-wrapper"></div>
           </div>
           
           <!-- Relational Associate Dashboard details panel -->
@@ -1475,31 +1517,15 @@
                     <option value="Cold">Cold</option>
                   </select>
                   <button onclick="showAddEnquiryModal()" class="btn btn-primary btn-sm" style="padding: 4px 8px; font-size:11.5px; font-weight:700;"><i class="ti ti-plus"></i> + Register Enquiry</button>
+                  <button class="btn btn-ghost btn-sm" id="cols-btn-leads" onclick="toggleColumnDropdown('leads', event)" style="padding: 4px 8px; font-size:11.5px;">⚙️ Columns</button>
                   <button onclick="triggerSecureExport('leads')" class="btn btn-ghost btn-sm" style="padding: 4px 8px; font-size:11.5px;"><i class="ti ti-download"></i> Export CSV</button>
                   <button class="btn btn-primary btn-sm" style="background: var(--gold); border: none; margin-right: 10px;" onclick="toggleSelectAllButton('leads', this)">☑️ Select All</button>
-                  <button class="btn btn-ghost btn-sm" onclick="triggerImport('leads')"" style="padding: 4px 8px; font-size:11.5px;"><i class="ti ti-upload"></i> Import Dataset</button>
+                  <button class="btn btn-ghost btn-sm" onclick="triggerImport('leads')" style="padding: 4px 8px; font-size:11.5px;"><i class="ti ti-upload"></i> Import Dataset</button>
                 </div>
               </div>
               <div class="card-sub">Complete customer enquiries register matching pipeline stages</div>
-              <div class="tw">
-                <table class="tbl">
-                  <thead>
-                    <tr>
-                      <th style="width: 40px;"><input type="checkbox" id="check-all-leads" onchange="toggleAllRowCheckboxes('leads', this.checked)"></th>
-                      <th>Lead Name</th>
-                      <th>Source</th>
-                      <th>Staging Stage</th>
-                      <th>Temperature</th>
-                      <th>BHK Requirement</th>
-                      <th>Budget Range</th>
-                      <th>Follow-up Date</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="enquiry-log-list-container">
-                    <!-- Enquiries loaded here -->
-                  </tbody>
-                </table>
+              <div class="tw" id="enquiry-log-table-wrapper" style="margin-top: 10px;">
+                <!-- Table will be dynamically loaded here by loadEnquiries() -->
               </div>
               <div id="enquiry-pagination-wrapper"></div>
             </div>
@@ -3195,13 +3221,14 @@
             <div class="form-group" style="display:flex; gap:10px;">
               <div style="flex:1;">
                 <label class="form-label">Zone *</label>
-                <select class="form-input" id="prop-zone" required>
-                  <option value="N">North (N)</option>
-                  <option value="S">South (S)</option>
-                  <option value="E">East (E)</option>
-                  <option value="W">West (W)</option>
-                  <option value="C">Central (C)</option>
-                </select>
+                <input class="form-input" type="text" id="prop-zone" list="datalist-prop-zone" required placeholder="Select or type zone" value="N">
+                <datalist id="datalist-prop-zone">
+                  <option value="N"></option>
+                  <option value="S"></option>
+                  <option value="E"></option>
+                  <option value="W"></option>
+                  <option value="C"></option>
+                </datalist>
               </div>
               <div style="flex:1;">
                 <label class="form-label">Year *</label>
@@ -3220,10 +3247,11 @@
             </div>
             <div class="form-group">
               <label class="form-label">Available For *</label>
-              <select class="form-select" id="prop-available-for" required onchange="document.querySelectorAll('.rent-only').forEach(el => el.classList.toggle('hidden', this.value !== 'Rent / Lease'))">
-                <option value="Sale">Outright Sale</option>
-                <option value="Rent / Lease">Rent / Lease</option>
-              </select>
+              <input class="form-input" type="text" id="prop-available-for" list="datalist-prop-avail" required placeholder="Select or type" value="Sale" onchange="document.querySelectorAll('.rent-only').forEach(el => el.classList.toggle('hidden', this.value !== 'Rent / Lease'))">
+              <datalist id="datalist-prop-avail">
+                <option value="Sale"></option>
+                <option value="Rent / Lease"></option>
+              </datalist>
             </div>
           </div>
           <div class="form-row">
@@ -3264,14 +3292,15 @@
             </div>
             <div class="form-group">
               <label class="form-label">Availability / Status</label>
-              <select class="form-select" id="prop-status">
-                <option value="AVAILABLE">🟢 Available</option>
-                <option value="SOLD">🔴 Sold</option>
-                <option value="ON HOLD">🟠 On Hold</option>
-                <option value="WITHDRAWN">⚫ Withdrawn</option>
-                <option value="EXPIRED">🔕 Expired</option>
-                <option value="RESERVED">🔵 Reserved</option>
-              </select>
+              <input class="form-input" type="text" id="prop-status" list="datalist-prop-status" placeholder="Select or type status" value="AVAILABLE">
+              <datalist id="datalist-prop-status">
+                <option value="AVAILABLE"></option>
+                <option value="SOLD"></option>
+                <option value="ON HOLD"></option>
+                <option value="WITHDRAWN"></option>
+                <option value="EXPIRED"></option>
+                <option value="RESERVED"></option>
+              </datalist>
             </div>
           </div>
           <div class="form-row">
@@ -3454,6 +3483,16 @@
               <input class="form-input" type="text" id="prop-unit-no" placeholder="e.g. Flat 302, Tower B">
             </div>
           </div>
+          <div class="form-row" style="background: rgba(184, 134, 11, 0.05); padding: 8px; border-radius: var(--radius-sm); border: 1px dashed var(--gold); margin-bottom: 12px;">
+            <div class="form-group">
+              <label class="form-label" style="color: var(--gold-l);">Commission Confirmed (%)</label>
+              <input class="form-input" type="text" id="prop-commission-agreed" placeholder="e.g. 2%, 1 Month Rent, Fixed 1L">
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="color: var(--gold-l);">Google Map URL</label>
+              <input class="form-input" type="url" id="prop-google-map-url" placeholder="https://maps.app.goo.gl/...">
+            </div>
+          </div>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Lead Source</label>
@@ -3503,13 +3542,14 @@
             <div class="form-group" style="display:flex; gap:10px;">
               <div style="flex:1;">
                 <label class="form-label">Zone *</label>
-                <select class="form-input" id="rent-zone" required>
-                  <option value="N">North (N)</option>
-                  <option value="S">South (S)</option>
-                  <option value="E">East (E)</option>
-                  <option value="W">West (W)</option>
-                  <option value="C">Central (C)</option>
-                </select>
+                <input class="form-input" type="text" id="rent-zone" list="datalist-rent-zone" required placeholder="Select or type zone" value="N">
+                <datalist id="datalist-rent-zone">
+                  <option value="N"></option>
+                  <option value="S"></option>
+                  <option value="E"></option>
+                  <option value="W"></option>
+                  <option value="C"></option>
+                </datalist>
               </div>
               <div style="flex:1;">
                 <label class="form-label">Year *</label>
@@ -3528,21 +3568,23 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Mandate Type *</label>
-              <select class="form-select" id="rental-mandate" required>
-                <option value="Non Exclusive">Non Exclusive</option>
-                <option value="Exclusive">Exclusive</option>
-              </select>
+              <input class="form-input" type="text" id="rental-mandate" list="datalist-rent-mandate" required placeholder="Select or type mandate">
+              <datalist id="datalist-rent-mandate">
+                <option value="Non Exclusive"></option>
+                <option value="Exclusive"></option>
+              </datalist>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Property Type *</label>
-              <select class="form-select" id="rental-type" required onchange="toggleVillaFields(this.value, 'rental')">
-                <option value="Apartment">Apartment</option>
-                <option value="Villa">Villa</option>
-                <option value="Independent House">Independent House</option>
-                <option value="Penthouse">Penthouse</option>
-              </select>
+              <input class="form-input" type="text" id="rental-type" list="datalist-rent-type" required placeholder="Select or type property type" oninput="toggleVillaFields(this.value, 'rental')">
+              <datalist id="datalist-rent-type">
+                <option value="Apartment"></option>
+                <option value="Villa"></option>
+                <option value="Independent House"></option>
+                <option value="Penthouse"></option>
+              </datalist>
             </div>
             <div class="form-group">
               <label class="form-label">Society / Project *</label>
@@ -3556,14 +3598,15 @@
             </div>
             <div class="form-group">
               <label class="form-label">Availability Status</label>
-              <select class="form-select" id="rental-status">
-                <option value="AVAILABLE">🟢 Available</option>
-                <option value="SOLD">🔴 Rented Out / Sold</option>
-                <option value="ON HOLD">🟠 On Hold</option>
-                <option value="WITHDRAWN">⚫ Withdrawn</option>
-                <option value="EXPIRED">🔕 Expired</option>
-                <option value="RESERVED">🔵 Reserved</option>
-              </select>
+              <input class="form-input" type="text" id="rental-status" list="datalist-rent-status" placeholder="Select or type status" value="AVAILABLE">
+              <datalist id="datalist-rent-status">
+                <option value="AVAILABLE"></option>
+                <option value="SOLD"></option>
+                <option value="ON HOLD"></option>
+                <option value="WITHDRAWN"></option>
+                <option value="EXPIRED"></option>
+                <option value="RESERVED"></option>
+              </datalist>
             </div>
           </div>
           <div class="form-row">
@@ -3614,11 +3657,12 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Interiors Status</label>
-              <select class="form-select" id="rental-interiors">
-                <option value="Semi Furnished">Semi Furnished</option>
-                <option value="Fully Furnished">Fully Furnished</option>
-                <option value="Unfurnished">Unfurnished</option>
-              </select>
+              <input class="form-input" type="text" id="rental-interiors" list="datalist-rent-interiors" placeholder="Select or type interiors">
+              <datalist id="datalist-rent-interiors">
+                <option value="Semi Furnished"></option>
+                <option value="Fully Furnished"></option>
+                <option value="Unfurnished"></option>
+              </datalist>
             </div>
             <div class="form-group">
               <label class="form-label">Facing</label>
@@ -3711,6 +3755,16 @@
               <label class="form-label">Sub Source</label>
               <input class="form-input" type="text" id="rental-sub-source" placeholder="e.g. Facebook">
             </div>
+            <div class="form-group">
+              <label class="form-label" style="color: var(--gold-l);">Commission Confirmed (%)</label>
+              <input class="form-input" type="text" id="rental-commission-agreed" placeholder="e.g. 2%, 1 Month Rent, Fixed 1L">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" style="color: #3498db;"><i class="ti ti-map-pin"></i> Google Map Link</label>
+              <input class="form-input" type="url" id="rental-google-map-url" placeholder="https://maps.app.goo.gl/...">
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">Vj Comments (Private)</label>
@@ -3750,13 +3804,14 @@
             <div class="form-group" style="display:flex; gap:10px;">
               <div style="flex:1;">
                 <label class="form-label">Zone *</label>
-                <select class="form-input" id="comm-zone" required>
-                  <option value="N">North (N)</option>
-                  <option value="S">South (S)</option>
-                  <option value="E">East (E)</option>
-                  <option value="W">West (W)</option>
-                  <option value="C">Central (C)</option>
-                </select>
+                <input class="form-input" type="text" id="comm-zone" list="datalist-comm-zone" required placeholder="Select or type zone" value="N">
+                <datalist id="datalist-comm-zone">
+                  <option value="N"></option>
+                  <option value="S"></option>
+                  <option value="E"></option>
+                  <option value="W"></option>
+                  <option value="C"></option>
+                </datalist>
               </div>
               <div style="flex:1;">
                 <label class="form-label">Year *</label>
@@ -3775,21 +3830,23 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Mandate Type *</label>
-              <select class="form-select" id="comm-mandate" required>
-                <option value="Non Exclusive">Non Exclusive</option>
-                <option value="Exclusive">Exclusive</option>
-              </select>
+              <input class="form-input" type="text" id="comm-mandate" list="datalist-comm-mandate" required placeholder="Select or type mandate">
+              <datalist id="datalist-comm-mandate">
+                <option value="Non Exclusive"></option>
+                <option value="Exclusive"></option>
+              </datalist>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Commercial Type *</label>
-              <select class="form-select" id="comm-type" required>
-                <option value="Office Space">Office Space</option>
-                <option value="Retail Showroom">Retail Showroom</option>
-                <option value="Warehouse">Warehouse</option>
-                <option value="Industrial Land">Industrial Land / Plot</option>
-              </select>
+              <input class="form-input" type="text" id="comm-type" list="datalist-comm-type" required placeholder="Select or type property type">
+              <datalist id="datalist-comm-type">
+                <option value="Office Space"></option>
+                <option value="Retail Showroom"></option>
+                <option value="Warehouse"></option>
+                <option value="Industrial Land"></option>
+              </datalist>
             </div>
             <div class="form-group">
               <label class="form-label">Project / Building Name *</label>
@@ -3803,10 +3860,11 @@
             </div>
             <div class="form-group">
               <label class="form-label">Available For *</label>
-              <select class="form-select" id="comm-available-for" required>
-                <option value="Rent / Lease">Rent / Lease</option>
-                <option value="Sale">Outright Sale</option>
-              </select>
+              <input class="form-input" type="text" id="comm-available-for" list="datalist-comm-avail" required placeholder="Select or type" value="Rent / Lease">
+              <datalist id="datalist-comm-avail">
+                <option value="Rent / Lease"></option>
+                <option value="Sale"></option>
+              </datalist>
             </div>
           </div>
           <div class="form-row">
@@ -3822,11 +3880,12 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Interiors Status</label>
-              <select class="form-select" id="comm-interiors">
-                <option value="Fully Fitted Out">Fully Fitted Out</option>
-                <option value="Bare Shell">Bare Shell / Warm Shell</option>
-                <option value="Furnished Office">Furnished Office</option>
-              </select>
+              <input class="form-input" type="text" id="comm-interiors" list="datalist-comm-interiors" placeholder="Select or type interiors">
+              <datalist id="datalist-comm-interiors">
+                <option value="Fully Fitted Out"></option>
+                <option value="Bare Shell"></option>
+                <option value="Furnished Office"></option>
+              </datalist>
             </div>
             <div class="form-group">
               <label class="form-label">Car Park</label>
@@ -3909,6 +3968,16 @@
               <label class="form-label">Sub Source</label>
               <input class="form-input" type="text" id="comm-sub-source" placeholder="e.g. Paid listing ad">
             </div>
+            <div class="form-group">
+              <label class="form-label" style="color: var(--gold-l);">Commission Confirmed (%)</label>
+              <input class="form-input" type="text" id="comm-commission-agreed" placeholder="e.g. 2%, 1 Month Rent, Fixed 1L">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" style="color: #3498db;"><i class="ti ti-map-pin"></i> Google Map Link</label>
+              <input class="form-input" type="url" id="comm-google-map-url" placeholder="https://maps.app.goo.gl/...">
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">Vj Comments (Private)</label>
@@ -3922,6 +3991,222 @@
         <div class="mft">
           <button class="btn btn-ghost" type="button" onclick="closeModal('modal-add-commercial')">Close</button>
           <button class="btn btn-primary" type="submit">Submit Commercial Property</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2D. ADD PROPERTY LISTING (LAND) -->
+  <div class="mbg hidden" id="modal-add-land">
+    <div class="modal" style="max-width: 800px;">
+      <div class="mhd">
+        <div class="mtitle">🏢 Register Land / Plot Listing</div>
+        <button class="mclose" onclick="closeModal('modal-add-land')">&times;</button>
+      </div>
+      <form id="form-add-land" onsubmit="submitAddLand(event)" autocomplete="off">
+        <div class="mbdy" style="max-height: 70vh; overflow-y: auto;">
+          <input type="hidden" id="edit-land-id">
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
+                Property ID 
+                <span class="btn btn-primary" style="padding: 2px 8px; font-size:11px; cursor:pointer;" onclick="previewID('land-id', 'land-type', 'Sale', 'land-zone', 'land-year', false)">👁 Preview</span>
+              </label>
+              <input class="form-input" type="text" id="land-id" placeholder="(Leave blank to auto-generate)">
+            </div>
+            <div class="form-group" style="display:flex; gap:10px;">
+              <div style="flex:1;">
+                <label class="form-label">Zone *</label>
+                <input class="form-input" type="text" id="land-zone" list="datalist-land-zone" required placeholder="Select or type zone" value="N">
+                <datalist id="datalist-land-zone">
+                  <option value="N"></option>
+                  <option value="S"></option>
+                  <option value="E"></option>
+                  <option value="W"></option>
+                  <option value="C"></option>
+                </datalist>
+              </div>
+              <div style="flex:1;">
+                <label class="form-label">Year *</label>
+                <input class="form-input" type="number" id="land-year" required placeholder="YYYY" value="2026">
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group" style="width: 100%;">
+              <label class="form-label" style="color:var(--gold-l); font-weight:700;"><i class="ti ti-link"></i> Link Project (Optional - Auto-Populates Society & Location)</label>
+              <select class="form-select prop-project-select" id="land-project-link" onchange="autoPopulateFromProject(this.value, 'land')" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); width: 100%;">
+                <option value="">-- Select Project --</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Mandate Type *</label>
+              <input class="form-input" type="text" id="land-mandate" list="datalist-land-mandate" required placeholder="Select or type mandate">
+              <datalist id="datalist-land-mandate">
+                <option value="Non Exclusive"></option>
+                <option value="Exclusive"></option>
+              </datalist>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Land / Plot Type *</label>
+              <input class="form-input" type="text" id="land-type" list="datalist-land-type" required placeholder="Select or type land type">
+              <datalist id="datalist-land-type">
+                <option value="Residential Plot"></option>
+                <option value="Commercial Plot"></option>
+                <option value="Agricultural Land"></option>
+                <option value="Industrial Plot"></option>
+                <option value="Farmland"></option>
+              </datalist>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Project / Society / Layout Name *</label>
+              <input class="form-input" type="text" id="land-society" required placeholder="e.g. Sobha Layout or Green Acres">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Location / Sub-locality *</label>
+              <input class="form-input" type="text" id="land-location" required placeholder="e.g. Devanahalli">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Availability Status</label>
+              <input class="form-input" type="text" id="land-status" list="datalist-land-status" placeholder="Select or type status" value="AVAILABLE">
+              <datalist id="datalist-land-status">
+                <option value="AVAILABLE"></option>
+                <option value="SOLD"></option>
+                <option value="ON HOLD"></option>
+                <option value="WITHDRAWN"></option>
+              </datalist>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Zoning (Use) *</label>
+              <input class="form-input" type="text" id="land-zoning" list="datalist-land-zoning" required placeholder="e.g. Residential, Commercial, Agricultural">
+              <datalist id="datalist-land-zoning">
+                <option value="Residential"></option>
+                <option value="Commercial"></option>
+                <option value="Agricultural"></option>
+                <option value="Industrial"></option>
+                <option value="Mixed Use"></option>
+              </datalist>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Plot Area (Sqft) *</label>
+              <input class="form-input" type="number" id="land-area" required placeholder="e.g. 1200, 2400">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Plot Size Description (e.g. Acres, Guntas, Cents)</label>
+              <input class="form-input" type="text" id="land-size" placeholder="e.g. 30x40, 2.5 Acres">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Plot Dimensions (WxL)</label>
+              <input class="form-input" type="text" id="land-dimensions" placeholder="e.g. 30 ft x 40 ft">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Plot Facing</label>
+              <input class="form-input" type="text" id="land-facing" list="datalist-land-facing" placeholder="e.g. East, North-East">
+              <datalist id="datalist-land-facing">
+                <option value="East"></option>
+                <option value="West"></option>
+                <option value="North"></option>
+                <option value="South"></option>
+                <option value="North-East"></option>
+                <option value="North-West"></option>
+                <option value="South-East"></option>
+                <option value="South-West"></option>
+              </datalist>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Asking Price (INR) *</label>
+              <input class="form-input" type="number" step="any" id="land-price" required placeholder="Total Price in Rs">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Plot / Survey No.</label>
+              <input class="form-input" type="text" id="land-unit-no" placeholder="e.g. Plot #15A, Survey #45/2">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Khata & Approval Status</label>
+              <input class="form-input" type="text" id="land-registration" list="datalist-land-reg" placeholder="Select or type approval">
+              <datalist id="datalist-land-reg">
+                <option value="A Khata"></option>
+                <option value="B Khata"></option>
+                <option value="BDA Approved"></option>
+                <option value="BMRDA Approved"></option>
+                <option value="DC Converted"></option>
+                <option value="Panchayat Approved"></option>
+              </datalist>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Owner Name</label>
+              <input class="form-input" type="text" id="land-owner-name" placeholder="Owner Name">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Owner Phone</label>
+              <input class="form-input" type="tel" id="land-owner-phone" placeholder="Owner Phone">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Owner Email</label>
+              <input class="form-input" type="email" id="land-owner-email" placeholder="Owner Email">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Source</label>
+              <select class="form-select" id="land-source"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sub Source</label>
+              <input class="form-input" type="text" id="land-sub-source" placeholder="e.g. Newspaper Ad">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" style="color: var(--gold-l);">Commission Confirmed (%)</label>
+              <input class="form-input" type="text" id="land-commission-agreed" placeholder="e.g. 2%, Fixed 2L">
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="color: #3498db;"><i class="ti ti-map-pin"></i> Google Map Link</label>
+              <input class="form-input" type="url" id="land-google-map-url" placeholder="https://maps.app.goo.gl/...">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Vj Comments (Private)</label>
+            <textarea class="form-input" id="land-comments" rows="2" placeholder="Private comments..."></textarea>
+          </div>
+          <div class="form-group admin-only-field">
+            <label class="form-label">🔐 Private Admin Comments</label>
+            <textarea class="form-input" id="land-admin-comments" rows="2" placeholder="Strictly private admin comments..."></textarea>
+          </div>
+        </div>
+        <div class="mft">
+          <button class="btn btn-ghost" type="button" onclick="closeModal('modal-add-land')">Close</button>
+          <button class="btn btn-primary" type="submit">Submit Land Property</button>
         </div>
       </form>
     </div>
@@ -4775,6 +5060,7 @@
           <button id="tab-lead-matches" class="btn btn-ghost btn-sm" onclick="switchLeadTab('matches')" style="border-radius:0; border-bottom:2px solid transparent; padding:8px 12px; font-size:11.5px; font-weight:700;">✨ AI Properties Matched</button>
           <button id="tab-lead-offered" class="btn btn-ghost btn-sm" onclick="switchLeadTab('offered')" style="border-radius:0; border-bottom:2px solid transparent; padding:8px 12px; font-size:11.5px; font-weight:700;">📤 Properties Offered</button>
           <button id="tab-lead-docs" class="btn btn-ghost btn-sm" onclick="switchLeadTab('docs')" style="border-radius:0; border-bottom:2px solid transparent; padding:8px 12px; font-size:11.5px; font-weight:700;">📁 Documents</button>
+          <button id="tab-lead-closure" class="btn btn-ghost btn-sm" onclick="switchLeadTab('closure')" style="border-radius:0; border-bottom:2px solid transparent; padding:8px 12px; font-size:11.5px; font-weight:700;">🤝 Closure Journey</button>
         </div>
 
         <input type="hidden" id="detail-lead-id" value="">
@@ -4896,6 +5182,88 @@
           </div>
           <div id="lead-docs-container" style="display:flex; flex-direction:column; gap:8px;">
             <!-- Docs injected by JS -->
+          </div>
+        </div>
+
+        <!-- TAB 7: CLOSURE JOURNEY -->
+        <div class="lead-tab-pane hidden" id="pane-lead-closure">
+          <div class="info-blue" style="margin-bottom:15px; font-size:12px; display:flex; justify-content:space-between; align-items:center;">
+            <span>Track the step-by-step transaction closing checklist for this prospect.</span>
+            <strong>Current Stage: <span id="closure-current-status" style="color:var(--green); text-transform:uppercase;">Site Visit</span></strong>
+          </div>
+          
+          <!-- Closure Flow Steps Diagram -->
+          <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.2); padding:15px; border-radius:8px; border:1px solid var(--border); margin-bottom:20px; gap:8px;">
+            <div class="closure-step" id="step-site-visit" style="flex:1; text-align:center; padding:8px; border-radius:4px; background:rgba(255,255,255,0.03); border:1px solid var(--border); font-size:11px;">
+              <div>📍 Step 1</div>
+              <div style="font-weight:700; margin-top:2px;">Site Visit</div>
+            </div>
+            <div style="color:var(--text-muted); font-weight:700;">➔</div>
+            <div class="closure-step" id="step-negotiation" style="flex:1; text-align:center; padding:8px; border-radius:4px; background:rgba(255,255,255,0.03); border:1px solid var(--border); font-size:11px;">
+              <div>💬 Step 2</div>
+              <div style="font-weight:700; margin-top:2px;">Negotiation</div>
+            </div>
+            <div style="color:var(--text-muted); font-weight:700;">➔</div>
+            <div class="closure-step" id="step-agreement" style="flex:1; text-align:center; padding:8px; border-radius:4px; background:rgba(255,255,255,0.03); border:1px solid var(--border); font-size:11px;">
+              <div>📄 Step 3</div>
+              <div style="font-weight:700; margin-top:2px;">Agreement (ATS)</div>
+            </div>
+            <div style="color:var(--text-muted); font-weight:700;">➔</div>
+            <div class="closure-step" id="step-registration" style="flex:1; text-align:center; padding:8px; border-radius:4px; background:rgba(255,255,255,0.03); border:1px solid var(--border); font-size:11px;">
+              <div>📜 Step 4</div>
+              <div style="font-weight:700; margin-top:2px;">Registration</div>
+            </div>
+            <div style="color:var(--text-muted); font-weight:700;">➔</div>
+            <div class="closure-step" id="step-closed" style="flex:1; text-align:center; padding:8px; border-radius:4px; background:rgba(255,255,255,0.03); border:1px solid var(--border); font-size:11px;">
+              <div>🎉 Step 5</div>
+              <div style="font-weight:700; margin-top:2px;">Deal Closed</div>
+            </div>
+          </div>
+
+          <!-- Transaction details form/checkbox list -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+            <div class="card" style="padding:12px; background:rgba(0,0,0,0.15); border:1px solid var(--border); margin:0;">
+              <div style="font-size:13px; font-weight:700; color:var(--gold-l); margin-bottom:10px;"><i class="ti ti-list-check"></i> Action Checklist</div>
+              <div style="display:flex; flex-direction:column; gap:10px;">
+                <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; cursor:pointer;">
+                  <input type="checkbox" id="chk-site-visit" onchange="updateClosureChecklist('site_visit', this.checked)">
+                  <span>Site Visit Conducted</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; cursor:pointer;">
+                  <input type="checkbox" id="chk-negotiation" onchange="updateClosureChecklist('negotiation', this.checked)">
+                  <span>Negotiation Completed</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; cursor:pointer;">
+                  <input type="checkbox" id="chk-agreement" onchange="updateClosureChecklist('agreement', this.checked)">
+                  <span>ATS (Agreement to Sell) Signed</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; cursor:pointer;">
+                  <input type="checkbox" id="chk-registration" onchange="updateClosureChecklist('registration', this.checked)">
+                  <span>Registration Completed</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; cursor:pointer;">
+                  <input type="checkbox" id="chk-closed" onchange="updateClosureChecklist('closed', this.checked)">
+                  <span>Deal Closed & Commission Realized</span>
+                </label>
+              </div>
+            </div>
+            
+            <div class="card" style="padding:12px; background:rgba(0,0,0,0.15); border:1px solid var(--border); margin:0; display:flex; flex-direction:column; gap:10px;">
+              <div style="font-size:13px; font-weight:700; color:var(--gold-l);"><i class="ti ti-cash"></i> Transaction Linkage</div>
+              <div class="form-group">
+                <label class="form-label" style="font-size:11px;">Property ID Linked</label>
+                <input type="text" class="form-input" id="closure-prop-id" placeholder="e.g. 151/E-2026" style="padding:4px 8px; font-size:12px;">
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size:11px;">Agreed Commission Amount (INR)</label>
+                <input type="number" class="form-input" id="closure-commission-amt" placeholder="e.g. 150000" style="padding:4px 8px; font-size:12px;">
+              </div>
+              <div class="form-group">
+                <label class="form-label" style="font-size:11px;">Closing Remarks / Notes</label>
+                <textarea class="form-input" id="closure-notes" rows="2" placeholder="Under agreement, token advance paid..." style="padding:4px 8px; font-size:11px; resize:none;"></textarea>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="saveClosureDetails()" style="align-self:flex-end; font-weight:700;">💾 Save Transaction Details</button>
+            </div>
           </div>
         </div>
       </div>
