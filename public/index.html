@@ -96,8 +96,11 @@
 
   <div class="app">
     
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay hidden" id="sidebar-overlay" onclick="toggleMobileSidebar()"></div>
+    
     <!-- ══════════════ PERSISTENT SIDEBAR ══════════════ -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
       <div class="logo">
         <div class="logo-icon-emblem" id="cobrand-emblem"><i class="ti ti-crown"></i></div>
         <div class="logo-text-details">
@@ -292,7 +295,10 @@
       
       <!-- Topbar -->
       <div class="topbar">
-        <span class="topbar-title" id="page-header-title">Command Dashboard</span>
+        <div class="topbar-brand-row" style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-burger" onclick="toggleMobileSidebar()" style="background:transparent; border:none; color:#fff; font-size:22px; cursor:pointer; padding:4px; outline:none; display:none; align-items:center; justify-content:center;"><i class="ti ti-menu-2"></i></button>
+          <span class="topbar-title" id="page-header-title">Command Dashboard</span>
+        </div>
         
         <div class="topbar-search" style="position: relative; margin: 0 15px; flex: 1; max-width: 400px; display: flex; align-items: center;">
           <input type="text" id="global-search-input" class="form-input" placeholder="Global Search (Leads, Projects, Properties)..." style="width: 100%; border-radius: 20px; padding-left: 35px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); font-size: 13px;" oninput="performGlobalSearch()" autocomplete="off">

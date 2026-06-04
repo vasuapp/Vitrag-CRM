@@ -2699,6 +2699,19 @@ html, body {
     overflow-x: hidden;
   }
 
+  /* Premium Modal & Overlay Mobile Overflow Fix */
+  .mbg {
+    align-items: flex-start !important;
+    overflow-y: auto !important;
+    padding: 10px !important;
+  }
+  .modal {
+    max-height: none !important;
+    margin-top: 20px !important;
+    margin-bottom: 20px !important;
+    max-width: 100% !important;
+  }
+
   /* Sidebar: full slide-out drawer on mobile */
   .sidebar {
     position: fixed !important;
@@ -2754,6 +2767,24 @@ html, body {
     padding: 10px 12px !important;
     flex-wrap: wrap;
     gap: 8px;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+  .topbar-brand-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
+  }
+  .btn-burger {
+    display: inline-flex !important;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 4px;
+    margin-right: 8px;
   }
   .topbar-title {
     font-size: 15px !important;
@@ -2764,11 +2795,13 @@ html, body {
     order: 3;
     width: 100% !important;
     max-width: 100% !important;
+    margin: 0 !important;
   }
-  .topbar-actions {
+  .topbar-badges {
     flex-wrap: wrap !important;
     gap: 6px !important;
     width: 100%;
+    justify-content: flex-start !important;
   }
 
   /* Pages: full scrollable area */
@@ -2904,7 +2937,7 @@ html, body {
   }
 
   /* Grid layouts: single column */
-  .grid2, .grid3, .grid4 {
+  .grid2, .grid3, .grid4, .pipeline, .form-row {
     grid-template-columns: 1fr !important;
   }
   .grid-asymmetric-1, .grid-asymmetric-2 {

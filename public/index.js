@@ -831,7 +831,7 @@ function setupSidebarNavigation() {
   // Prevent details elements inside the sidebar from closing on mobile or when collapsed in rail mode
   document.querySelectorAll('.sidebar details').forEach(details => {
     details.addEventListener('click', (e) => {
-      const isCollapsed = document.querySelector('.sidebar')?.classList.contains('locked-collapsed') || window.innerWidth <= 992;
+      const isCollapsed = document.querySelector('.sidebar')?.classList.contains('locked-collapsed') || (window.innerWidth > 768 && window.innerWidth <= 992);
       if (isCollapsed && (e.target.tagName === 'SUMMARY' || e.target.closest('summary'))) {
         e.preventDefault();
       }
@@ -886,6 +886,12 @@ function navToPage(pageId) {
   document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
   const targetPage = document.getElementById(`page-${pageId}`);
   if (targetPage) targetPage.classList.add('active');
+
+  // Close mobile sidebar if open
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('mobile-sidebar-overlay');
+  if (sidebar) sidebar.classList.remove('mobile-open');
+  if (overlay) overlay.classList.remove('active');
 
   // Dynamic Header Title
   const titles = {
