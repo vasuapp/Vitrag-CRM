@@ -489,6 +489,7 @@ async function verifyTeamLockPin() {
       showToast(`Welcome back, ${data.agent.name}!`, 'success');
       state.currentUser = data.agent;
       localStorage.setItem('crm_active_member_session', JSON.stringify(data.agent));
+      sessionStorage.setItem('crm_session_active', 'true');
       
       applyAuthenticatedPermissions(data.agent);
       autoClock('IN');
@@ -502,6 +503,10 @@ async function verifyTeamLockPin() {
           lockScreen.style.display = 'none';
         }, 400);
       }
+
+      // Restore active page or default to dashboard
+      const savedPage = localStorage.getItem('crm_active_page') || 'dashboard';
+      navToPage(savedPage);
     } else {
       const panel = document.getElementById('lock-panel');
       if (panel) {
@@ -536,8 +541,17 @@ window.secureLockSession = function() {
   state.currentUser = null;
   localStorage.removeItem('crm_active_member_session');
   localStorage.removeItem('crm_active_page');
+  sessionStorage.removeItem('crm_session_active');
   resetPinInput();
   showLockProfileSelect();
+  
+  // Clear sidebar details to placeholder locked state
+  const uName = document.getElementById('user-name');
+  if (uName) uName.innerText = 'Session Locked';
+  const uRole = document.getElementById('user-role');
+  if (uRole) uRole.innerText = 'Select Profile';
+  const uAv = document.getElementById('user-av');
+  if (uAv) uAv.innerText = '??';
   
   const lockScreen = document.getElementById('crm-lock-screen');
   if (lockScreen) {
@@ -674,7 +688,8 @@ function applyAuthenticatedPermissions(user) {
 async function initApp() {
   // Session check on Startup
   const cachedSession = localStorage.getItem('crm_active_member_session');
-  if (cachedSession) {
+  const sessionActive = sessionStorage.getItem('crm_session_active');
+  if (cachedSession && sessionActive) {
     try {
       const user = JSON.parse(cachedSession);
       state.currentUser = user;
@@ -6319,6 +6334,18 @@ window.showAddCommissionModal = () => openModal('modal-add-commission');
 window.closeModal = closeModal;
 window.navToPage = navToPage;
 
+// Expose submit handlers for inline HTML form invocation
+window.submitCaptureLead = submitCaptureLead;
+window.submitAddTodo = submitAddTodo;
+window.submitAddListing = submitAddListing;
+window.submitAddRental = submitAddRental;
+window.submitAddCommercial = submitAddCommercial;
+window.submitAddProject = submitAddProject;
+window.submitAddAssociate = submitAddAssociate;
+window.submitAddCommission = submitAddCommission;
+window.submitLeadScorecard = submitLeadScorecard;
+window.submitAddTeam = submitAddTeam;
+
 function showToast(msg) {
   const toast = document.getElementById('toast');
   toast.innerText = msg;
@@ -6899,18 +6926,28 @@ const DEFAULT_CONFIGS = {
 
 function initDropdownOptionsConfig() {
   let configs = localStorage.getItem('realpro_field_configs');
+  let parsed;
   if (!configs) {
-    localStorage.setItem('realpro_field_configs', JSON.stringify(DEFAULT_CONFIGS));
-    configs = JSON.stringify(DEFAULT_CONFIGS);
+    parsed = { ...DEFAULT_CONFIGS };
   } else {
-    // Force-update statusTypes if old cache is missing EXPIRED/RESERVED
-    let parsed = JSON.parse(configs);
-    if (!parsed.statusTypes || !parsed.statusTypes.includes('EXPIRED')) {
-      parsed.statusTypes = DEFAULT_CONFIGS.statusTypes;
-      localStorage.setItem('realpro_field_configs', JSON.stringify(parsed));
+    try {
+      parsed = JSON.parse(configs);
+      // Merge with default configs to ensure all properties exist
+      for (const key in DEFAULT_CONFIGS) {
+        if (!parsed[key] || !Array.isArray(parsed[key])) {
+          parsed[key] = [...DEFAULT_CONFIGS[key]];
+        }
+      }
+      // Force-update statusTypes if old cache is missing EXPIRED/RESERVED
+      if (!parsed.statusTypes || !parsed.statusTypes.includes('EXPIRED')) {
+        parsed.statusTypes = [...DEFAULT_CONFIGS.statusTypes];
+      }
+    } catch (e) {
+      console.error('Failed to parse realpro_field_configs, resetting to defaults', e);
+      parsed = { ...DEFAULT_CONFIGS };
     }
-    configs = JSON.stringify(parsed);
   }
+  localStorage.setItem('realpro_field_configs', JSON.stringify(parsed));
   
   // Populate all dropdown elements in the app
   populateAllDropdowns();
@@ -6966,13 +7003,14 @@ function populateSelectElement(elementId, options) {
   if (!targetEl) return;
   const currentVal = el.value;
   
-  const mapped = options.map(opt => `<option value="${opt}">${opt}</option>`);
+  const opts = options || [];
+  const mapped = opts.map(opt => `<option value="${opt}">${opt}</option>`);
   if (el.tagName === 'SELECT') {
     mapped.push(`<option value="__ADD_CUSTOM__" style="color:var(--gold-l); font-weight:700;">➕ Add Custom Option...</option>`);
   }
 
   targetEl.innerHTML = mapped.join('');
-  if (options.includes(currentVal) && el.tagName === 'SELECT') {
+  if (opts.includes(currentVal) && el.tagName === 'SELECT') {
     el.value = currentVal;
   }
 }

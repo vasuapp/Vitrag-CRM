@@ -357,8 +357,22 @@ CREATE TABLE IF NOT EXISTS communication_templates (
     } catch (migErr) {
       console.log("Migration skipped or failed:", migErr.message);
     }
-
     
+    // Seed default admin agent if empty
+    try {
+      const agentCountResult = await pool.query("SELECT COUNT(*) FROM agents");
+      const agentCount = agentCountResult.rows[0].count;
+      if (parseInt(agentCount) === 0) {
+        await pool.query(`
+          INSERT INTO agents (name, email, phone, status, location_specialty, role, login_pin, allowed_pages)
+          VALUES ('Vasu Jain', 'info@subhhomes.com', '+91 98200 12345', 'ACTIVE', 'All Zones', 'Admin', '0000', '*')
+        `);
+        console.log("Seeded default admin agent 'Vasu Jain' with PIN '0000'.");
+      }
+    } catch (agentSeedErr) {
+      console.log("Agent seeding skipped or failed:", agentSeedErr.message);
+    }
+
     // Also seed templates if empty
       const tempCount = (await pool.query("SELECT COUNT(*) FROM communication_templates")).rows[0].count;
       if (parseInt(tempCount) === 0) {
