@@ -106,13 +106,24 @@ let state = {
   assocPage: 1,
   columnConfig: (() => {
     const saved = localStorage.getItem('crm_column_config');
-    return saved ? JSON.parse(saved) : {
-      resale: { bhk: true, size: true, price: true, mandate: true, interiors: true, facing: true, staging: true },
-      rental: { type: true, area: true, rent: true, deposit: true, maintenance: true, available: true },
-      commercial: { type: true, available: true, area: true, price: true, deposit: true, maintenance: true, handover: true },
-      land: { type: true, zoning: true, area: true, price: true, dimensions: true, facing: true },
-      leads: { phone: true, source: true, stage: true, type: true, budget: true, followup: true }
+    const defaults = {
+      resale: { bhk: true, size: true, price: true, mandate: true, interiors: true, facing: true, staging: true, zone: true, year: true, registration: true, carpark: true, possession: true },
+      rental: { type: true, area: true, rent: true, deposit: true, maintenance: true, available: true, interiors: true, facing: true, zone: true },
+      commercial: { type: true, available: true, area: true, price: true, deposit: true, maintenance: true, handover: true, zone: true, facing: true },
+      land: { type: true, zoning: true, area: true, price: true, dimensions: true, facing: true, roadwidth: true, fsi: true },
+      leads: { phone: true, source: true, stage: true, type: true, budget: true, followup: true, location: true, agent: true }
     };
+    if (!saved) return defaults;
+    try {
+      const parsed = JSON.parse(saved);
+      for (const tab in defaults) {
+        if (!parsed[tab]) parsed[tab] = {};
+        parsed[tab] = { ...defaults[tab], ...parsed[tab] };
+      }
+      return parsed;
+    } catch (e) {
+      return defaults;
+    }
   })()
 };
 
@@ -172,7 +183,12 @@ window.toggleColumnDropdown = function(tab, event) {
       { key: 'mandate', label: 'Mandate' },
       { key: 'interiors', label: 'Interiors' },
       { key: 'facing', label: 'Facing' },
-      { key: 'staging', label: 'Staging' }
+      { key: 'staging', label: 'Staging' },
+      { key: 'zone', label: 'Zone' },
+      { key: 'year', label: 'Year Built' },
+      { key: 'registration', label: 'Registration' },
+      { key: 'carpark', label: 'Car Parking' },
+      { key: 'possession', label: 'Possession' }
     ],
     rental: [
       { key: 'type', label: 'Property Type' },
@@ -180,7 +196,10 @@ window.toggleColumnDropdown = function(tab, event) {
       { key: 'rent', label: 'Rent' },
       { key: 'deposit', label: 'Deposit' },
       { key: 'maintenance', label: 'Maintenance' },
-      { key: 'available', label: 'Available From' }
+      { key: 'available', label: 'Available From' },
+      { key: 'interiors', label: 'Furnishing' },
+      { key: 'facing', label: 'Facing' },
+      { key: 'zone', label: 'Zone' }
     ],
     commercial: [
       { key: 'type', label: 'Property Type' },
@@ -189,7 +208,9 @@ window.toggleColumnDropdown = function(tab, event) {
       { key: 'price', label: 'Rent / Price' },
       { key: 'deposit', label: 'Deposit' },
       { key: 'maintenance', label: 'Maintenance' },
-      { key: 'handover', label: 'Handover' }
+      { key: 'handover', label: 'Handover' },
+      { key: 'zone', label: 'Zone' },
+      { key: 'facing', label: 'Facing' }
     ],
     land: [
       { key: 'type', label: 'Plot Type' },
@@ -197,7 +218,9 @@ window.toggleColumnDropdown = function(tab, event) {
       { key: 'area', label: 'Area (Sqft)' },
       { key: 'price', label: 'Asking Price' },
       { key: 'dimensions', label: 'Dimensions' },
-      { key: 'facing', label: 'Facing' }
+      { key: 'facing', label: 'Facing' },
+      { key: 'roadwidth', label: 'Road Width' },
+      { key: 'fsi', label: 'FSI Allowed' }
     ],
     leads: [
       { key: 'phone', label: 'Phone / Email' },
@@ -205,7 +228,9 @@ window.toggleColumnDropdown = function(tab, event) {
       { key: 'stage', label: 'Pipeline Stage' },
       { key: 'type', label: 'Property Type' },
       { key: 'budget', label: 'Budget' },
-      { key: 'followup', label: 'Next Follow-up' }
+      { key: 'followup', label: 'Next Follow-up' },
+      { key: 'location', label: 'Location Pref' },
+      { key: 'agent', label: 'Assigned Agent' }
     ]
   };
 
@@ -2196,6 +2221,11 @@ function renderResaleProperties(listings) {
               ${showCol('resale', 'interiors') ? `<th>Interiors</th>` : ''}
               ${showCol('resale', 'facing') ? `<th>Facing</th>` : ''}
               ${showCol('resale', 'staging') ? `<th>Staging</th>` : ''}
+              ${showCol('resale', 'zone') ? `<th>Zone</th>` : ''}
+              ${showCol('resale', 'year') ? `<th>Year Built</th>` : ''}
+              ${showCol('resale', 'registration') ? `<th>Registration</th>` : ''}
+              ${showCol('resale', 'carpark') ? `<th>Car Park</th>` : ''}
+              ${showCol('resale', 'possession') ? `<th>Possession</th>` : ''}
               <th>Actions</th>
             </tr>
           </thead>
@@ -2218,6 +2248,11 @@ function renderResaleProperties(listings) {
                  ${showCol('resale', 'interiors') ? `<td>${p.interiors}</td>` : ''}
                  ${showCol('resale', 'facing') ? `<td>${p.facing || 'East'}</td>` : ''}
                  ${showCol('resale', 'staging') ? `<td>${p.project_status || 'RTMI'}</td>` : ''}
+                 ${showCol('resale', 'zone') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'zone', this)">${p.zone || 'N'}</td>` : ''}
+                 ${showCol('resale', 'year') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'onboarded_year', this)">${p.onboarded_year || 'N/A'}</td>` : ''}
+                 ${showCol('resale', 'registration') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'registration_status', this)">${p.registration_status || 'N/A'}</td>` : ''}
+                 ${showCol('resale', 'carpark') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'car_park', this)">${p.car_park || 'N/A'}</td>` : ''}
+                 ${showCol('resale', 'possession') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'possession', this)">${p.possession || 'N/A'}</td>` : ''}
                  <td>
                   <div style="display:flex; gap:4px;">
                     ${state.systemSettings.showMaskedFields ? 
@@ -2402,7 +2437,9 @@ function renderRentalProperties(listings) {
               ${showCol('rental', 'deposit') ? `<th>Deposit</th>` : ''}
               ${showCol('rental', 'maintenance') ? `<th>Maintenance</th>` : ''}
               ${showCol('rental', 'available') ? `<th>Available From</th>` : ''}
-              <th>Interiors</th>
+              ${showCol('rental', 'interiors') ? `<th>Furnishing</th>` : ''}
+              ${showCol('rental', 'facing') ? `<th>Facing</th>` : ''}
+              ${showCol('rental', 'zone') ? `<th>Zone</th>` : ''}
               <th>Actions</th>
             </tr>
           </thead>
@@ -2424,7 +2461,9 @@ function renderRentalProperties(listings) {
                  ${showCol('rental', 'deposit') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'deposit', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.deposit || 0}</td>` : ''}
                  ${showCol('rental', 'maintenance') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'maintenance', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.maintenance || 0}</td>` : ''}
                  ${showCol('rental', 'available') ? `<td>${p.available_from || 'Immediate'}</td>` : ''}
-                 <td>${p.interiors}</td>
+                 ${showCol('rental', 'interiors') ? `<td>${p.interiors}</td>` : ''}
+                 ${showCol('rental', 'facing') ? `<td>${p.facing || 'East'}</td>` : ''}
+                 ${showCol('rental', 'zone') ? `<td>${p.zone || 'N'}</td>` : ''}
                  <td>
                   <div style="display:flex; gap:4px;">
                     ${state.systemSettings.showMaskedFields ? 
@@ -2603,6 +2642,8 @@ function renderCommercialProperties(listings) {
               ${showCol('commercial', 'deposit') ? `<th>Deposit</th>` : ''}
               ${showCol('commercial', 'maintenance') ? `<th>Maintenance</th>` : ''}
               ${showCol('commercial', 'handover') ? `<th>Handover</th>` : ''}
+              ${showCol('commercial', 'zone') ? `<th>Zone</th>` : ''}
+              ${showCol('commercial', 'facing') ? `<th>Facing</th>` : ''}
               <th>Actions</th>
             </tr>
           </thead>
@@ -2625,6 +2666,8 @@ function renderCommercialProperties(listings) {
                  ${showCol('commercial', 'deposit') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'deposit', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.deposit || 0}</td>` : ''}
                  ${showCol('commercial', 'maintenance') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'maintenance', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.maintenance || 0}</td>` : ''}
                  ${showCol('commercial', 'handover') ? `<td>${p.possession || 'Immediate'}</td>` : ''}
+                 ${showCol('commercial', 'zone') ? `<td>${p.zone || 'N'}</td>` : ''}
+                 ${showCol('commercial', 'facing') ? `<td>${p.facing || 'N/A'}</td>` : ''}
                  <td>
                   <div style="display:flex; gap:4px;">
                     ${state.systemSettings.showMaskedFields ? 
@@ -2800,6 +2843,8 @@ function renderLandProperties(listings) {
             ${showCol('land', 'price') ? `<th>Price</th>` : ''}
             ${showCol('land', 'dimensions') ? `<th>Dimensions</th>` : ''}
             ${showCol('land', 'facing') ? `<th>Facing</th>` : ''}
+            ${showCol('land', 'roadwidth') ? `<th>Road Width</th>` : ''}
+            ${showCol('land', 'fsi') ? `<th>FSI Allowed</th>` : ''}
             <th>Actions</th>
           </tr>
         </thead>
@@ -2819,6 +2864,8 @@ function renderLandProperties(listings) {
               ${showCol('land', 'price') ? `<td contenteditable="true" class="editable-cell" style="color:var(--green); font-weight:600; cursor: text;" onblur="updatePropertyInline(${p.id}, 'price', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${formatPriceToWords(p.price)}</td>` : ''}
               ${showCol('land', 'dimensions') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'plot_dimension', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.plot_dimension || 'N/A'}</td>` : ''}
               ${showCol('land', 'facing') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'plot_facing', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.plot_facing || 'N/A'}</td>` : ''}
+              ${showCol('land', 'roadwidth') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'road_width', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.road_width || 'N/A'}</td>` : ''}
+              ${showCol('land', 'fsi') ? `<td contenteditable="true" class="editable-cell" style="cursor: text;" onblur="updatePropertyInline(${p.id}, 'fsi', this)" onkeydown="if(event.key==='Enter'){event.preventDefault(); this.blur();}">${p.fsi || 'N/A'}</td>` : ''}
               <td>
                 <div style="display:flex; gap:4px;">
                   ${state.systemSettings.showMaskedFields ? 
@@ -2896,10 +2943,8 @@ function clearInventoryFilters() {
   });
   
   loadProperties();
-  showToast('Filters cleared.');
 }
 
-// ─── SPECIAL FLAGS: Sync Distress/Bank/BelowMkt checkboxes with prop-tags ───
 function syncSpecialFlags() {
   const tagsInput = document.getElementById('prop-tags');
   if (!tagsInput) return;
@@ -2914,103 +2959,223 @@ function syncSpecialFlags() {
 
 // ─── CLOSURE JOURNEY: Mark inventory as Sold / Rented ───
 function closureDeal(propId, propName, propType) {
-  const isRental = propType && propType.toLowerCase().includes('rental');
+  const p = state.properties.find(x => x.id === propId);
+  if (!p) return;
+  const isRental = propType && propType.toLowerCase().includes('rental') || (p.available_for && p.available_for.toLowerCase().includes('rent')) || (p.available_for && p.available_for.toLowerCase().includes('lease'));
+  
   const closureHTML = `
-    <div class="mbg" id="modal-closure-journey" style="display:flex; z-index:200000;">
-      <div class="modal" style="max-width:480px; width:90%;">
-        <div class="mhdr">
-          <div class="mtitle">🏁 ${isRental ? 'Mark as Rented Out' : 'Close Deal — Mark as Sold'}</div>
-          <button class="mclose" onclick="closeModal('modal-closure-journey')">&times;</button>
+    <div class="mbg" id="modal-closure-journey" style="display:flex; z-index:200000; align-items:center; justify-content:center; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85);">
+      <div class="modal" style="max-width: 680px; width: 90%; display:flex; flex-direction:column; overflow:hidden;">
+        <div class="mhd" style="display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid var(--border);">
+          <div class="mtitle" style="font-size:16px; font-weight:800; color:var(--gold-l); display:flex; align-items:center; gap:8px;">
+            🏁 Deal Flow & Closure Journey: <span id="prop-closure-current-status" style="font-weight:800;">Available</span>
+          </div>
+          <button class="mclose" onclick="closeModal('modal-closure-journey')" style="background:none; border:none; color:#aaa; font-size:24px; cursor:pointer;">&times;</button>
         </div>
-        <div class="mbdy" style="padding:20px; display:flex; flex-direction:column; gap:14px;">
-          <div style="padding:10px; background:rgba(46,204,113,0.08); border:1px solid rgba(46,204,113,0.2); border-radius:var(--radius-sm); font-size:12px; color:rgba(255,255,255,0.7);">
-            📍 Property: <strong style="color:var(--gold-l);">${propName}</strong>
+        
+        <div class="mbdy" style="padding:20px; overflow-y:auto; max-height:75vh; display:flex; flex-direction:column; gap:20px;">
+          <!-- Property details bar -->
+          <div style="padding:12px; background:rgba(184,134,11,0.08); border:1px dashed var(--gold); border-radius:6px; font-size:12.5px;">
+            🏠 Property Listing: <strong style="color:var(--gold-l);">${propName}</strong> | Type: <strong>${propType || 'Resale'}</strong>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">${isRental ? 'Tenant Name' : 'Buyer Name'} *</label>
-              <input class="form-input" id="closure-buyer" placeholder="${isRental ? 'e.g. Rahul Sharma' : 'e.g. Anita Singh'}">
+
+          <!-- Progress timeline steps -->
+          <div style="display:flex; align-items:center; gap:6px; justify-content:space-between; flex-wrap:wrap; background:rgba(255,255,255,0.02); padding:10px; border-radius:6px; border:0.5px solid var(--border);">
+            <div class="closure-step" id="prop-step-site-visit" style="flex:1; text-align:center; padding:6px; border-radius:4px; border:1px solid var(--border); font-size:10.5px; min-width:80px;">
+              <div>Step 1</div><div style="font-weight:700;">Site Visit</div>
             </div>
-            <div class="form-group">
-              <label class="form-label">${isRental ? 'Tenant Phone' : 'Buyer Phone'}</label>
-              <input class="form-input" id="closure-buyer-phone" type="tel" placeholder="e.g. 9876543210">
+            <div style="color:var(--text-muted);">➔</div>
+            <div class="closure-step" id="prop-step-negotiation" style="flex:1; text-align:center; padding:6px; border-radius:4px; border:1px solid var(--border); font-size:10.5px; min-width:80px;">
+              <div>Step 2</div><div style="font-weight:700;">Negotiation</div>
+            </div>
+            <div style="color:var(--text-muted);">➔</div>
+            <div class="closure-step" id="prop-step-agreement" style="flex:1; text-align:center; padding:6px; border-radius:4px; border:1px solid var(--border); font-size:10.5px; min-width:80px;">
+              <div>Step 3</div><div style="font-weight:700;">Agreement</div>
+            </div>
+            <div style="color:var(--text-muted);">➔</div>
+            <div class="closure-step" id="prop-step-registration" style="flex:1; text-align:center; padding:6px; border-radius:4px; border:1px solid var(--border); font-size:10.5px; min-width:80px;">
+              <div>Step 4</div><div style="font-weight:700;">Registration</div>
+            </div>
+            <div style="color:var(--text-muted);">➔</div>
+            <div class="closure-step" id="prop-step-closed" style="flex:1; text-align:center; padding:6px; border-radius:4px; border:1px solid var(--border); font-size:10.5px; min-width:80px;">
+              <div>🎉 Step 5</div><div style="font-weight:700;">Deal Closed</div>
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">Deal Value (₹) *</label>
-              <input class="form-input" id="closure-deal-value" type="number" placeholder="${isRental ? 'Monthly Rent' : 'e.g. 8500000'}">
+
+          <!-- Action Checklist & Transaction details -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; flex-wrap:wrap;">
+            <!-- Left Col: Checklist -->
+            <div class="card" style="padding:15px; background:rgba(0,0,0,0.2); border:1px solid var(--border); margin:0;">
+              <div style="font-size:13px; font-weight:700; color:var(--gold-l); margin-bottom:12px;"><i class="ti ti-list-check"></i> Deal Milestones</div>
+              <div style="display:flex; flex-direction:column; gap:12px;">
+                <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                  <input type="checkbox" id="prop-chk-site-visit" onchange="updatePropClosureFlowUI()" ${p.closure_site_visit ? 'checked' : ''}>
+                  <span>Site Visit Conducted</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                  <input type="checkbox" id="prop-chk-negotiation" onchange="updatePropClosureFlowUI()" ${p.closure_negotiation ? 'checked' : ''}>
+                  <span>Negotiation Completed</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                  <input type="checkbox" id="prop-chk-agreement" onchange="updatePropClosureFlowUI()" ${p.closure_agreement ? 'checked' : ''}>
+                  <span>ATS Signed (Under Agreement)</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                  <input type="checkbox" id="prop-chk-registration" onchange="updatePropClosureFlowUI()" ${p.closure_registration ? 'checked' : ''}>
+                  <span>Registration Completed</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
+                  <input type="checkbox" id="prop-chk-closed" onchange="updatePropClosureFlowUI()" ${p.closure_closed ? 'checked' : ''}>
+                  <span style="font-weight:700; color:var(--green);">Deal Closed (SOLD/RENTED)</span>
+                </label>
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">Commission % *</label>
-              <input class="form-input" id="closure-commission" type="number" step="0.1" placeholder="e.g. 2">
+
+            <!-- Right Col: Transaction Linkage -->
+            <div class="card" style="padding:15px; background:rgba(0,0,0,0.2); border:1px solid var(--border); margin:0; display:flex; flex-direction:column; gap:10px;">
+              <div style="font-size:13px; font-weight:700; color:var(--gold-l);"><i class="ti ti-cash"></i> Closing Details</div>
+              
+              <div class="form-row" style="display:flex; gap:10px;">
+                <div class="form-group" style="flex:1;">
+                  <label class="form-label" style="font-size:10.5px;">${isRental ? 'Tenant Name' : 'Buyer Name'} *</label>
+                  <input class="form-input" id="prop-closure-buyer" style="padding:4px 8px; font-size:12px;" value="${p.closure_buyer_name || ''}" placeholder="e.g. Amit Kumar">
+                </div>
+                <div class="form-group" style="flex:1;">
+                  <label class="form-label" style="font-size:10.5px;">${isRental ? 'Tenant Phone' : 'Buyer Phone'}</label>
+                  <input class="form-input" id="prop-closure-buyer-phone" type="tel" style="padding:4px 8px; font-size:12px;" value="${p.closure_buyer_phone || ''}" placeholder="e.g. 9876543210">
+                </div>
+              </div>
+
+              <div class="form-row" style="display:flex; gap:10px;">
+                <div class="form-group" style="flex:1;">
+                  <label class="form-label" style="font-size:10.5px;">Deal Value (₹) *</label>
+                  <input class="form-input" id="prop-closure-deal-value" type="number" style="padding:4px 8px; font-size:12px;" value="${p.closure_deal_value || ''}" placeholder="Total value / Rent">
+                </div>
+                <div class="form-group" style="flex:1;">
+                  <label class="form-label" style="font-size:10.5px;">Commission % *</label>
+                  <input class="form-input" id="prop-closure-commission" type="number" step="0.1" style="padding:4px 8px; font-size:12px;" value="${p.closure_commission_pct || ''}" placeholder="e.g. 2">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" style="font-size:10.5px;">Deal Closing Date</label>
+                <input class="form-input" id="prop-closure-date" type="date" style="padding:4px 8px; font-size:12px;" value="${p.closure_date || new Date().toISOString().split('T')[0]}">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" style="font-size:10.5px;">Closing Remarks / Notes</label>
+                <textarea class="form-input" id="prop-closure-notes" rows="2" style="padding:4px 8px; font-size:11px; resize:none;" placeholder="Key handover, registration token, etc.">${p.closure_notes || ''}</textarea>
+              </div>
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Deal Date</label>
-            <input class="form-input" id="closure-date" type="date" value="${new Date().toISOString().split('T')[0]}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Deal Notes</label>
-            <textarea class="form-input" id="closure-notes" rows="2" placeholder="Registry date, key handover, etc."></textarea>
-          </div>
-          <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:8px;">
+          
+          <div style="display:flex; gap:10px; justify-content:flex-end; border-top:1px solid var(--border); padding-top:15px; margin-top:10px;">
             <button class="btn btn-ghost" onclick="closeModal('modal-closure-journey')">Cancel</button>
-            <button class="btn btn-primary" style="background:var(--green); border:none;" onclick="submitClosureDeal(${propId}, '${isRental ? 'RENTED OUT' : 'SOLD'}')">
-              ✅ Confirm ${isRental ? 'Rental Closure' : 'Sale Closure'}
+            <button class="btn btn-primary" style="background:var(--green); border:none; font-weight:700;" onclick="submitClosureDeal(${propId})">
+              💾 Save Deal Flow Progress
             </button>
           </div>
         </div>
       </div>
     </div>
   `;
-  // Remove existing if any
   const existing2 = document.getElementById('modal-closure-journey');
   if (existing2) existing2.remove();
   document.body.insertAdjacentHTML('beforeend', closureHTML);
+  updatePropClosureFlowUI();
 }
+window.closureDeal = closureDeal;
 
-async function submitClosureDeal(propId, finalStatus) {
-  const buyer = document.getElementById('closure-buyer')?.value?.trim();
-  const dealValue = parseFloat(document.getElementById('closure-deal-value')?.value || 0);
-  const commission = parseFloat(document.getElementById('closure-commission')?.value || 0);
-  if (!buyer || !dealValue) { showToast('Please fill Buyer Name and Deal Value.', true); return; }
-  
-  try {
-    // Update property status
-    await fetch(`/api/properties/${propId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        status: finalStatus,
-        admin_comments: `Closed: ${buyer} | Deal: ₹${dealValue.toLocaleString('en-IN')} | Notes: ${document.getElementById('closure-notes')?.value || ''}`
-      })
-    });
-    // Record commission entry
-    await fetch('/api/commissions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        property_id: propId,
-        buyer_name: buyer,
-        buyer_phone: document.getElementById('closure-buyer-phone')?.value || '',
-        deal_value: dealValue,
-        commission_percentage: commission,
-        deal_date: document.getElementById('closure-date')?.value || new Date().toISOString().split('T')[0],
-        payment_status: 'Pending',
-        notes: document.getElementById('closure-notes')?.value || ''
-      })
-    });
-    closeModal('modal-closure-journey');
-    document.getElementById('modal-closure-journey')?.remove();
-    showToast(`🏁 Deal closed! Property marked as ${finalStatus}.`);
-    loadProperties();
-    loadDashboardData();
-  } catch (err) {
-    console.error(err);
-    showToast('Error closing deal. Please try again.', true);
+window.updatePropClosureFlowUI = function() {
+  const steps = [
+    { id: 'prop-step-site-visit', chkId: 'prop-chk-site-visit', label: 'Site Visit' },
+    { id: 'prop-step-negotiation', chkId: 'prop-chk-negotiation', label: 'Negotiation' },
+    { id: 'prop-step-agreement', chkId: 'prop-chk-agreement', label: 'Agreement' },
+    { id: 'prop-step-registration', chkId: 'prop-chk-registration', label: 'Registration' },
+    { id: 'prop-step-closed', chkId: 'prop-chk-closed', label: 'Deal Closed' }
+  ];
+
+  let currentStage = 'Available';
+  steps.forEach(step => {
+    const el = document.getElementById(step.id);
+    const checked = document.getElementById(step.chkId)?.checked;
+    if (el) {
+      if (checked) {
+        el.style.background = 'rgba(46, 204, 113, 0.2)';
+        el.style.borderColor = 'var(--green)';
+        el.style.color = 'var(--green)';
+        currentStage = step.label;
+      } else {
+        el.style.background = 'rgba(255, 255, 255, 0.03)';
+        el.style.borderColor = 'var(--border)';
+        el.style.color = 'var(--text-light)';
+      }
+    }
+  });
+
+  const statusEl = document.getElementById('prop-closure-current-status');
+  if (statusEl) {
+    statusEl.innerText = currentStage;
+    statusEl.style.color = currentStage === 'Deal Closed' ? 'var(--green)' : 'var(--gold-l)';
   }
-}
+};
+
+window.submitClosureDeal = async function(propId) {
+  const buyerName = document.getElementById('prop-closure-buyer').value.trim();
+  const buyerPhone = document.getElementById('prop-closure-buyer-phone').value.trim();
+  const dealValue = document.getElementById('prop-closure-deal-value').value;
+  const commissionPct = document.getElementById('prop-closure-commission').value;
+  const isClosed = document.getElementById('prop-chk-closed').checked;
+
+  if (isClosed && (!buyerName || !dealValue || !commissionPct)) {
+    showToast('Please fill in Buyer/Tenant Name, Deal Value, and Commission % to close the deal.', true);
+    return;
+  }
+
+  const payload = {
+    closure_site_visit: document.getElementById('prop-chk-site-visit').checked,
+    closure_negotiation: document.getElementById('prop-chk-negotiation').checked,
+    closure_agreement: document.getElementById('prop-chk-agreement').checked,
+    closure_registration: document.getElementById('prop-chk-registration').checked,
+    closure_closed: isClosed,
+    closure_buyer_name: buyerName,
+    closure_buyer_phone: buyerPhone,
+    closure_deal_value: dealValue ? parseFloat(dealValue) : null,
+    closure_commission_pct: commissionPct ? parseFloat(commissionPct) : null,
+    closure_date: document.getElementById('prop-closure-date').value,
+    closure_notes: document.getElementById('prop-closure-notes').value
+  };
+
+  try {
+    const res = await fetch(`/api/properties/${propId}/closure`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+    if (res.ok) {
+      closeModal('modal-closure-journey');
+      document.getElementById('modal-closure-journey')?.remove();
+      
+      const p = state.properties.find(x => x.id === propId);
+      let finalStatus = 'Updated';
+      if (payload.closure_closed) {
+        const pType = (p && p.property_type || '').toLowerCase();
+        const isRental = pType.includes('rental') || (p && p.available_for && p.available_for.toLowerCase().includes('rent')) || (p && p.available_for && p.available_for.toLowerCase().includes('lease'));
+        finalStatus = isRental ? 'RENTED OUT' : 'SOLD';
+      }
+      
+      showToast(`🏁 Deal flow progress saved. Status: ${finalStatus}`);
+      loadProperties();
+      loadDashboardData();
+    } else {
+      showToast(result.error || 'Failed to save closure details.', true);
+    }
+  } catch (err) {
+    console.error('Error saving closure details:', err);
+    showToast('Network error saving closure details.', true);
+  }
+};
 
 
 async function deletePropertyListing(id) {
@@ -3890,6 +4055,8 @@ async function loadEnquiries() {
             ${showCol('leads', 'type') ? `<th>Property Type</th>` : ''}
             ${showCol('leads', 'budget') ? `<th>Budget Range</th>` : ''}
             ${showCol('leads', 'followup') ? `<th>Follow-up Date</th>` : ''}
+            ${showCol('leads', 'location') ? `<th>Location Pref</th>` : ''}
+            ${showCol('leads', 'agent') ? `<th>Assigned Agent</th>` : ''}
             <th>Actions</th>
           </tr>
         </thead>
@@ -3904,9 +4071,9 @@ async function loadEnquiries() {
                 <td><input type="checkbox" class="row-checkbox-leads" value="${l.id}" onchange="updateBulkSelectionState('leads')"></td>
                 <td>
                   <strong style="cursor:pointer; text-decoration:underline;" onclick="showLeadDetails(${l.id})">${l.name}</strong><br>
-                  ${showCol('leads', 'phone') ? `<span style="font-size:10px; color:var(--text-muted)">${l.phone}</span>` : ''}
+                  ${showCol('leads', 'phone') ? `<span style="font-size:10px; color:var(--text-muted)">${l.phone || ''}${l.email ? ' / ' + l.email : ''}</span>` : ''}
                   <span onclick="triggerClickToCall(${l.id}, '${l.name.replace(/'/g, "\\'")}', '${l.phone}')" style="cursor:pointer; color:var(--gold-l); font-size:11px; margin-left:4px;" title="Click-to-Call"><i class="ti ti-phone"></i></span>
-                  ${l.agent_name ? `<br><span class="badge" style="background:rgba(201, 153, 26, 0.08); color:var(--gold-l); font-size:9px; padding:1.5px 5px; font-weight:700; margin-top:4px; display:inline-block;"><i class="ti ti-user"></i> ${l.agent_name}</span>` : ''}
+                  ${l.agent_name && !showCol('leads', 'agent') ? `<br><span class="badge" style="background:rgba(201, 153, 26, 0.08); color:var(--gold-l); font-size:9px; padding:1.5px 5px; font-weight:700; margin-top:4px; display:inline-block;"><i class="ti ti-user"></i> ${l.agent_name}</span>` : ''}
                   <div style="margin-top:6px;">
                     <select class="form-select btn-sm" style="font-size:9.5px; padding:2px 4px; width:130px; border: 0.5px solid var(--border);" onchange="linkAssociateToLead(${l.id}, this.value)">
                       <option value="">-- Link Co-Broker --</option>
@@ -3920,6 +4087,8 @@ async function loadEnquiries() {
                 ${showCol('leads', 'type') ? `<td>${l.project_type}</td>` : ''}
                 ${showCol('leads', 'budget') ? `<td>₹${(l.budget_min/100000).toFixed(0)}L - ₹${(l.budget_max/100000).toFixed(0)}L</td>` : ''}
                 ${showCol('leads', 'followup') ? `<td>${l.next_followup || 'Not scheduled'}</td>` : ''}
+                ${showCol('leads', 'location') ? `<td>${l.location_preference || 'N/A'}</td>` : ''}
+                ${showCol('leads', 'agent') ? `<td><strong>${l.agent_name || 'Unassigned'}</strong></td>` : ''}
                 <td>
                   <div style="display:flex; flex-direction:column; gap:4px;">
                     <button class="btn btn-ghost btn-sm" style="color:var(--gold-l); font-size:10px; padding:2px 6px;" onclick="editID('leads', ${l.id})"><i class="ti ti-edit"></i> Edit</button>
@@ -4856,6 +5025,8 @@ window.submitAddLand = async function(e) {
     zone: document.getElementById('land-zone').value,
     onboarded_year: document.getElementById('land-year').value,
     project_id: document.getElementById('land-project-link').value || null,
+    road_width: document.getElementById('land-road-width').value,
+    fsi: document.getElementById('land-fsi').value,
     available_for: 'Sale'
   };
 
@@ -5607,6 +5778,8 @@ window.editFullProperty = function(id) {
     setVal('land-comments', p.comments);
     setVal('land-admin-comments', p.admin_comments);
     setVal('land-project-link', p.project_id);
+    setVal('land-road-width', p.road_width);
+    setVal('land-fsi', p.fsi);
 
     const titleEl = document.querySelector('#modal-add-land .mtitle');
     if (titleEl) titleEl.innerText = "Edit Land Listing: " + (p.society || "Property");
@@ -9587,7 +9760,339 @@ window.showProjectDetails = async function(projectId) {
 };
 
 window.printProjectCard = function() {
-  window.print();
+  const projectId = document.getElementById('detail-proj-id')?.value;
+  if (!projectId) {
+    showToast('No project selected to print.', true);
+    return;
+  }
+  const p = state.projects.find(x => x.id == projectId);
+  if (!p) {
+    showToast('Project details not found.', true);
+    return;
+  }
+
+  // Parse unit details JSON safely
+  let unitRowsHTML = '';
+  if (p.unit_details) {
+    try {
+      const units = JSON.parse(p.unit_details);
+      if (units && units.length > 0) {
+        unitRowsHTML = units.map(u => `
+          <tr>
+            <td><strong>${u.config || 'N/A'}</strong></td>
+            <td>${u.area || 'N/A'}</td>
+            <td style="color:#27ae60; font-weight:700;">${u.price || 'N/A'}</td>
+          </tr>
+        `).join('');
+      } else {
+        unitRowsHTML = `<tr><td colspan="3" style="text-align:center; color:#888;">No units configured.</td></tr>`;
+      }
+    } catch(err) {
+      unitRowsHTML = `<tr><td colspan="3" style="text-align:center; color:#e74c3c;">Error loading unit configurations.</td></tr>`;
+    }
+  } else {
+    unitRowsHTML = `<tr><td colspan="3" style="text-align:center; color:#888;">No units configured.</td></tr>`;
+  }
+
+  // Construct specifications table
+  const specs = [
+    { label: 'Builder', value: p.builder_name || 'N/A' },
+    { label: 'Project ID', value: p.proj_id || ('#' + p.id) },
+    { label: 'Location', value: p.location || 'N/A' },
+    { label: 'Land Parcel', value: p.land_parcel || 'N/A' },
+    { label: 'Total Towers / Blocks', value: p.tower || 'N/A' },
+    { label: 'Elevation', value: p.elevation || 'N/A' },
+    { label: 'Project Status', value: p.uc_rtmi || 'N/A' },
+    { label: 'Expected Possession', value: p.possession || 'N/A' }
+  ];
+
+  if (p.zone) specs.push({ label: 'Micro-market Zone', value: p.zone });
+  if (p.onboarded_year) specs.push({ label: 'Onboarded Year', value: p.onboarded_year });
+  if (p.subvention) specs.push({ label: 'Subvention Scheme', value: p.subvention });
+  if (p.clp_due) specs.push({ label: 'CLP Milestones Due', value: p.clp_due });
+  if (p.floor_rise) specs.push({ label: 'Floor Rise Details', value: p.floor_rise });
+
+  const specHTML = specs.map(s => `
+    <div class="spec-item">
+      <span class="spec-label">${s.label}</span>
+      <span class="spec-value">${s.value}</span>
+    </div>
+  `).join('');
+
+  // Handle USPs
+  let uspHTML = '';
+  if (p.location_usp || p.metro_station || p.other_usp) {
+    uspHTML = `
+      <div>
+        <div class="section-title">Connectivity & Key Features</div>
+        <div class="description-box" style="background:#fffaf0; border-color:#fbeec1;">
+          ${p.location_usp ? `<div style="margin-bottom:8px;"><strong>📍 Location Advantages:</strong> ${p.location_usp}</div>` : ''}
+          ${p.metro_station ? `<div style="margin-bottom:8px;"><strong>🚇 Metro Proximity:</strong> ${p.metro_station}</div>` : ''}
+          ${p.other_usp ? `<div><strong>🌟 Unique Selling Points:</strong> ${p.other_usp}</div>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  // Handle Map Link
+  const mapBtnHTML = p.google_map_url ? `
+    <div class="map-btn-container">
+      <a href="${p.google_map_url}" target="_blank" class="map-btn">
+        📍 Open Project Map Location
+      </a>
+    </div>
+  ` : '';
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Project Presentation - ${p.project_name}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+        <style>
+          body {
+            font-family: 'Inter', sans-serif;
+            color: #1a1a1a;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .print-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+          }
+          .luxury-header {
+            border-bottom: 2px solid #d4af37;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+          }
+          .brand-title {
+            font-family: 'Playfair Display', serif;
+            color: #1a1a1a;
+            margin: 0;
+            font-size: 32px;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+          }
+          .brand-subtitle {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #d4af37;
+            margin-top: 5px;
+            font-weight: 600;
+          }
+          .contact-info {
+            text-align: right;
+            font-size: 11.5px;
+            line-height: 1.6;
+            color: #555;
+          }
+          .project-title-section {
+            margin-bottom: 25px;
+          }
+          .proj-id-badge {
+            display: inline-block;
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid #d4af37;
+            color: #b8860b;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+          }
+          .project-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            color: #111;
+            margin: 0 0 5px 0;
+            font-weight: 700;
+          }
+          .project-builder {
+            font-size: 15px;
+            color: #d4af37;
+            font-weight: 600;
+            margin-bottom: 5px;
+          }
+          .project-location {
+            font-size: 14px;
+            color: #666;
+          }
+          .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            color: #1a1a1a;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+            margin-top: 35px;
+            margin-bottom: 15px;
+            font-weight: 700;
+          }
+          .spec-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px 30px;
+          }
+          .spec-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dashed #e5e5e5;
+            padding-bottom: 6px;
+            font-size: 13.5px;
+          }
+          .spec-label {
+            color: #666;
+            font-weight: 500;
+          }
+          .spec-value {
+            color: #111;
+            font-weight: 600;
+          }
+          .unit-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 13.5px;
+          }
+          .unit-table th, .unit-table td {
+            text-align: left;
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+          }
+          .unit-table th {
+            background-color: #fcf8f0;
+            color: #b8860b;
+            font-weight: 700;
+            border-top: 1px solid #fbeec1;
+            border-bottom: 2px solid #fbeec1;
+          }
+          .description-box {
+            font-size: 13.5px;
+            line-height: 1.7;
+            color: #444;
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #f0f0f0;
+            margin-top: 15px;
+          }
+          .map-btn-container {
+            margin-top: 25px;
+            text-align: center;
+          }
+          .map-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #d4af37;
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13.5px;
+            transition: background 0.2s;
+          }
+          .luxury-footer {
+            margin-top: 50px;
+            border-top: 1px solid #d4af37;
+            padding-top: 20px;
+            text-align: center;
+            font-size: 11px;
+            color: #888;
+            letter-spacing: 0.5px;
+          }
+          @media print {
+            body {
+              background: #fff;
+            }
+            .map-btn {
+              background: #d4af37 !important;
+              color: #fff !important;
+            }
+            .print-container {
+              padding: 20px;
+            }
+            .map-btn-container {
+              display: none;
+            }
+            .unit-table th {
+              background-color: #fcf8f0 !important;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="print-container">
+          <div class="luxury-header">
+            <div>
+              <div class="brand-title">SUBH HOMES</div>
+              <div class="brand-subtitle">Premium Real Estate Advisory</div>
+            </div>
+            <div class="contact-info">
+              <strong>Vasu Jain</strong><br>
+              📞 +91 98200 12345<br>
+              ✉️ info@subhhomes.com<br>
+              🌐 www.subhhomes.com
+            </div>
+          </div>
+
+          <div class="project-title-section">
+            <span class="proj-id-badge">ID: ${p.proj_id || ('#' + p.id)}</span>
+            <div class="project-builder">${p.builder_name}</div>
+            <h1 class="project-name">${p.project_name}</h1>
+            <div class="project-location">📍 ${p.location}</div>
+          </div>
+
+          <div>
+            <div class="section-title">Project Specifications</div>
+            <div class="spec-grid">
+              ${specHTML}
+            </div>
+          </div>
+
+          <div>
+            <div class="section-title">Configured Unit Types & Pricing</div>
+            <table class="unit-table">
+              <thead>
+                <tr>
+                  <th>Typology</th>
+                  <th>Saleable Area</th>
+                  <th>Price range</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${unitRowsHTML}
+              </tbody>
+            </table>
+          </div>
+
+          ${uspHTML}
+          ${mapBtnHTML}
+
+          <div class="luxury-footer">
+            Subh Homes • Premium Real Estate Advisory • Vasu Jain +91 98200 12345 • info@subhhomes.com
+          </div>
+        </div>
+        <script>
+          setTimeout(() => {
+            window.print();
+            window.close();
+          }, 500);
+        </script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
 };
 
 window.loadProjectLeads = async function(projectId) {
@@ -11956,73 +12461,267 @@ window.updatePropertyInline = async function(id, field, el) {
 function printPropertyCard(id) {
   const p = state.properties.find(x => x.id === id);
   if (!p) return;
+
+  const specs = [];
+  const pType = (p.property_type || '').toLowerCase();
+  const isLand = pType.includes('land') || pType.includes('plot');
+
+  specs.push({ label: 'Property Type', value: p.property_type || 'N/A' });
+  
+  if (isLand) {
+    specs.push({ label: 'Zoning / Land Use', value: p.configuration || 'N/A' });
+    specs.push({ label: 'Plot Size', value: p.plot_size ? p.plot_size + ' Sqft' : 'N/A' });
+    specs.push({ label: 'Dimensions', value: p.plot_dimension || 'N/A' });
+    specs.push({ label: 'Road Width', value: p.road_width || 'N/A' });
+    specs.push({ label: 'FSI Allowed', value: p.fsi || 'N/A' });
+    specs.push({ label: 'Plot Facing', value: p.plot_facing || 'N/A' });
+  } else {
+    specs.push({ label: 'Configuration', value: p.configuration || 'N/A' });
+    specs.push({ label: 'Super Built-up Area', value: p.area_sqft ? p.area_sqft + ' Sqft' : 'N/A' });
+    specs.push({ label: 'Furnishing Status', value: p.interiors || 'N/A' });
+    specs.push({ label: 'Facing', value: p.facing || 'East' });
+    specs.push({ label: 'Possession Status', value: p.possession || 'Ready' });
+    specs.push({ label: 'Car Parking', value: p.car_park || 'N/A' });
+    if (p.zone) specs.push({ label: 'Micro-market Zone', value: p.zone });
+  }
+  
+  if (p.deposit) specs.push({ label: 'Security Deposit', value: '₹' + parseFloat(p.deposit).toLocaleString('en-IN') });
+  if (p.maintenance) specs.push({ label: 'Maintenance Fee', value: '₹' + parseFloat(p.maintenance).toLocaleString('en-IN') });
+  if (p.registration_status) specs.push({ label: 'Registration Status', value: p.registration_status });
+  if (p.onboarded_year) specs.push({ label: 'Onboarded Year', value: p.onboarded_year });
+
+  const specHTML = specs.map(s => `
+    <div class="spec-item">
+      <span class="spec-label">${s.label}</span>
+      <span class="spec-value">${s.value}</span>
+    </div>
+  `).join('');
+
+  const mapBtnHTML = p.google_map_url ? `
+    <div class="map-btn-container">
+      <a href="${p.google_map_url}" target="_blank" class="map-btn">
+        📍 Open Location Google Map
+      </a>
+    </div>
+  ` : '';
+
+  const descHTML = p.additional_info ? `
+    <div>
+      <div class="section-title">Overview & Remarks</div>
+      <div class="description-box">${p.additional_info}</div>
+    </div>
+  ` : '';
+
   const printWindow = window.open('', '_blank');
   printWindow.document.write(`
     <html>
       <head>
-        <title>Property Pitch - ${p.prop_id || p.id}</title>
+        <title>Property Presentation - ${p.prop_id || ('#' + p.id)}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
         <style>
-          body { font-family: 'Inter', sans-serif; color: #333; padding: 40px; margin: 0; background: #fff; }
-          .header { text-align: center; border-bottom: 2px solid #b8860b; padding-bottom: 20px; margin-bottom: 30px; }
-          .header img { max-height: 80px; }
-          .title { font-size: 24px; font-weight: 800; color: #111; margin: 10px 0 5px 0; }
-          .loc { font-size: 16px; color: #555; }
-          .price { font-size: 28px; font-weight: 800; color: #2ecc71; margin-top: 20px; text-align: center; }
-          .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
-          .card { background: #f9f9f9; padding: 20px; border-radius: 8px; border: 1px solid #eee; }
-          .label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
-          .val { font-size: 16px; font-weight: 600; color: #222; margin-top: 4px; }
-          .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
+          body {
+            font-family: 'Inter', sans-serif;
+            color: #1a1a1a;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .print-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+          }
+          .luxury-header {
+            border-bottom: 2px solid #d4af37;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+          }
+          .brand-title {
+            font-family: 'Playfair Display', serif;
+            color: #1a1a1a;
+            margin: 0;
+            font-size: 32px;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+          }
+          .brand-subtitle {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #d4af37;
+            margin-top: 5px;
+            font-weight: 600;
+          }
+          .contact-info {
+            text-align: right;
+            font-size: 11.5px;
+            line-height: 1.6;
+            color: #555;
+          }
+          .property-title-section {
+            margin-bottom: 25px;
+          }
+          .prop-id-badge {
+            display: inline-block;
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid #d4af37;
+            color: #b8860b;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+          }
+          .property-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            color: #111;
+            margin: 0 0 5px 0;
+            font-weight: 700;
+          }
+          .property-location {
+            font-size: 14px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+          }
+          .price-tag {
+            font-family: 'Inter', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: #27ae60;
+            margin-top: 15px;
+            padding: 10px 15px;
+            background: #f4fbf7;
+            border-left: 4px solid #27ae60;
+            display: inline-block;
+          }
+          .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            color: #1a1a1a;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-weight: 700;
+          }
+          .spec-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px 30px;
+          }
+          .spec-item {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dashed #e5e5e5;
+            padding-bottom: 6px;
+            font-size: 13.5px;
+          }
+          .spec-label {
+            color: #666;
+            font-weight: 500;
+          }
+          .spec-value {
+            color: #111;
+            font-weight: 600;
+          }
+          .description-box {
+            font-size: 13.5px;
+            line-height: 1.7;
+            color: #444;
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #f0f0f0;
+            margin-top: 15px;
+          }
+          .map-btn-container {
+            margin-top: 25px;
+            text-align: center;
+          }
+          .map-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #d4af37;
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13.5px;
+            transition: background 0.2s;
+          }
+          .luxury-footer {
+            margin-top: 50px;
+            border-top: 1px solid #d4af37;
+            padding-top: 20px;
+            text-align: center;
+            font-size: 11px;
+            color: #888;
+            letter-spacing: 0.5px;
+          }
           @media print {
-            body { -webkit-print-color-adjust: exact; }
+            body {
+              background: #fff;
+            }
+            .map-btn {
+              background: #d4af37 !important;
+              color: #fff !important;
+            }
+            .print-container {
+              padding: 20px;
+            }
+            .map-btn-container {
+              display: none; /* Do not print map button since it is interactive */
+            }
           }
         </style>
       </head>
       <body>
-        <div class="header">
-          <h1 style="color: #b8860b; margin:0;">SUBH HOMES</h1>
-          <div style="color: #555;">Premium Real Estate Consultancy</div>
-        </div>
-        <div class="title">${p.society}</div>
-        <div class="loc">${p.location} ${p.zone ? ' | Zone: ' + p.zone : ''}</div>
-        <div class="price">${p.price_raw || 'Price on Request'}</div>
-        
-        <div class="grid">
-          <div class="card">
-            <div class="label">Property Type</div>
-            <div class="val">${p.property_type || 'N/A'}</div>
+        <div class="print-container">
+          <div class="luxury-header">
+            <div>
+              <div class="brand-title">SUBH HOMES</div>
+              <div class="brand-subtitle">Premium Real Estate Advisory</div>
+            </div>
+            <div class="contact-info">
+              <strong>Vasu Jain</strong><br>
+              📞 +91 98200 12345<br>
+              ✉️ info@subhhomes.com<br>
+              🌐 www.subhhomes.com
+            </div>
           </div>
-          <div class="card">
-            <div class="label">Configuration</div>
-            <div class="val">${p.configuration || 'N/A'}</div>
-          </div>
-          <div class="card">
-            <div class="label">Super Built-up Area</div>
-            <div class="val">${p.area_sqft || 'N/A'} Sqft</div>
-          </div>
-          <div class="card">
-            <div class="label">Furnishing</div>
-            <div class="val">${p.interiors || 'N/A'}</div>
-          </div>
-          <div class="card">
-            <div class="label">Facing</div>
-            <div class="val">${p.facing || 'N/A'}</div>
-          </div>
-          <div class="card">
-            <div class="label">Possession Status</div>
-            <div class="val">${p.possession || p.project_status || 'N/A'}</div>
-          </div>
-        </div>
-        
-        ${p.additional_info ? `
-        <div style="margin-top: 30px;">
-          <div class="label">Description & Amenities</div>
-          <p style="line-height: 1.6; color: #444;">${p.additional_info}</p>
-        </div>` : ''}
 
-        <div class="footer">
-          For inquiries, please contact us.<br>
-          Generated by Subh Homes CRM System
+          <div class="property-title-section">
+            <span class="prop-id-badge">ID: ${p.prop_id || ('#' + p.id)}</span>
+            <h1 class="property-name">${p.society}</h1>
+            <div class="property-location">📍 ${p.location}</div>
+            <div class="price-tag">${p.price_raw || formatPriceToWords(p.price) || 'Price on Request'}</div>
+          </div>
+
+          <div>
+            <div class="section-title">Property Details</div>
+            <div class="spec-grid">
+              ${specHTML}
+            </div>
+          </div>
+
+          ${descHTML}
+          ${mapBtnHTML}
+
+          <div class="luxury-footer">
+            Subh Homes • Premium Real Estate Advisory • Vasu Jain +91 98200 12345 • info@subhhomes.com
+          </div>
         </div>
         <script>
           setTimeout(() => {

@@ -92,8 +92,8 @@ CREATE TABLE properties (
     sba TEXT,
     associate_id INTEGER,
     special_tags TEXT,
-    last_updated TEXT DEFAULT CURRENT_TIMESTAMP
-    sync_status TEXT DEFAULT 'NOT_SYNCED', zone TEXT, onboarded_year TEXT, plot_dimension TEXT, house_facing TEXT, plot_facing TEXT, holder_type TEXT, deleted_at TEXT, admin_comments TEXT, project_id INTEGER, agent_id INTEGER, commission_agreed TEXT, google_map_url TEXT);
+    last_updated TEXT DEFAULT CURRENT_TIMESTAMP,
+    sync_status TEXT DEFAULT 'NOT_SYNCED', zone TEXT, onboarded_year TEXT, plot_dimension TEXT, house_facing TEXT, plot_facing TEXT, holder_type TEXT, deleted_at TEXT, admin_comments TEXT, project_id INTEGER, agent_id INTEGER, commission_agreed TEXT, google_map_url TEXT, road_width TEXT, fsi TEXT, closure_site_visit BOOLEAN DEFAULT false, closure_negotiation BOOLEAN DEFAULT false, closure_agreement BOOLEAN DEFAULT false, closure_registration BOOLEAN DEFAULT false, closure_closed BOOLEAN DEFAULT false, closure_buyer_name TEXT, closure_buyer_phone TEXT, closure_deal_value NUMERIC, closure_commission_pct NUMERIC, closure_date TEXT, closure_notes TEXT);
 CREATE TABLE builder_projects (
     id SERIAL PRIMARY KEY,
     builder_name TEXT NOT NULL,
@@ -330,6 +330,20 @@ CREATE TABLE communication_templates (
     try {
       await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS commission_agreed TEXT;');
       await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS google_map_url TEXT;');
+      await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS road_width TEXT;');
+      await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS fsi TEXT;');
+      
+      await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS closure_site_visit BOOLEAN DEFAULT false;');
+      await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS closure_negotiation BOOLEAN DEFAULT false;');
+      await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS closure_agreement BOOLEAN DEFAULT false;');
+      await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS closure_registration BOOLEAN DEFAULT false;');
+      await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS closure_closed BOOLEAN DEFAULT false;');
+      await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS closure_buyer_name TEXT;');
+      await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS closure_buyer_phone TEXT;');
+      await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS closure_deal_value NUMERIC;');
+      await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS closure_commission_pct NUMERIC;');
+      await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS closure_date TEXT;');
+      await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS closure_notes TEXT;');
       
       await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS closure_site_visit BOOLEAN DEFAULT false;');
       await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS closure_negotiation BOOLEAN DEFAULT false;');

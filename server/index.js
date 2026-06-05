@@ -1839,7 +1839,9 @@ app.post('/api/properties', async (req, res) => {
       associate_id,
       project_id,
       commission_agreed,
-      google_map_url
+      google_map_url,
+      road_width,
+      fsi
     } = req.body;
     const user = getRequestUser(req);
     const agentId = user ? user.id : null;
@@ -1910,9 +1912,9 @@ app.post('/api/properties', async (req, res) => {
         registration_status, source, sub_source, comments,
         maintenance, deposit, available_from, date_of_inventory, available_for,
         plot_size, sba, special_tags, zone, onboarded_year,
-        plot_dimension, plot_facing, house_facing, holder_type, admin_comments, associate_id, project_id, agent_id, commission_agreed, google_map_url, last_updated
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, CURRENT_TIMESTAMP)
-     RETURNING id`, [pId, mandate_type || 'Open', property_type || 'Resale', society, location || '', status || 'AVAILABLE', site_area || '', parseFloat(area_sqft || 0), configuration || '', floor_info || '', floor_range || '', interiors || 'Unfurnished', facing || '', amenities || '', car_park || '', parseFloat(price || 0), pRaw, possession || '', project_size || '', project_status || '', additional_info || '', video_link || '', photo_link || '', brochure_link || '', owner_name || '', owner_phone || '', owner_email || '', unit_no || '', registration_status || '', source || '', sub_source || '', comments || '', parseFloat(maintenance || 0), parseFloat(deposit || 0), available_from || '', date_of_inventory || '', available_for || 'Sale', plot_size || '', sba || '', special_tags || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), plot_dimension || '', plot_facing || '', house_facing || '', holder_type || '', admin_comments || '', associate_id ? parseInt(associate_id) : null, project_id ? parseInt(project_id) : null, agentId, commission_agreed || '', google_map_url || '']);
+        plot_dimension, plot_facing, house_facing, holder_type, admin_comments, associate_id, project_id, agent_id, commission_agreed, google_map_url, road_width, fsi, last_updated
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54, CURRENT_TIMESTAMP)
+     RETURNING id`, [pId, mandate_type || 'Open', property_type || 'Resale', society, location || '', status || 'AVAILABLE', site_area || '', parseFloat(area_sqft || 0), configuration || '', floor_info || '', floor_range || '', interiors || 'Unfurnished', facing || '', amenities || '', car_park || '', parseFloat(price || 0), pRaw, possession || '', project_size || '', project_status || '', additional_info || '', video_link || '', photo_link || '', brochure_link || '', owner_name || '', owner_phone || '', owner_email || '', unit_no || '', registration_status || '', source || '', sub_source || '', comments || '', parseFloat(maintenance || 0), parseFloat(deposit || 0), available_from || '', date_of_inventory || '', available_for || 'Sale', plot_size || '', sba || '', special_tags || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), plot_dimension || '', plot_facing || '', house_facing || '', holder_type || '', admin_comments || '', associate_id ? parseInt(associate_id) : null, project_id ? parseInt(project_id) : null, agentId, commission_agreed || '', google_map_url || '', road_width || '', fsi || '']);
       return {
         lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
         changes: r.rowCount
@@ -2008,7 +2010,9 @@ app.put('/api/properties/:id', async (req, res) => {
       associate_id,
       project_id,
       commission_agreed,
-      google_map_url
+      google_map_url,
+      road_width,
+      fsi
     } = req.body;
 
     // Optional duplicate detection check ignoring self
@@ -2051,9 +2055,9 @@ app.put('/api/properties/:id', async (req, res) => {
         maintenance = $32, deposit = $33, available_from = $34, date_of_inventory = $35, available_for = $36,
         plot_size = $37, sba = $38, special_tags = $39, zone = $40, onboarded_year = $41,
         plot_dimension = $42, plot_facing = $43, house_facing = $44, holder_type = $45, admin_comments = $46, 
-        associate_id = $47, project_id = $48, commission_agreed = $49, google_map_url = $50, last_updated = CURRENT_TIMESTAMP
-      WHERE id = $51
-    `, [mandate_type || 'Open', property_type || 'Resale', society, location || '', status || 'AVAILABLE', site_area || '', parseFloat(area_sqft || 0), configuration || '', floor_info || '', floor_range || '', interiors || 'Unfurnished', facing || '', amenities || '', car_park || '', parseFloat(price || 0), pRaw, possession || '', project_size || '', project_status || '', additional_info || '', video_link || '', photo_link || '', brochure_link || '', owner_name || '', owner_phone || '', owner_email || '', unit_no || '', registration_status || '', source || '', sub_source || '', comments || '', parseFloat(maintenance || 0), parseFloat(deposit || 0), available_from || '', date_of_inventory || '', available_for || 'Sale', plot_size || '', sba || '', special_tags || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), plot_dimension || '', plot_facing || '', house_facing || '', holder_type || '', admin_comments || '', associate_id ? parseInt(associate_id) : null, project_id ? parseInt(project_id) : null, commission_agreed || '', google_map_url || '', req.params.id]);
+        associate_id = $47, project_id = $48, commission_agreed = $49, google_map_url = $50, road_width = $51, fsi = $52, last_updated = CURRENT_TIMESTAMP
+      WHERE id = $53
+    `, [mandate_type || 'Open', property_type || 'Resale', society, location || '', status || 'AVAILABLE', site_area || '', parseFloat(area_sqft || 0), configuration || '', floor_info || '', floor_range || '', interiors || 'Unfurnished', facing || '', amenities || '', car_park || '', parseFloat(price || 0), pRaw, possession || '', project_size || '', project_status || '', additional_info || '', video_link || '', photo_link || '', brochure_link || '', owner_name || '', owner_phone || '', owner_email || '', unit_no || '', registration_status || '', source || '', sub_source || '', comments || '', parseFloat(maintenance || 0), parseFloat(deposit || 0), available_from || '', date_of_inventory || '', available_for || 'Sale', plot_size || '', sba || '', special_tags || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), plot_dimension || '', plot_facing || '', house_facing || '', holder_type || '', admin_comments || '', associate_id ? parseInt(associate_id) : null, project_id ? parseInt(project_id) : null, commission_agreed || '', google_map_url || '', road_width || '', fsi || '', req.params.id]);
       return {
         lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
         changes: r.rowCount
@@ -2072,6 +2076,95 @@ app.put('/api/properties/:id', async (req, res) => {
     });
   }
 });
+
+app.patch('/api/properties/:id/closure', async (req, res) => {
+  try {
+    const {
+      closure_site_visit,
+      closure_negotiation,
+      closure_agreement,
+      closure_registration,
+      closure_closed,
+      closure_buyer_name,
+      closure_buyer_phone,
+      closure_deal_value,
+      closure_commission_pct,
+      closure_date,
+      closure_notes
+    } = req.body;
+    
+    await db.query(`
+      UPDATE properties
+      SET closure_site_visit = $1,
+          closure_negotiation = $2,
+          closure_agreement = $3,
+          closure_registration = $4,
+          closure_closed = $5,
+          closure_buyer_name = $6,
+          closure_buyer_phone = $7,
+          closure_deal_value = $8,
+          closure_commission_pct = $9,
+          closure_date = $10,
+          closure_notes = $11
+      WHERE id = $12
+    `, [
+      closure_site_visit === true || closure_site_visit === 'true',
+      closure_negotiation === true || closure_negotiation === 'true',
+      closure_agreement === true || closure_agreement === 'true',
+      closure_registration === true || closure_registration === 'true',
+      closure_closed === true || closure_closed === 'true',
+      closure_buyer_name || null,
+      closure_buyer_phone || null,
+      closure_deal_value ? parseFloat(closure_deal_value) : null,
+      closure_commission_pct ? parseFloat(closure_commission_pct) : null,
+      closure_date || null,
+      closure_notes || null,
+      req.params.id
+    ]);
+
+    // If deal is closed, automatically log a closed deal on property
+    if (closure_closed === true || closure_closed === 'true') {
+      const propResult = await db.query("SELECT society, property_type, available_for FROM properties WHERE id = $1", [req.params.id]);
+      const p = propResult.rows[0];
+      if (p) {
+        const pType = (p.property_type || '').toLowerCase();
+        const isRental = pType.includes('rental') || (p.available_for && p.available_for.toLowerCase().includes('rent')) || (p.available_for && p.available_for.toLowerCase().includes('lease'));
+        const finalStatus = isRental ? 'RENTED OUT' : 'SOLD';
+        
+        await db.query("UPDATE properties SET status = $1 WHERE id = $2", [finalStatus, req.params.id]);
+        
+        // Check if commission entry already exists for this property
+        const commCheck = await db.query("SELECT id FROM commissions WHERE deal_name = $1", [p.society + ' - ' + (closure_buyer_name || 'Closed Deal')]);
+        if (commCheck.rows.length === 0) {
+          const dealVal = closure_deal_value ? parseFloat(closure_deal_value) : 0;
+          const commPct = closure_commission_pct ? parseFloat(closure_commission_pct) : 0;
+          const commAmt = (dealVal * commPct) / 100;
+          
+          await db.query(`
+            INSERT INTO commissions (deal_name, deal_value, commission_percentage, commission_amount, payment_status, booking_date, created_at)
+            VALUES ($1, $2, $3, $4, 'Pending', $5, CURRENT_TIMESTAMP)
+          `, [
+            p.society + ' - ' + (closure_buyer_name || 'Closed Deal'),
+            dealVal,
+            commPct,
+            commAmt,
+            closure_date || new Date().toISOString().split('T')[0]
+          ]);
+        }
+      }
+    }
+    
+    res.json({
+      success: true,
+      id: req.params.id
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+});
+
 app.delete('/api/properties/:id', async (req, res) => {
   try {
     await (async () => {
