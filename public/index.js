@@ -2182,7 +2182,7 @@ function renderResaleProperties(listings) {
               ${p.is_stale ? `<span class="chip chip-hot btn-sm" style="font-size:9px; font-weight:700;">⚠️ STALE LISTING</span>` : ''}
               ${p.mandate_type === 'Exclusive' ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(184,134,11,0.2); border:0.5px solid var(--gold); color:var(--gold-l);">👑 EXCLUSIVE</span>` : ''}
               ${(()=>{ const s=(p.status||'AVAILABLE').toUpperCase(); if(s==='AVAILABLE') return `<span class="chip chip-available btn-sm" style="font-size:9px;font-weight:700;background:rgba(46,204,113,0.2);border:0.5px solid var(--green);color:var(--green);">🟢 AVAILABLE</span>`; if(s==='SOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.2);border:0.5px solid var(--red);color:var(--red);">🔴 SOLD</span>`; if(s==='ON HOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(230,126,34,0.2);border:0.5px solid #e67e22;color:#e67e22;">🟠 ON HOLD</span>`; if(s==='WITHDRAWN') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(127,140,141,0.2);border:0.5px solid #7f8c8d;color:#7f8c8d;">⚫ WITHDRAWN</span>`; if(s==='EXPIRED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.1);border:0.5px solid #c0392b;color:#c0392b;opacity:0.7;">🔕 EXPIRED</span>`; if(s==='RESERVED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(52,152,219,0.2);border:0.5px solid var(--blue);color:var(--blue-light);">🔵 RESERVED</span>`; return ''; })()}
-              ${p.associate_id ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(52, 152, 219, 0.2); border:0.5px solid var(--blue); color:var(--blue-light);">🏢 ASSOCIATE INVENTORY</span>` : ''}
+              ${p.associate_id ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(52, 152, 219, 0.2); border:0.5px solid var(--blue); color:var(--blue-light);">🏢 Associate: ${p.associate_name || 'Network Broker'}</span>` : ''}
               ${p.special_tags ? p.special_tags.split(',').map(tag => `<span class="chip chip-warm btn-sm" style="font-size:9px; font-weight:600;">🏷️ ${tag.trim()}</span>`).join(' ') : ''}
               ${p.sync_status && p.sync_status !== 'NOT_SYNCED' ? `<span class="portal-sync-badge"><i class="ti ti-world"></i> ${p.sync_status}</span>` : ''}
             </div>
@@ -2423,7 +2423,7 @@ function renderRentalProperties(listings) {
               <span class="chip chip-cold btn-sm" style="font-size:9.5px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">ID: ${p.prop_id || '#' + p.id}</span>
               ${p.mandate_type === 'Exclusive' ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(184,134,11,0.2); border:0.5px solid var(--gold); color:var(--gold-l);">👑 EXCLUSIVE</span>` : ''}
               ${(()=>{ const s=(p.status||'AVAILABLE').toUpperCase(); if(s==='AVAILABLE') return `<span class="chip chip-available btn-sm" style="font-size:9px;font-weight:700;background:rgba(46,204,113,0.2);border:0.5px solid var(--green);color:var(--green);">🟢 AVAILABLE</span>`; if(s==='SOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.2);border:0.5px solid var(--red);color:var(--red);">🔴 RENTED OUT</span>`; if(s==='ON HOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(230,126,34,0.2);border:0.5px solid #e67e22;color:#e67e22;">🟠 ON HOLD</span>`; if(s==='WITHDRAWN') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(127,140,141,0.2);border:0.5px solid #7f8c8d;color:#7f8c8d;">⚫ WITHDRAWN</span>`; if(s==='EXPIRED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.1);border:0.5px solid #c0392b;color:#c0392b;opacity:0.7;">🔕 EXPIRED</span>`; if(s==='RESERVED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(52,152,219,0.2);border:0.5px solid var(--blue);color:var(--blue-light);">🔵 RESERVED</span>`; return ''; })()}
-              ${p.associate_id ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(52, 152, 219, 0.2); border:0.5px solid var(--blue); color:var(--blue-light);">🏢 ASSOCIATE INVENTORY</span>` : ''}
+              ${p.associate_id ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(52, 152, 219, 0.2); border:0.5px solid var(--blue); color:var(--blue-light);">🏢 Associate: ${p.associate_name || 'Network Broker'}</span>` : ''}
               ${p.special_tags ? p.special_tags.split(',').map(tag => `<span class="chip chip-warm btn-sm" style="font-size:9px; font-weight:600;">🏷️ ${tag.trim()}</span>`).join(' ') : ''}
               ${p.sync_status && p.sync_status !== 'NOT_SYNCED' ? `<span class="portal-sync-badge"><i class="ti ti-world"></i> ${p.sync_status}</span>` : ''}
             </div>
@@ -2627,7 +2627,7 @@ function renderCommercialProperties(listings) {
               <span class="chip chip-cold btn-sm" style="font-size:9.5px; background:var(--purple-light); color:var(--purple); cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">ID: ${p.prop_id || '#' + p.id}</span>
               ${p.mandate_type === 'Exclusive' ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(184,134,11,0.2); border:0.5px solid var(--gold); color:var(--gold-l);">👑 EXCLUSIVE</span>` : ''}
               ${(()=>{ const s=(p.status||'AVAILABLE').toUpperCase(); if(s==='AVAILABLE') return `<span class="chip chip-available btn-sm" style="font-size:9px;font-weight:700;background:rgba(46,204,113,0.2);border:0.5px solid var(--green);color:var(--green);">🟢 AVAILABLE</span>`; if(s==='SOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.2);border:0.5px solid var(--red);color:var(--red);">🔴 SOLD</span>`; if(s==='ON HOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(230,126,34,0.2);border:0.5px solid #e67e22;color:#e67e22;">🟠 ON HOLD</span>`; if(s==='WITHDRAWN') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(127,140,141,0.2);border:0.5px solid #7f8c8d;color:#7f8c8d;">⚫ WITHDRAWN</span>`; if(s==='EXPIRED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.1);border:0.5px solid #c0392b;color:#c0392b;opacity:0.7;">🔕 EXPIRED</span>`; if(s==='RESERVED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(52,152,219,0.2);border:0.5px solid var(--blue);color:var(--blue-light);">🔵 RESERVED</span>`; return ''; })()}
-              ${p.associate_id ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(52, 152, 219, 0.2); border:0.5px solid var(--blue); color:var(--blue-light);">🏢 ASSOCIATE INVENTORY</span>` : ''}
+              ${p.associate_id ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(52, 152, 219, 0.2); border:0.5px solid var(--blue); color:var(--blue-light);">🏢 Associate: ${p.associate_name || 'Network Broker'}</span>` : ''}
               ${p.special_tags ? p.special_tags.split(',').map(tag => `<span class="chip chip-warm btn-sm" style="font-size:9px; font-weight:600;">🏷️ ${tag.trim()}</span>`).join(' ') : ''}
               ${p.sync_status && p.sync_status !== 'NOT_SYNCED' ? `<span class="portal-sync-badge"><i class="ti ti-world"></i> ${p.sync_status}</span>` : ''}
             </div>
@@ -2832,7 +2832,7 @@ function renderLandProperties(listings) {
               <span class="chip chip-cold btn-sm" style="font-size:9.5px; background:rgba(46,204,113,0.15); color:var(--green); cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">ID: ${p.prop_id || '#' + p.id}</span>
               ${p.mandate_type === 'Exclusive' ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(184,134,11,0.2); border:0.5px solid var(--gold); color:var(--gold-l);">👑 EXCLUSIVE</span>` : ''}
               ${(()=>{ const s=(p.status||'AVAILABLE').toUpperCase(); if(s==='AVAILABLE') return `<span class="chip chip-available btn-sm" style="font-size:9px;font-weight:700;background:rgba(46,204,113,0.2);border:0.5px solid var(--green);color:var(--green);">🟢 AVAILABLE</span>`; if(s==='SOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.2);border:0.5px solid var(--red);color:var(--red);">🔴 SOLD</span>`; if(s==='ON HOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(230,126,34,0.2);border:0.5px solid #e67e22;color:#e67e22;">🟠 ON HOLD</span>`; if(s==='WITHDRAWN') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(127,140,141,0.2);border:0.5px solid #7f8c8d;color:#7f8c8d;">⚫ WITHDRAWN</span>`; return ''; })()}
-              ${p.associate_id ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(52, 152, 219, 0.2); border:0.5px solid var(--blue); color:var(--blue-light);">🏢 ASSOCIATE INVENTORY</span>` : ''}
+              ${p.associate_id ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(52, 152, 219, 0.2); border:0.5px solid var(--blue); color:var(--blue-light);">🏢 Associate: ${p.associate_name || 'Network Broker'}</span>` : ''}
               ${p.special_tags ? p.special_tags.split(',').map(tag => `<span class="chip chip-warm btn-sm" style="font-size:9px; font-weight:600;">🏷️ ${tag.trim()}</span>`).join(' ') : ''}
             </div>
             <div class="inv-loc" style="margin-top:6px; font-size:12px;">📍 Location: <strong>${p.location}</strong> · Type: <strong>${p.property_type || 'Land / Plot'}</strong></div>
@@ -3105,6 +3105,10 @@ function closureDeal(propId, propName, propType) {
                   <input type="checkbox" id="prop-chk-site-visit" onchange="updatePropClosureFlowUI()" ${p.closure_site_visit ? 'checked' : ''}>
                   <span>Site Visit Conducted</span>
                 </label>
+                <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer; margin-left: 15px;" id="lbl-prop-chk-joint-visit">
+                  <input type="checkbox" id="prop-chk-joint-visit" onchange="updatePropClosureFlowUI()" ${p.closure_joint_visit ? 'checked' : ''}>
+                  <span>Joint Visit (Accompanied by Associate)</span>
+                </label>
                 <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer;">
                   <input type="checkbox" id="prop-chk-negotiation" onchange="updatePropClosureFlowUI()" ${p.closure_negotiation ? 'checked' : ''}>
                   <span>Negotiation Completed</span>
@@ -3227,6 +3231,7 @@ window.submitClosureDeal = async function(propId) {
 
   const payload = {
     closure_site_visit: document.getElementById('prop-chk-site-visit').checked,
+    closure_joint_visit: document.getElementById('prop-chk-joint-visit').checked,
     closure_negotiation: document.getElementById('prop-chk-negotiation').checked,
     closure_agreement: document.getElementById('prop-chk-agreement').checked,
     closure_registration: document.getElementById('prop-chk-registration').checked,
@@ -3667,16 +3672,28 @@ async function loadAssociates() {
     const data = await res.json();
     state.associates = data;
 
-    // Populate dropdowns in Lead forms
-    const leadAssocSelect = document.getElementById('lead-associate');
-    const editLeadAssocSelect = document.getElementById('edit-lead-associate');
-    if (leadAssocSelect) {
-      leadAssocSelect.innerHTML = '<option value="">-- None (Direct Client) --</option>' + 
-        data.map(a => `<option value="${a.id}">${a.name} (${a.company || 'Private Brokerage'})</option>`).join('');
-    }
-    if (editLeadAssocSelect) {
-      editLeadAssocSelect.innerHTML = '<option value="">-- None (Direct Client) --</option>' + 
-        data.map(a => `<option value="${a.id}">${a.name} (${a.company || 'Private Brokerage'})</option>`).join('');
+    // Populate dropdowns across all forms
+    const selectsToPopulate = [
+      { id: 'lead-associate', placeholder: '-- None (Direct Client) --' },
+      { id: 'edit-lead-associate', placeholder: '-- None (Direct Client) --' },
+      { id: 'prop-associate-id', placeholder: '-- None (Direct Listing) --' },
+      { id: 'rental-associate-id', placeholder: '-- None (Direct Listing) --' },
+      { id: 'comm-prop-associate-id', placeholder: '-- None (Direct Listing) --' },
+      { id: 'land-associate-id', placeholder: '-- None (Direct Listing) --' },
+      { id: 'comm-associate-id', placeholder: '-- None (Direct Deal) --' }
+    ];
+    selectsToPopulate.forEach(item => {
+      const select = document.getElementById(item.id);
+      if (select) {
+        const currentVal = select.value;
+        select.innerHTML = `<option value="">${item.placeholder}</option>` + 
+          data.map(a => `<option value="${a.id}">${a.name} (${a.company || 'Private Brokerage'})</option>`).join('');
+        if (currentVal) select.value = currentVal;
+      }
+    });
+
+    if (typeof loadAssociatesPerformance === 'function') {
+      loadAssociatesPerformance();
     }
 
     const searchVal = (document.getElementById('filter-assoc-search')?.value || '').toLowerCase().trim();
@@ -5022,7 +5039,8 @@ async function submitAddListing(e) {
     plot_dimension: document.getElementById('prop-plot-dimension').value,
     plot_facing: document.getElementById('prop-plot-facing').value,
     house_facing: document.getElementById('prop-house-facing').value,
-    project_id: document.getElementById('prop-project-link').value || null
+    project_id: document.getElementById('prop-project-link').value || null,
+    associate_id: document.getElementById('prop-associate-id').value ? parseInt(document.getElementById('prop-associate-id').value) : null
   };
 
 
@@ -5119,7 +5137,8 @@ async function submitAddRental(e) {
     available_for: 'Rent / Lease',
     zone: document.getElementById('rent-zone').value,
     onboarded_year: document.getElementById('rent-year').value,
-    project_id: document.getElementById('rental-project-link').value || null
+    project_id: document.getElementById('rental-project-link').value || null,
+    associate_id: document.getElementById('rental-associate-id').value ? parseInt(document.getElementById('rental-associate-id').value) : null
   };
 
   try {
@@ -5207,7 +5226,8 @@ async function submitAddCommercial(e) {
     admin_comments: document.getElementById('comm-admin-comments').value,
     zone: document.getElementById('comm-zone').value,
     onboarded_year: document.getElementById('comm-year').value,
-    project_id: document.getElementById('comm-project-link').value || null
+    project_id: document.getElementById('comm-project-link').value || null,
+    associate_id: document.getElementById('comm-prop-associate-id').value ? parseInt(document.getElementById('comm-prop-associate-id').value) : null
   };
 
   try {
@@ -5259,12 +5279,12 @@ window.submitAddLand = async function(e) {
     google_map_url: document.getElementById('land-google-map-url').value,
     comments: document.getElementById('land-comments').value,
     admin_comments: document.getElementById('land-admin-comments').value,
-    zone: document.getElementById('land-zone').value,
     onboarded_year: document.getElementById('land-year').value,
     project_id: document.getElementById('land-project-link').value || null,
     road_width: document.getElementById('land-road-width').value,
     fsi: document.getElementById('land-fsi').value,
-    available_for: 'Sale'
+    available_for: 'Sale',
+    associate_id: document.getElementById('land-associate-id').value ? parseInt(document.getElementById('land-associate-id').value) : null
   };
 
   try {
@@ -5533,7 +5553,8 @@ async function submitAddCommission(e) {
     co_broker_payout: parseFloat(document.getElementById('comm-payout').value || 0),
     expenses: parseFloat(document.getElementById('comm-expenses').value || 0),
     billing_invoice: document.getElementById('comm-invoice').value,
-    payment_status: document.getElementById('comm-status').value
+    payment_status: document.getElementById('comm-status').value,
+    associate_id: document.getElementById('comm-associate-id').value ? parseInt(document.getElementById('comm-associate-id').value) : null
   };
 
   try {
@@ -5575,6 +5596,7 @@ function editCommission(id) {
     document.getElementById('comm-expenses').value = c.expenses;
     document.getElementById('comm-invoice').value = c.billing_invoice;
     document.getElementById('comm-status').value = c.payment_status;
+    document.getElementById('comm-associate-id').value = c.associate_id || '';
     
     editingCommissionId = id;
     document.querySelector('#form-add-commission button[type="submit"]').innerText = 'Update Deal';
@@ -5935,6 +5957,8 @@ window.editFullProperty = function(id) {
     setVal('comm-commission-agreed', p.commission_agreed);
     setVal('comm-google-map-url', p.google_map_url);
     setVal('comm-comments', p.comments);
+    setVal('comm-project-link', p.project_id);
+    setVal('comm-prop-associate-id', p.associate_id);
 
     const titleEl = document.querySelector('#modal-add-commercial .mtitle');
     if (titleEl) titleEl.innerText = "Edit Commercial Listing: " + (p.society || "Property");
@@ -5980,6 +6004,8 @@ window.editFullProperty = function(id) {
     setVal('rental-commission-agreed', p.commission_agreed);
     setVal('rental-google-map-url', p.google_map_url);
     setVal('rental-comments', p.comments);
+    setVal('rental-project-link', p.project_id);
+    setVal('rental-associate-id', p.associate_id);
 
     setVal('rental-plot-size', p.plot_size);
     setVal('rental-sba', p.sba);
@@ -6025,6 +6051,7 @@ window.editFullProperty = function(id) {
     setVal('land-comments', p.comments);
     setVal('land-admin-comments', p.admin_comments);
     setVal('land-project-link', p.project_id);
+    setVal('land-associate-id', p.associate_id);
     setVal('land-road-width', p.road_width);
     setVal('land-fsi', p.fsi);
 
@@ -6071,6 +6098,8 @@ window.editFullProperty = function(id) {
     setVal('prop-commission-agreed', p.commission_agreed);
     setVal('prop-google-map-url', p.google_map_url);
     setVal('prop-comments', p.comments);
+    setVal('prop-project-link', p.project_id);
+    setVal('prop-associate-id', p.associate_id);
     
     setVal('prop-tags', p.special_tags);
     setVal('prop-zone', p.zone || 'E');
@@ -6334,9 +6363,10 @@ window.showAssociateDetails = async function(assocId) {
   switchAssocTab('overview');
   openModal('modal-associate-detail');
 
-  // Load Inventory & Requirements
+  // Load Inventory, Requirements & Shares
   loadAssociateInventory(assocId);
   loadAssociateRequirements(assocId);
+  loadAssociateShares(assocId);
 };
 
 window.switchAssocTab = function(tabName) {
@@ -6344,9 +6374,15 @@ window.switchAssocTab = function(tabName) {
   document.getElementById('tab-assoc-overview').classList.remove('active');
   document.getElementById('tab-assoc-inventory').classList.remove('active');
   document.getElementById('tab-assoc-reqs').classList.remove('active');
+  document.getElementById('tab-assoc-shared').classList.remove('active');
 
   document.getElementById(`pane-assoc-${tabName}`).classList.remove('hidden');
   document.getElementById(`tab-assoc-${tabName}`).classList.add('active');
+
+  const assocId = document.getElementById('detail-assoc-id').value;
+  if (tabName === 'shared' && assocId) {
+    loadAssociateShares(assocId);
+  }
 };
 
 window.editAssociateData = function() {
@@ -6409,21 +6445,188 @@ async function loadAssociateRequirements(assocId) {
     const myLeads = leads.filter(l => l.associate_id == assocId);
 
     if (myLeads.length === 0) {
-      container.innerHTML = `<div style="font-size:12px; color:var(--text-muted);">No buyer leads found for this associate.</div>`;
+      container.innerHTML = `<div style="font-size:12px; color:var(--text-muted);">No buyer leads/requirements found for this associate.</div>`;
       return;
     }
 
-    container.innerHTML = myLeads.map(l => `
+    container.innerHTML = myLeads.map(l => {
+      // Find matching properties from our inventory
+      const matches = (state.properties || []).filter(p => {
+        if ((p.status || 'AVAILABLE').toUpperCase() !== 'AVAILABLE') return false;
+        
+        // Match BHK config
+        const lBhk = (l.config_bhk || '').toLowerCase().replace(/[^0-9]/g, '');
+        const pConfig = (p.configuration || '').toLowerCase().replace(/[^0-9]/g, '');
+        const bhkMatch = !lBhk || !pConfig || pConfig.includes(lBhk) || lBhk.includes(pConfig);
+        
+        // Match Location
+        const lLoc = (l.location_preference || '').toLowerCase().trim();
+        const pLoc = (p.location || '').toLowerCase().trim();
+        const locMatch = !lLoc || !pLoc || pLoc.includes(lLoc) || lLoc.includes(pLoc);
+        
+        // Match Price (lead budget is in Crores, property price in Rupees)
+        const propPrice = parseFloat(p.price || 0);
+        const minVal = parseFloat(l.budget_min || 0) * 10000000;
+        const maxVal = parseFloat(l.budget_max || 0) * 10000000;
+        const priceMatch = (minVal === 0 && maxVal === 0) || (propPrice >= minVal && propPrice <= (maxVal || Infinity));
+        
+        return bhkMatch && locMatch && priceMatch;
+      });
+
+      const matchesHtml = matches.length > 0 ? 
+        `<div style="margin-top:10px; border-top:1px dashed rgba(255,255,255,0.08); padding-top:8px;">
+          <div style="font-size:11px; font-weight:700; color:var(--green); margin-bottom:5px;">✨ Auto-Matches in Our Database (${matches.length}):</div>
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            ${matches.slice(0, 3).map(m => `
+              <div style="font-size:10.5px; background:rgba(46,204,113,0.06); padding:4px 8px; border-radius:4px; display:flex; justify-content:space-between; align-items:center; border: 0.5px solid rgba(46,204,113,0.15);">
+                <span>🏠 <strong>${m.society}</strong> (${m.configuration || 'N/A'} | ${m.location}) - <strong style="color:var(--green);">${m.price_raw || formatPriceToWords(m.price)}</strong></span>
+                <button class="btn btn-ghost btn-sm" onclick="showShareModal(${m.id})" style="font-size:9px; padding:2px 6px;">📢 Share Pitch</button>
+              </div>
+            `).join('')}
+            ${matches.length > 3 ? `<div style="font-size:9.5px; color:var(--text-muted); padding-left:4px;">...and ${matches.length - 3} other matches.</div>` : ''}
+          </div>
+        </div>` : 
+        `<div style="margin-top:8px; font-size:10.5px; color:var(--text-muted); font-style:italic;">No exact matches in active inventory.</div>`;
+
+      return `
+        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:12px; border-radius:8px; display:flex; flex-direction:column; gap:6px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <div style="font-size:13.5px; font-weight:700; color:var(--text-light);">${l.name}</div>
+              <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">
+                Budget: <strong style="color:var(--gold-l);">₹${l.budget_min || 0}Cr - ₹${l.budget_max || 0}Cr</strong> | 
+                Config: <strong>${l.config_bhk || 'N/A'}</strong> | 
+                Location: <strong>${l.location_preference || 'Any'}</strong>
+              </div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="showLeadDetails(${l.id})">View Detail</button>
+          </div>
+          ${matchesHtml}
+        </div>
+      `;
+    }).join('');
+  } catch(e) {
+    console.error(e);
+    container.innerHTML = `<div style="font-size:12px; color:var(--red);">Failed to load buyer requirements.</div>`;
+  }
+}
+
+async function loadAssociateShares(assocId) {
+  const container = document.getElementById('det-assoc-shared-container');
+  if (!container) return;
+  try {
+    const res = await fetch(`/api/associates/${assocId}/shares`);
+    const data = await res.json();
+
+    if (data.length === 0) {
+      container.innerHTML = `<div style="font-size:12px; color:var(--text-muted);">No shared properties found for this associate.</div>`;
+      return;
+    }
+
+    container.innerHTML = data.map(p => `
       <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:10px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
         <div>
-          <div style="font-size:13px; font-weight:700; color:var(--text-light);">${l.client_name}</div>
-          <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Budget: ${l.budget} | Phone: ${l.phone}</div>
+          <div style="font-size:13px; font-weight:700; color:var(--gold-l);">${p.society}</div>
+          <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">
+            ${p.configuration} | ${p.price_raw || formatPriceToWords(p.price)} | Location: ${p.location}
+          </div>
+          <div style="font-size:9.5px; color:var(--text-secondary); margin-top:3px;">
+            Shared on: ${new Date(p.shared_at).toLocaleDateString()} by ${p.shared_by}
+          </div>
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="showLeadDetails(${l.id})">View Lead</button>
+        <button class="btn btn-ghost btn-sm" onclick="showShareModal(${p.id})" style="font-size:10.5px;">📢 Re-share Pitch</button>
       </div>
     `).join('');
   } catch(e) {
     console.error(e);
+    container.innerHTML = `<div style="font-size:12px; color:var(--red);">Failed to load shared properties.</div>`;
+  }
+}
+
+window.showSharePropertyWithAssociateForm = async function(show = true) {
+  const container = document.getElementById('assoc-share-property-form-container');
+  if (!show) {
+    container.classList.add('hidden');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/properties');
+    const props = await res.json();
+    
+    const select = document.getElementById('assoc-share-property-select');
+    select.innerHTML = props
+      .map(p => `<option value="${p.id}">${p.society} (${p.configuration} | ${p.price_raw || formatPriceToWords(p.price)})</option>`)
+      .join('');
+      
+    if (select.options.length === 0) {
+      select.innerHTML = '<option value="">-- No Properties Available --</option>';
+    }
+
+    container.classList.remove('hidden');
+  } catch (e) {
+    console.error(e);
+    showToast('Failed to load listings to share.');
+  }
+};
+
+window.submitSharePropertyWithAssociate = async function() {
+  const assocId = document.getElementById('detail-assoc-id').value;
+  const propId = document.getElementById('assoc-share-property-select').value;
+  if (!propId) {
+    showToast('Please select a property to share.');
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/associates/${assocId}/shares`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ property_id: propId })
+    });
+    if (res.ok) {
+      showToast('🎉 Property shared with associate logged.');
+      document.getElementById('assoc-share-property-form-container').classList.add('hidden');
+      loadAssociateShares(assocId);
+      loadAssociatesPerformance();
+    } else {
+      const err = await res.json();
+      showToast('Error: ' + err.error);
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to share property.');
+  }
+};
+
+async function loadAssociatesPerformance() {
+  const container = document.getElementById('associates-performance-container');
+  if (!container) return;
+  try {
+    const res = await fetch('/api/associates/performance');
+    const data = await res.json();
+
+    if (data.length === 0) {
+      container.innerHTML = `<tr><td colspan="7" class="empty">No performance data available.</td></tr>`;
+      return;
+    }
+
+    container.innerHTML = data.map(a => `
+      <tr>
+        <td>
+          <strong>${a.name}</strong> ${a.is_inner_circle ? '<span class="badge badge-amber" style="font-size:9px; padding:2px 6px; margin-left:5px;">⭐ Inner Circle</span>' : ''}
+          ${a.company ? `<br><span style="font-size:11px; color:var(--text-muted);">${a.company}</span>` : ''}
+        </td>
+        <td style="text-align:center; font-weight:700;">${a.total_listings}</td>
+        <td style="text-align:center; font-weight:700; color:var(--blue-light);">${a.joint_site_visits}</td>
+        <td style="text-align:center; font-weight:700; color:var(--gold-l);">${a.shared_listings}</td>
+        <td style="text-align:center; font-weight:700; color:var(--green);">${a.converted_deals}</td>
+        <td style="text-align:center; font-weight:700; color:var(--green-dark);">₹${parseFloat(a.total_payout).toLocaleString('en-IN')}</td>
+        <td style="text-align:center;">${'⭐'.repeat(a.rating || 5)}</td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error(err);
   }
 }
 
@@ -8729,6 +8932,7 @@ async function showLeadDetails(leadId) {
 
     // Populate Closure Checklist & Info
     document.getElementById('chk-site-visit').checked = lead.closure_site_visit || false;
+    document.getElementById('chk-joint-visit').checked = lead.closure_joint_visit || false;
     document.getElementById('chk-negotiation').checked = lead.closure_negotiation || false;
     document.getElementById('chk-agreement').checked = lead.closure_agreement || false;
     document.getElementById('chk-registration').checked = lead.closure_registration || false;
@@ -10962,6 +11166,7 @@ window.syncCommPercentToAmount = function() {
   const percent = parseFloat(document.getElementById('comm-percent').value || 0);
   if (value) {
     document.getElementById('comm-amount').value = Math.round(value * (percent / 100));
+    if (typeof window.autoCalculateCoBrokerPayout === 'function') window.autoCalculateCoBrokerPayout();
   }
 };
 
@@ -10970,6 +11175,24 @@ window.syncCommAmountToPercent = function() {
   const amount = parseFloat(document.getElementById('comm-amount').value || 0);
   if (value) {
     document.getElementById('comm-percent').value = ((amount / value) * 100).toFixed(2);
+    if (typeof window.autoCalculateCoBrokerPayout === 'function') window.autoCalculateCoBrokerPayout();
+  }
+};
+
+window.autoCalculateCoBrokerPayout = function() {
+  const assocId = document.getElementById('comm-associate-id').value;
+  if (!assocId) {
+    return; // Don't wipe manual entry if they unset the co-brokerage dropdown
+  }
+  const assoc = state.associates.find(a => a.id == assocId);
+  if (!assoc) return;
+  const splitPct = parseFloat(assoc.co_brokerage_share || 0);
+  const commAmount = parseFloat(document.getElementById('comm-amount').value || 0);
+  
+  if (commAmount && splitPct) {
+    document.getElementById('comm-payout').value = Math.round(commAmount * (splitPct / 100));
+  } else {
+    document.getElementById('comm-payout').value = 0;
   }
 };
 
@@ -13304,6 +13527,7 @@ window.saveClosureDetails = async function() {
 
   const payload = {
     closure_site_visit: document.getElementById('chk-site-visit').checked,
+    closure_joint_visit: document.getElementById('chk-joint-visit').checked,
     closure_negotiation: document.getElementById('chk-negotiation').checked,
     closure_agreement: document.getElementById('chk-agreement').checked,
     closure_registration: document.getElementById('chk-registration').checked,

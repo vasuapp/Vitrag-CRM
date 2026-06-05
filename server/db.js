@@ -376,6 +376,18 @@ CREATE TABLE IF NOT EXISTS communication_templates (
       await pool.query('CREATE INDEX IF NOT EXISTS idx_leads_closure_registration ON leads(closure_registration);');
       await pool.query('CREATE INDEX IF NOT EXISTS idx_leads_closure_closed ON leads(closure_closed);');
       
+      // New Associate linkage and Joint visit migrations
+      await pool.query('ALTER TABLE commissions ADD COLUMN IF NOT EXISTS associate_id INTEGER;');
+      await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS closure_joint_visit BOOLEAN DEFAULT false;');
+      await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS closure_joint_visit BOOLEAN DEFAULT false;');
+      await pool.query(`CREATE TABLE IF NOT EXISTS associate_shares (
+        id SERIAL PRIMARY KEY,
+        associate_id INTEGER NOT NULL,
+        property_id INTEGER NOT NULL,
+        shared_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        shared_by TEXT
+      );`);
+
       console.log("Migration: Added new columns and indexes to properties and leads tables successfully.");
     } catch (migErr) {
       console.log("Migration skipped or failed:", migErr.message);

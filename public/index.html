@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>REALPro CRM — Real Estate Operating System</title>
-  <link rel="stylesheet" href="index.css">
+  <link rel="stylesheet" href="index.css?v=2.0.1">
   <!-- Tabler Icons via CDN -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -1136,6 +1136,30 @@
               </table>
             </div>
             <div id="associates-pagination-wrapper"></div>
+          </div>
+
+          <!-- Associates Performance Summary Card -->
+          <div class="card" style="margin-top: 20px;">
+            <div class="card-title"><i class="ti ti-chart-bar"></i> VJ Associates Performance Summary</div>
+            <div class="card-sub">Comparative analysis of co-broker conversions, listings contributed, shared deals, and payouts.</div>
+            <div class="tw">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th>Associate</th>
+                    <th style="text-align:center;">Sourced Listings</th>
+                    <th style="text-align:center;">Joint Site Visits</th>
+                    <th style="text-align:center;">Shared Listings</th>
+                    <th style="text-align:center;">Converted Deals</th>
+                    <th style="text-align:center;">Total Co-Broker Payout</th>
+                    <th style="text-align:center;">Trust Rating</th>
+                  </tr>
+                </thead>
+                <tbody id="associates-performance-container">
+                  <!-- Performance stats loaded here -->
+                </tbody>
+              </table>
+            </div>
           </div>
           
           <!-- Relational Associate Dashboard details panel -->
@@ -3271,12 +3295,18 @@
             </div>
           </div>
           <div class="form-row">
-            <div class="form-group" style="width: 100%;">
-              <label class="form-label" style="color:var(--gold-l); font-weight:700;"><i class="ti ti-link"></i> Link Project (Optional - Auto-Populates Society & Location)</label>
-              <select class="form-select prop-project-select" id="prop-project-link" onchange="autoPopulateFromProject(this.value, 'resale')" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); width: 100%;">
-                <option value="">-- Select Project --</option>
-              </select>
-            </div>
+             <div class="form-group" style="flex:1;">
+               <label class="form-label" style="color:var(--gold-l); font-weight:700;"><i class="ti ti-link"></i> Link Project (Optional)</label>
+               <select class="form-select prop-project-select" id="prop-project-link" onchange="autoPopulateFromProject(this.value, 'resale')" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); width: 100%;">
+                 <option value="">-- Select Project --</option>
+               </select>
+             </div>
+             <div class="form-group" style="flex:1;">
+               <label class="form-label" style="color:var(--gold-l); font-weight:700;"><i class="ti ti-user"></i> Co-Broker / Associate (Optional)</label>
+               <select class="form-select" id="prop-associate-id" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); width: 100%;">
+                 <option value="">-- None (Direct Listing) --</option>
+               </select>
+             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -3517,7 +3547,7 @@
               <input class="form-input" type="text" id="prop-unit-no" placeholder="e.g. Flat 302, Tower B">
             </div>
           </div>
-          <div class="form-row" style="background: rgba(184, 134, 11, 0.05); padding: 8px; border-radius: var(--radius-sm); border: 1px dashed var(--gold); margin-bottom: 12px;">
+          <div class="form-row" style="background: rgba(184, 134, 11, 0.05); padding: 8px; border-radius: var(--radius-sm); border: 1px dashed var(--gold);">
             <div class="form-group">
               <label class="form-label" style="color: var(--gold-l);">Commission Confirmed (%)</label>
               <input class="form-input" type="text" id="prop-commission-agreed" placeholder="e.g. 2%, 1 Month Rent, Fixed 1L">
@@ -3592,12 +3622,18 @@
             </div>
           </div>
           <div class="form-row">
-            <div class="form-group" style="width: 100%;">
-              <label class="form-label" style="color:var(--gold-l); font-weight:700;"><i class="ti ti-link"></i> Link Project (Optional - Auto-Populates Society & Location)</label>
-              <select class="form-select prop-project-select" id="rental-project-link" onchange="autoPopulateFromProject(this.value, 'rental')" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); width: 100%;">
-                <option value="">-- Select Project --</option>
-              </select>
-            </div>
+             <div class="form-group" style="flex:1;">
+               <label class="form-label" style="color:var(--gold-l); font-weight:700;"><i class="ti ti-link"></i> Link Project (Optional)</label>
+               <select class="form-select prop-project-select" id="rental-project-link" onchange="autoPopulateFromProject(this.value, 'rental')" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); width: 100%;">
+                 <option value="">-- Select Project --</option>
+               </select>
+             </div>
+             <div class="form-group" style="flex:1;">
+               <label class="form-label" style="color:var(--gold-l); font-weight:700;"><i class="ti ti-user"></i> Co-Broker / Associate (Optional)</label>
+               <select class="form-select" id="rental-associate-id" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); width: 100%;">
+                 <option value="">-- None (Direct Listing) --</option>
+               </select>
+             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -3872,12 +3908,18 @@
             </div>
           </div>
           <div class="form-row">
-            <div class="form-group" style="width: 100%;">
-              <label class="form-label" style="color:var(--gold-l); font-weight:700;"><i class="ti ti-link"></i> Link Project (Optional - Auto-Populates Society & Location)</label>
-              <select class="form-select prop-project-select" id="comm-project-link" onchange="autoPopulateFromProject(this.value, 'commercial')" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); width: 100%;">
-                <option value="">-- Select Project --</option>
-              </select>
-            </div>
+             <div class="form-group" style="flex:1;">
+               <label class="form-label" style="color:var(--gold-l); font-weight:700;"><i class="ti ti-link"></i> Link Project (Optional)</label>
+               <select class="form-select prop-project-select" id="comm-project-link" onchange="autoPopulateFromProject(this.value, 'commercial')" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); width: 100%;">
+                 <option value="">-- Select Project --</option>
+               </select>
+             </div>
+             <div class="form-group" style="flex:1;">
+               <label class="form-label" style="color:var(--gold-l); font-weight:700;"><i class="ti ti-user"></i> Co-Broker / Associate (Optional)</label>
+               <select class="form-select" id="comm-prop-associate-id" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); width: 100%;">
+                 <option value="">-- None (Direct Listing) --</option>
+               </select>
+             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -4105,12 +4147,18 @@
           </div>
           
           <div class="form-row">
-            <div class="form-group" style="width: 100%;">
-              <label class="form-label" style="color:var(--gold-l); font-weight:700;"><i class="ti ti-link"></i> Link Project (Optional - Auto-Populates Society & Location)</label>
-              <select class="form-select prop-project-select" id="land-project-link" onchange="autoPopulateFromProject(this.value, 'land')" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); width: 100%;">
-                <option value="">-- Select Project --</option>
-              </select>
-            </div>
+             <div class="form-group" style="flex:1;">
+               <label class="form-label" style="color:var(--gold-l); font-weight:700;"><i class="ti ti-link"></i> Link Project (Optional)</label>
+               <select class="form-select prop-project-select" id="land-project-link" onchange="autoPopulateFromProject(this.value, 'land')" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); width: 100%;">
+                 <option value="">-- Select Project --</option>
+               </select>
+             </div>
+             <div class="form-group" style="flex:1;">
+               <label class="form-label" style="color:var(--gold-l); font-weight:700;"><i class="ti ti-user"></i> Co-Broker / Associate (Optional)</label>
+               <select class="form-select" id="land-associate-id" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); width: 100%;">
+                 <option value="">-- None (Direct Listing) --</option>
+               </select>
+             </div>
           </div>
 
           <div class="form-row">
@@ -4721,6 +4769,7 @@
           <button id="tab-assoc-overview" class="btn btn-ghost btn-sm active" onclick="switchAssocTab('overview')" style="border-radius:0; border-bottom:2px solid var(--gold); padding:8px 12px; font-weight:700;">👤 Overview</button>
           <button id="tab-assoc-inventory" class="btn btn-ghost btn-sm" onclick="switchAssocTab('inventory')" style="border-radius:0; border-bottom:2px solid transparent; padding:8px 12px; font-weight:700;">🏢 Property Inventory</button>
           <button id="tab-assoc-reqs" class="btn btn-ghost btn-sm" onclick="switchAssocTab('reqs')" style="border-radius:0; border-bottom:2px solid transparent; padding:8px 12px; font-weight:700;">🎯 Buyer Requirements</button>
+          <button id="tab-assoc-shared" class="btn btn-ghost btn-sm" onclick="switchAssocTab('shared')" style="border-radius:0; border-bottom:2px solid transparent; padding:8px 12px; font-weight:700;">📢 Shared Properties</button>
         </div>
         <input type="hidden" id="detail-assoc-id" value="">
 
@@ -4782,6 +4831,30 @@
             <!-- Leads populated dynamically -->
           </div>
         </div>
+
+        <!-- SHARED PROPERTIES TAB -->
+        <div class="assoc-tab-pane hidden" id="pane-assoc-shared">
+          <div class="info-blue" style="margin-bottom:15px; font-size:12.5px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; border-left: 3px solid var(--gold);">
+            <span>Properties shared from our database with this associate.</span>
+            <button class="btn btn-primary btn-sm" onclick="showSharePropertyWithAssociateForm(true)" style="background:var(--gold); border:none; color:#000;"><i class="ti ti-link"></i> Share Property</button>
+          </div>
+
+          <!-- Expandable Share Property form -->
+          <div id="assoc-share-property-form-container" class="hidden" style="background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:12px; border-radius:6px; margin-bottom:15px; display:flex; gap:8px; align-items:flex-end;">
+            <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+              <label style="font-size:10px; font-weight:700; color:var(--gold-l);">Select Property to Share</label>
+              <select class="form-select" id="assoc-share-property-select" style="font-size:12px; background:rgba(0,0,0,0.3); border: 1px solid var(--border); width: 100%;">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="submitSharePropertyWithAssociate()">Share Listing</button>
+            <button class="btn btn-ghost btn-sm" onclick="showSharePropertyWithAssociateForm(false)">Cancel</button>
+          </div>
+
+          <div id="det-assoc-shared-container" style="display:flex; flex-direction:column; gap:8px;">
+            <!-- Shared properties populated dynamically -->
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -4832,7 +4905,10 @@
               <input class="form-input" type="text" id="comm-invoice" placeholder="e.g. INV-2026-001">
             </div>
             <div class="form-group">
-              <!-- Empty spacer to keep balance -->
+              <label class="form-label">Linked Co-Broker / Associate (Optional)</label>
+              <select class="form-select" id="comm-associate-id" onchange="autoCalculateCoBrokerPayout()">
+                <option value="">-- None (Direct Deal) --</option>
+              </select>
             </div>
           </div>
           <div class="form-group" style="margin-bottom:12px;">
@@ -5423,6 +5499,10 @@
                 <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; cursor:pointer;">
                   <input type="checkbox" id="chk-site-visit" onchange="updateClosureChecklist('site_visit', this.checked)">
                   <span>Site Visit Conducted</span>
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; cursor:pointer; margin-left: 15px;" id="lbl-chk-joint-visit">
+                  <input type="checkbox" id="chk-joint-visit" onchange="updateClosureChecklist('joint_visit', this.checked)">
+                  <span>Joint Visit (Accompanied by Associate)</span>
                 </label>
                 <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; cursor:pointer;">
                   <input type="checkbox" id="chk-negotiation" onchange="updateClosureChecklist('negotiation', this.checked)">

@@ -1494,6 +1494,7 @@ app.patch('/api/leads/:id/closure', async (req, res) => {
   try {
     const {
       closure_site_visit,
+      closure_joint_visit,
       closure_negotiation,
       closure_agreement,
       closure_registration,
@@ -1506,16 +1507,18 @@ app.patch('/api/leads/:id/closure', async (req, res) => {
     await db.query(`
       UPDATE leads
       SET closure_site_visit = $1,
-          closure_negotiation = $2,
-          closure_agreement = $3,
-          closure_registration = $4,
-          closure_closed = $5,
-          closure_prop_id = $6,
-          closure_commission_amt = $7,
-          closure_notes = $8
-      WHERE id = $9
+          closure_joint_visit = $2,
+          closure_negotiation = $3,
+          closure_agreement = $4,
+          closure_registration = $5,
+          closure_closed = $6,
+          closure_prop_id = $7,
+          closure_commission_amt = $8,
+          closure_notes = $9
+      WHERE id = $10
     `, [
       closure_site_visit === true || closure_site_visit === 'true',
+      closure_joint_visit === true || closure_joint_visit === 'true',
       closure_negotiation === true || closure_negotiation === 'true',
       closure_agreement === true || closure_agreement === 'true',
       closure_registration === true || closure_registration === 'true',
@@ -1743,38 +1746,38 @@ app.get('/api/properties', async (req, res) => {
     const isAdmin = !user || user.role === 'Admin';
     const allowed = getParsedAllowedPages(user);
     const hasPhoneAccess = isAdmin || allowed.includes('*') || allowed.includes('phone_access');
-    let query = 'SELECT * FROM properties WHERE deleted_at IS NULL';
+    let query = 'SELECT p.*, a.name AS associate_name, a.company AS associate_company FROM properties p LEFT JOIN associates a ON p.associate_id = a.id WHERE p.deleted_at IS NULL';
     const params = [];
     if (min_price) {
-      query += ' AND price >= ?';
+      query += ' AND p.price >= ?';
       params.push(parseFloat(min_price));
     }
     if (max_price) {
-      query += ' AND price <= ?';
+      query += ' AND p.price <= ?';
       params.push(parseFloat(max_price));
     }
     if (configuration) {
-      query += ' AND configuration ILIKE ?';
+      query += ' AND p.configuration ILIKE ?';
       params.push(`%${configuration}%`);
     }
     if (mandate_type) {
-      query += ' AND mandate_type ILIKE ?';
+      query += ' AND p.mandate_type ILIKE ?';
       params.push(`%${mandate_type}%`);
     }
     if (property_type) {
-      query += ' AND property_type ILIKE ?';
+      query += ' AND p.property_type ILIKE ?';
       params.push(`%${property_type}%`);
     }
     if (rera_checked !== undefined && rera_checked !== '') {
-      query += ' AND rera_checked = ?';
+      query += ' AND p.rera_checked = ?';
       params.push(parseInt(rera_checked));
     }
     if (search) {
-      query += ' AND (society ILIKE ? OR location ILIKE ? OR property_type ILIKE ? OR prop_id ILIKE ? OR owner_name ILIKE ? OR owner_phone ILIKE ? OR owner_email ILIKE ? OR comments ILIKE ? OR admin_comments ILIKE ? OR additional_info ILIKE ? OR configuration ILIKE ? OR special_tags ILIKE ?)';
+      query += ' AND (p.society ILIKE ? OR p.location ILIKE ? OR p.property_type ILIKE ? OR p.prop_id ILIKE ? OR p.owner_name ILIKE ? OR p.owner_phone ILIKE ? OR p.owner_email ILIKE ? OR p.comments ILIKE ? OR p.admin_comments ILIKE ? OR p.additional_info ILIKE ? OR p.configuration ILIKE ? OR p.special_tags ILIKE ? OR a.name ILIKE ? OR a.company ILIKE ?)';
       const s = `%${search}%`;
-      params.push(s, s, s, s, s, s, s, s, s, s, s, s);
+      params.push(s, s, s, s, s, s, s, s, s, s, s, s, s, s);
     }
-    query += ' ORDER BY id DESC';
+    query += ' ORDER BY p.id DESC';
     const listings = (await db.query(query, [params])).rows;
 
     // Stale listing check: last_updated older than 7 days
@@ -2093,6 +2096,7 @@ app.patch('/api/properties/:id/closure', async (req, res) => {
   try {
     const {
       closure_site_visit,
+      closure_joint_visit,
       closure_negotiation,
       closure_agreement,
       closure_registration,
@@ -2108,19 +2112,21 @@ app.patch('/api/properties/:id/closure', async (req, res) => {
     await db.query(`
       UPDATE properties
       SET closure_site_visit = $1,
-          closure_negotiation = $2,
-          closure_agreement = $3,
-          closure_registration = $4,
-          closure_closed = $5,
-          closure_buyer_name = $6,
-          closure_buyer_phone = $7,
-          closure_deal_value = $8,
-          closure_commission_pct = $9,
-          closure_date = $10,
-          closure_notes = $11
-      WHERE id = $12
+          closure_joint_visit = $2,
+          closure_negotiation = $3,
+          closure_agreement = $4,
+          closure_registration = $5,
+          closure_closed = $6,
+          closure_buyer_name = $7,
+          closure_buyer_phone = $8,
+          closure_deal_value = $9,
+          closure_commission_pct = $10,
+          closure_date = $11,
+          closure_notes = $12
+      WHERE id = $13
     `, [
       closure_site_visit === true || closure_site_visit === 'true',
+      closure_joint_visit === true || closure_joint_visit === 'true',
       closure_negotiation === true || closure_negotiation === 'true',
       closure_agreement === true || closure_agreement === 'true',
       closure_registration === true || closure_registration === 'true',
@@ -2968,6 +2974,70 @@ app.post('/api/associates/:id/upload-inventory', express.text({
   }
 });
 
+// GET Associate Performance Metrics Summary
+app.get('/api/associates/performance', async (req, res) => {
+  try {
+    const q = `
+      SELECT 
+        a.id,
+        a.name,
+        a.company,
+        a.rating,
+        a.co_brokerage_share,
+        a.is_inner_circle,
+        (SELECT COUNT(*) FROM properties WHERE associate_id = a.id AND deleted_at IS NULL) AS total_listings,
+        (SELECT COUNT(*) FROM properties WHERE associate_id = a.id AND status = 'SOLD' AND deleted_at IS NULL) AS converted_deals,
+        (SELECT COUNT(*) FROM associate_shares WHERE associate_id = a.id) AS shared_listings,
+        (SELECT COUNT(*) FROM leads WHERE associate_id = a.id AND closure_joint_visit = true) AS joint_site_visits,
+        (SELECT COALESCE(SUM(co_broker_payout), 0) FROM commissions c WHERE c.associate_id = a.id) AS total_payout
+      FROM associates a
+      ORDER BY total_listings DESC, total_payout DESC
+    `;
+    const result = await db.query(q);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET Sourced/Shared properties with Associate
+app.get('/api/associates/:id/shares', async (req, res) => {
+  try {
+    const assocId = req.params.id;
+    const q = `
+      SELECT s.id AS share_id, s.shared_at, s.shared_by, p.* 
+      FROM associate_shares s
+      JOIN properties p ON s.property_id = p.id
+      WHERE s.associate_id = $1 AND p.deleted_at IS NULL
+      ORDER BY s.id DESC
+    `;
+    const result = await db.query(q, [parseInt(assocId)]);
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST Share property with Associate
+app.post('/api/associates/:id/shares', async (req, res) => {
+  try {
+    const assocId = req.params.id;
+    const { property_id } = req.body;
+    const user = getRequestUser(req);
+    const sharedBy = user ? user.name : 'System';
+
+    const q = `
+      INSERT INTO associate_shares (associate_id, property_id, shared_by)
+      VALUES ($1, $2, $3)
+      RETURNING id
+    `;
+    const result = await db.query(q, [parseInt(assocId), parseInt(property_id), sharedBy]);
+    res.json({ success: true, id: result.rows[0].id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ----------------------------------------------------
 // 8. COMMISSIONS FINANCE LEDGER
 // ----------------------------------------------------
@@ -2996,13 +3066,14 @@ app.post('/api/commissions', async (req, res) => {
       booking_date,
       agreement_date,
       registration_date,
-      handover_date
+      handover_date,
+      associate_id
     } = req.body;
     const info = await (async () => {
       const r = await db.query(`
-      INSERT INTO commissions (deal_name, deal_value, commission_percentage, commission_amount, co_broker_payout, billing_invoice, expenses, payment_status, booking_date, agreement_date, registration_date, handover_date)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-     RETURNING id`, [deal_name, deal_value || 0, commission_percentage || 0, commission_amount || 0, co_broker_payout || 0, billing_invoice || '', expenses || 0, payment_status || 'Pending', booking_date || '', agreement_date || '', registration_date || '', handover_date || '']);
+      INSERT INTO commissions (deal_name, deal_value, commission_percentage, commission_amount, co_broker_payout, billing_invoice, expenses, payment_status, booking_date, agreement_date, registration_date, handover_date, associate_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+     RETURNING id`, [deal_name, deal_value || 0, commission_percentage || 0, commission_amount || 0, co_broker_payout || 0, billing_invoice || '', expenses || 0, payment_status || 'Pending', booking_date || '', agreement_date || '', registration_date || '', handover_date || '', associate_id ? parseInt(associate_id) : null]);
       return {
         lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
         changes: r.rowCount
@@ -3032,14 +3103,15 @@ app.put('/api/commissions/:id', async (req, res) => {
       booking_date,
       agreement_date,
       registration_date,
-      handover_date
+      handover_date,
+      associate_id
     } = req.body;
     await (async () => {
       const r = await db.query(`
       UPDATE commissions
-      SET deal_name = $1, deal_value = $2, commission_percentage = $3, commission_amount = $4, co_broker_payout = $5, billing_invoice = $6, expenses = $7, payment_status = $8, booking_date = $9, agreement_date = $10, registration_date = $11, handover_date = $12
-      WHERE id = $13
-    `, [deal_name, deal_value, commission_percentage, commission_amount || 0, co_broker_payout, billing_invoice, expenses, payment_status, booking_date, agreement_date, registration_date, handover_date, req.params.id]);
+      SET deal_name = $1, deal_value = $2, commission_percentage = $3, commission_amount = $4, co_broker_payout = $5, billing_invoice = $6, expenses = $7, payment_status = $8, booking_date = $9, agreement_date = $10, registration_date = $11, handover_date = $12, associate_id = $13
+      WHERE id = $14
+    `, [deal_name, deal_value, commission_percentage, commission_amount || 0, co_broker_payout, billing_invoice, expenses, payment_status, booking_date, agreement_date, registration_date, handover_date, associate_id ? parseInt(associate_id) : null, req.params.id]);
       return {
         lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
         changes: r.rowCount
