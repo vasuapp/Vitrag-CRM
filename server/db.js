@@ -352,6 +352,7 @@ CREATE TABLE IF NOT EXISTS communication_templates (
       await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS closure_prop_id TEXT;');
       await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS closure_commission_amt NUMERIC;');
       await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS closure_notes TEXT;');
+      await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS project_id INTEGER;');
       
       // Create indexes for properties closure milestones and land parameters
       await pool.query('CREATE INDEX IF NOT EXISTS idx_properties_closure_site_visit ON properties(closure_site_visit);');

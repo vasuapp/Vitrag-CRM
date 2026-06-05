@@ -1051,15 +1051,41 @@
                 <option value="RTMI">Ready to Move (RTMI)</option>
               </select>
 
-              <!-- Advanced Filters -->
-              <div style="display:flex; gap:4px; flex:1.5;">
+              <!-- Config filter -->
+              <select class="form-select" style="flex:1;" id="filter-proj-config" onchange="loadProjects()">
+                <option value="">All Configurations</option>
+                <option value="1 BHK">1 BHK</option>
+                <option value="2 BHK">2 BHK</option>
+                <option value="3 BHK">3 BHK</option>
+                <option value="4 BHK">4 BHK</option>
+                <option value="5 BHK">5 BHK+</option>
+                <option value="Villa">Villa</option>
+                <option value="Plot">Plot</option>
+              </select>
+
+              <!-- Type filter -->
+              <select class="form-select" style="flex:1;" id="filter-proj-type" onchange="loadProjects()">
+                <option value="">All Typologies</option>
+                <option value="Apartment">Apartment</option>
+                <option value="Villa">Villa / Row House</option>
+                <option value="Plot">Plot / Land</option>
+                <option value="Penthouse">Penthouse</option>
+              </select>
+
+              <!-- Area Range -->
+              <div style="display:flex; gap:4px; flex:1.5; min-width:140px;">
                 <input type="number" class="form-input" style="width:50%;" id="filter-proj-area-min" placeholder="Min Area (sqft)" oninput="loadProjects()">
                 <input type="number" class="form-input" style="width:50%;" id="filter-proj-area-max" placeholder="Max Area" oninput="loadProjects()">
               </div>
               
-              <div style="display:flex; gap:4px; flex:1.5;">
-                <input type="number" class="form-input" style="width:50%;" id="filter-proj-price-min" placeholder="Min Price (Cr)" oninput="loadProjects()">
-                <input type="number" class="form-input" style="width:50%;" id="filter-proj-price-max" placeholder="Max Price (Cr)" oninput="loadProjects()">
+              <!-- Price Range & Slider -->
+              <div style="display:flex; gap:4px; flex:2; min-width:200px; align-items:center;">
+                <input type="number" class="form-input" style="width:30%;" id="filter-proj-price-min" placeholder="Min Cr" oninput="loadProjects()">
+                <input type="number" class="form-input" style="width:30%;" id="filter-proj-price-max" placeholder="Max Cr" oninput="loadProjects()">
+                <div style="display:flex; flex-direction:column; gap:2px; flex:1; padding-left:4px;">
+                  <span style="font-size:9px; color:var(--text-secondary); white-space:nowrap;">Max Slider: <strong id="label-proj-price-slider" style="color:var(--gold-l);">25 Cr</strong></span>
+                  <input type="range" id="filter-proj-price-slider" min="0.5" max="25" step="0.5" value="25" style="width:100%; height:4px; accent-color:var(--gold);" oninput="document.getElementById('filter-proj-price-max').value = this.value === '25' ? '' : this.value; document.getElementById('label-proj-price-slider').innerText = this.value === '25' ? 'Max (25+ Cr)' : this.value + ' Cr'; loadProjects();">
+                </div>
               </div>
               
               <button class="btn btn-ghost" onclick="clearProjectFilters()" type="button">Clear</button>
@@ -1073,25 +1099,9 @@
           <!-- Project Comparison Tool -->
           <div class="card">
             <div class="card-title"><i class="ti ti-git-compare"></i> Project Comparison Sheets</div>
-            <div class="card-sub">For fast property matches during site walk-ins</div>
-            <div class="tw">
-              <table class="tbl">
-                <thead>
-                  <tr>
-                    <th>Ecosystem parameter</th>
-                    <th>Prestige Lakeside</th>
-                    <th>Sobha City</th>
-                    <th>Brigade Utopia</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr><td>Ecosystem Location</td><td>Whitefield</td><td>Thanisandra</td><td>Varthur</td></tr>
-                  <tr><td>BHK Base Price</td><td>₹7,200/sqft</td><td>₹7,400/sqft</td><td>₹7,000/sqft</td></tr>
-                  <tr><td>Structural Handover</td><td>Dec-25</td><td>Ready to Move</td><td>Dec-24</td></tr>
-                  <tr><td>RERA compliance</td><td>✅ RERA Registered</td><td>✅ RERA Registered</td><td>✅ RERA Registered</td></tr>
-                  <tr><td>Commission Cut</td><td>2.5% Gross</td><td>3.0% Gross</td><td>2.0% Gross</td></tr>
-                </tbody>
-              </table>
+            <div class="card-sub">For fast property matches during site walk-ins (Based on current active filters)</div>
+            <div class="tw" id="project-comparison-container" style="overflow-x: auto;">
+              <!-- Dynamically populated comparison table -->
             </div>
           </div>
         </div>
@@ -4333,6 +4343,66 @@
               <input class="form-input" type="text" id="proj-google-map" placeholder="e.g. https://maps.google.com/...">
             </div>
           </div>
+          <!-- Document Vault Links -->
+          <div style="margin-top:20px; padding:12px; border:1px solid rgba(255,255,255,0.05); border-radius:6px; background:rgba(0,0,0,0.1);">
+            <label class="form-label" style="font-weight:700; color:var(--gold-l); margin-bottom:10px; display:block;">📁 Documents & Media Vault Links</label>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Brochure URL</label>
+                <input class="form-input" type="text" id="proj-brochure" placeholder="https://drive.google.com/...">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Floor Plans URL</label>
+                <input class="form-input" type="text" id="proj-floor-plans" placeholder="https://drive.google.com/...">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Mother Docs URL</label>
+                <input class="form-input" type="text" id="proj-mother-docs" placeholder="https://drive.google.com/...">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Assignments URL</label>
+                <input class="form-input" type="text" id="proj-assignments" placeholder="https://drive.google.com/...">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">KYC Docs URL</label>
+                <input class="form-input" type="text" id="proj-kyc-docs" placeholder="https://drive.google.com/...">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Photos Link</label>
+                <input class="form-input" type="text" id="proj-photos" placeholder="https://drive.google.com/...">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Videos Link</label>
+                <input class="form-input" type="text" id="proj-videos" placeholder="https://drive.google.com/...">
+              </div>
+              <div class="form-group">
+                <label class="form-label">CP Agreements URL</label>
+                <input class="form-input" type="text" id="proj-cp-agreements" placeholder="https://drive.google.com/...">
+              </div>
+            </div>
+          </div>
+
+          <!-- Finance & Analytics Notes -->
+          <div style="margin-top:20px; padding:12px; border:1px solid rgba(255,255,255,0.05); border-radius:6px; background:rgba(0,0,0,0.1);">
+            <label class="form-label" style="font-weight:700; color:var(--gold-l); margin-bottom:10px; display:block;">💰 Finance & Analytics</label>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Finance Information / Remarks</label>
+                <textarea class="form-input" id="proj-finance-info" rows="2" placeholder="Subvention details, CLP schedules, etc."></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Analytics & Rating Metrics</label>
+                <textarea class="form-input" id="proj-analytics-info" rows="2" placeholder="Builder scorecards, local metrics, etc."></textarea>
+              </div>
+            </div>
+          </div>
+
           <div class="form-group admin-only-field" style="margin-top: 15px;">
             <label class="form-label">🔐 Private Admin Comments</label>
             <textarea class="form-input" id="proj-admin-comments" rows="2" placeholder="Strictly private admin comments..."></textarea>
@@ -5322,6 +5392,7 @@
           <button id="tab-proj-docs" class="btn btn-ghost btn-sm" onclick="switchProjTab('docs')" style="border-radius:0; border-bottom:2px solid transparent; padding:8px 12px; font-weight:700;">📁 Documents Vault</button>
           <button id="tab-proj-finance" class="btn btn-ghost btn-sm" onclick="switchProjTab('finance')" style="border-radius:0; border-bottom:2px solid transparent; padding:8px 12px; font-weight:700;">💰 Finance & CP</button>
           <button id="tab-proj-leads" class="btn btn-ghost btn-sm" onclick="switchProjTab('leads')" style="border-radius:0; border-bottom:2px solid transparent; padding:8px 12px; font-weight:700;">🎯 Interested Leads</button>
+          <button id="tab-proj-properties" class="btn btn-ghost btn-sm" onclick="switchProjTab('properties')" style="border-radius:0; border-bottom:2px solid transparent; padding:8px 12px; font-weight:700;">🔑 Linked Properties</button>
           <button id="tab-proj-analytics" class="btn btn-ghost btn-sm" onclick="switchProjTab('analytics')" style="border-radius:0; border-bottom:2px solid transparent; padding:8px 12px; font-weight:700;">📈 Analytics</button>
         </div>
         <input type="hidden" id="detail-proj-id" value="">
@@ -5392,9 +5463,20 @@
 
         <!-- TAB 3: INTERESTED LEADS -->
         <div class="proj-tab-pane hidden" id="pane-proj-leads">
-          <div class="info-blue" style="margin-bottom:15px; font-size:12px;">
-            Live Auto-Match: Buyers whose budget and BHK requirements intersect with this project's inventory.
+          <!-- Manual Assignment UI -->
+          <div style="background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); margin-bottom:15px; display:flex; gap:8px; align-items:center;">
+            <select class="form-select" id="assign-lead-select" style="flex:1;">
+              <option value="">-- Select Lead to Assign --</option>
+            </select>
+            <button class="btn btn-primary" onclick="submitLeadAssignment()" style="padding:8px 16px;">Assign Lead</button>
           </div>
+
+          <div style="font-size:13px; font-weight:700; color:var(--gold-l); margin-bottom:8px;">🎯 Manually Assigned Leads</div>
+          <div id="det-proj-assigned-leads-container" style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">
+            <!-- Manually assigned leads -->
+          </div>
+
+          <div style="font-size:13px; font-weight:700; color:var(--gold-l); margin-bottom:8px;">🤖 Live Auto-Match (Based on BHK & Budget)</div>
           <div id="det-proj-leads-container" style="display:flex; flex-direction:column; gap:8px;">
             <!-- Matches populated dynamically by JS -->
           </div>
@@ -5419,6 +5501,31 @@
               <div style="font-size:11px; color:var(--gold-l); font-weight:700; text-transform:uppercase; margin-bottom:8px;">Finance Info / Remarks</div>
               <div id="det-proj-finance-info" style="color:var(--text-light); white-space:pre-wrap;"></div>
             </div>
+          </div>
+        </div>
+
+        <!-- NEW TAB: LINKED PROPERTIES -->
+        <div class="proj-tab-pane hidden" id="pane-proj-properties">
+          <div class="info-blue" style="margin-bottom:15px; font-size:12px;">
+            Secondary market listings (Resale / Rental / Commercial / Land) linked directly to this developer project.
+          </div>
+          <div class="tw" style="overflow-x: auto;">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>Listing ID</th>
+                  <th>Segment</th>
+                  <th>Society / Unit</th>
+                  <th>Config</th>
+                  <th>Price / Rent</th>
+                  <th>Owner Contact</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="det-proj-properties-tbody">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
           </div>
         </div>
 

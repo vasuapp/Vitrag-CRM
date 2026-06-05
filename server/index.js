@@ -2239,16 +2239,23 @@ app.patch('/api/properties/:id/associate', async (req, res) => {
   }
 });
 
-// Add Special Tag to Property
+// Add/Remove Special Tag to Property
 app.patch('/api/properties/:id/tag', async (req, res) => {
   try {
     const {
-      tag
+      tag,
+      action
     } = req.body;
     const prop = (await db.query("SELECT special_tags FROM properties WHERE id = $1", [req.params.id])).rows[0];
     let tags = prop.special_tags ? prop.special_tags.split(',').map(t => t.trim()) : [];
-    if (tag && !tags.includes(tag)) {
-      tags.push(tag);
+    if (tag) {
+      if (action === 'remove') {
+        tags = tags.filter(t => t.toLowerCase() !== tag.trim().toLowerCase());
+      } else {
+        if (!tags.includes(tag.trim())) {
+          tags.push(tag.trim());
+        }
+      }
     }
     const tagsStr = tags.filter(t => t !== '').join(', ');
     await (async () => {
@@ -2440,7 +2447,13 @@ app.post('/api/projects', async (req, res) => {
       google_map_url,
       unit_details,
       builder_poc_details,
-      admin_comments
+      admin_comments,
+      brochure_link,
+      floor_plans,
+      mother_docs,
+      assignments,
+      kyc_docs,
+      photos
     } = req.body;
 
     // Duplicate detection check (project_name + builder_name)
@@ -2488,9 +2501,10 @@ app.post('/api/projects', async (req, res) => {
         possession, subvention, clp_due, floor_rise, location_usp,
         metro_station, other_usp, special_tags, videos, cp_agreements,
         builder_details, finance_info, analytics_info, zone, onboarded_year,
-        google_map_url, unit_details, builder_poc_details, admin_comments, created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, CURRENT_TIMESTAMP)
-     RETURNING id`, [pId, builder_name, project_name, location || '', land_parcel || '', tower || '', elevation || '', configuration || '', carpet_area || '', price_final || '', uc_rtmi || 'UC', possession || '', subvention || '', clp_due || '', floor_rise || '', location_usp || '', metro_station || '', other_usp || '', special_tags || '', videos || '', cp_agreements || '', builder_details || '', finance_info || '', analytics_info || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), google_map_url || '', unit_details || '', builder_poc_details || '', admin_comments || '']);
+        google_map_url, unit_details, builder_poc_details, admin_comments,
+        brochure_link, floor_plans, mother_docs, assignments, kyc_docs, photos, created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, CURRENT_TIMESTAMP)
+     RETURNING id`, [pId, builder_name, project_name, location || '', land_parcel || '', tower || '', elevation || '', configuration || '', carpet_area || '', price_final || '', uc_rtmi || 'UC', possession || '', subvention || '', clp_due || '', floor_rise || '', location_usp || '', metro_station || '', other_usp || '', special_tags || '', videos || '', cp_agreements || '', builder_details || '', finance_info || '', analytics_info || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), google_map_url || '', unit_details || '', builder_poc_details || '', admin_comments || '', brochure_link || '', floor_plans || '', mother_docs || '', assignments || '', kyc_docs || '', photos || '']);
       return {
         lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
         changes: r.rowCount
@@ -2540,7 +2554,13 @@ app.put('/api/projects/:id', async (req, res) => {
       google_map_url,
       unit_details,
       builder_poc_details,
-      admin_comments
+      admin_comments,
+      brochure_link,
+      floor_plans,
+      mother_docs,
+      assignments,
+      kyc_docs,
+      photos
     } = req.body;
     await (async () => {
       const r = await db.query(`
@@ -2550,9 +2570,10 @@ app.put('/api/projects/:id', async (req, res) => {
         possession = $11, subvention = $12, clp_due = $13, floor_rise = $14, location_usp = $15,
         metro_station = $16, other_usp = $17, special_tags = $18, videos = $19, cp_agreements = $20,
         builder_details = $21, finance_info = $22, analytics_info = $23, zone = $24, onboarded_year = $25,
-        google_map_url = $26, unit_details = $27, builder_poc_details = $28, admin_comments = $29
-      WHERE id = $30
-    `, [builder_name, project_name, location || '', land_parcel || '', tower || '', elevation || '', configuration || '', carpet_area || '', price_final || '', uc_rtmi || 'UC', possession || '', subvention || '', clp_due || '', floor_rise || '', location_usp || '', metro_station || '', other_usp || '', special_tags || '', videos || '', cp_agreements || '', builder_details || '', finance_info || '', analytics_info || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), google_map_url || '', unit_details || '', builder_poc_details || '', admin_comments || '', req.params.id]);
+        google_map_url = $26, unit_details = $27, builder_poc_details = $28, admin_comments = $29,
+        brochure_link = $30, floor_plans = $31, mother_docs = $32, assignments = $33, kyc_docs = $34, photos = $35
+      WHERE id = $36
+    `, [builder_name, project_name, location || '', land_parcel || '', tower || '', elevation || '', configuration || '', carpet_area || '', price_final || '', uc_rtmi || 'UC', possession || '', subvention || '', clp_due || '', floor_rise || '', location_usp || '', metro_station || '', other_usp || '', special_tags || '', videos || '', cp_agreements || '', builder_details || '', finance_info || '', analytics_info || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), google_map_url || '', unit_details || '', builder_poc_details || '', admin_comments || '', brochure_link || '', floor_plans || '', mother_docs || '', assignments || '', kyc_docs || '', photos || '', req.params.id]);
       return {
         lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
         changes: r.rowCount
@@ -2569,16 +2590,23 @@ app.put('/api/projects/:id', async (req, res) => {
   }
 });
 
-// Add Special Tag to Project
+// Add/Remove Special Tag to Project
 app.patch('/api/projects/:id/tag', async (req, res) => {
   try {
     const {
-      tag
+      tag,
+      action
     } = req.body;
     const proj = (await db.query("SELECT special_tags FROM builder_projects WHERE id = $1", [req.params.id])).rows[0];
     let tags = proj.special_tags ? proj.special_tags.split(',').map(t => t.trim()) : [];
-    if (tag && !tags.includes(tag)) {
-      tags.push(tag);
+    if (tag) {
+      if (action === 'remove') {
+        tags = tags.filter(t => t.toLowerCase() !== tag.trim().toLowerCase());
+      } else {
+        if (!tags.includes(tag.trim())) {
+          tags.push(tag.trim());
+        }
+      }
     }
     const tagsStr = tags.filter(t => t !== '').join(', ');
     await (async () => {
@@ -2592,6 +2620,23 @@ app.patch('/api/projects/:id/tag', async (req, res) => {
       success: true,
       id: req.params.id,
       special_tags: tagsStr
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+});
+
+// Assign Lead to Project manually
+app.patch('/api/leads/:id/assign-project', async (req, res) => {
+  try {
+    const { project_id } = req.body;
+    await db.query("UPDATE leads SET project_id = $1 WHERE id = $2", [project_id, req.params.id]);
+    res.json({
+      success: true,
+      id: req.params.id,
+      project_id
     });
   } catch (err) {
     res.status(500).json({

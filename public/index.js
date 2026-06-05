@@ -39,45 +39,123 @@
 document.addEventListener('DOMContentLoaded', () => {
   initApp();
   
-  // Number to Words Suggestion Engine for all numeric inputs
+  // Number to Words Suggestion Engine for all numeric/price inputs
   document.body.addEventListener('input', (e) => {
-    if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
-      const val = parseFloat(e.target.value);
-      let hintEl = null;
-      if (e.target.id === 'prop-price') hintEl = document.getElementById('prop-price-words');
-      else if (e.target.id === 'rental-price') hintEl = document.getElementById('rental-price-words');
-      else if (e.target.id === 'comm-price') hintEl = document.getElementById('comm-price-words');
-      else if (e.target.id === 'inv-value') hintEl = document.getElementById('inv-value-words');
-      else if (e.target.id === 'comm-value') hintEl = document.getElementById('comm-value-words');
+    if (e.target.tagName === 'INPUT') {
+      const id = e.target.id || '';
+      const className = e.target.className || '';
+      const isNumber = e.target.type === 'number';
+      const priceKeywords = ['price', 'deposit', 'maintenance', 'budget', 'value', 'payout', 'expenses', 'amount', 'rent'];
+      const hasKeyword = priceKeywords.some(kw => id.toLowerCase().includes(kw) || className.toLowerCase().includes(kw));
       
-      if (!hintEl) {
-        hintEl = e.target.nextElementSibling;
-        if (!hintEl || !hintEl.classList.contains('num-hint')) {
-          hintEl = document.createElement('div');
-          hintEl.className = 'num-hint';
-          hintEl.style.fontSize = '11px';
-          hintEl.style.color = 'var(--gold-l)';
-          hintEl.style.fontWeight = '700';
-          hintEl.style.marginTop = '4px';
-          e.target.parentNode.insertBefore(hintEl, e.target.nextSibling);
+      if (isNumber || hasKeyword) {
+        const rawVal = e.target.value.trim();
+        // If it contains letters (like "1.5 Cr"), don't auto-convert
+        if (/[a-zA-Z]/.test(rawVal)) {
+          let hintEl = e.target.parentNode.querySelector('.num-hint');
+          if (hintEl) hintEl.innerText = '';
+          return;
         }
-      }
-      
-      if (!isNaN(val) && val > 0) {
-        const shortForm = formatPriceToWords(val);
-        let wordsForm = '';
-        try {
-          if (typeof window.priceToWords === 'function') {
-            wordsForm = window.priceToWords(Math.round(val));
+        const val = parseFloat(rawVal);
+        let hintEl = null;
+        if (e.target.id === 'prop-price') hintEl = document.getElementById('prop-price-words');
+        else if (e.target.id === 'rental-price') hintEl = document.getElementById('rental-price-words');
+        else if (e.target.id === 'comm-price') hintEl = document.getElementById('comm-price-words');
+        else if (e.target.id === 'inv-value') hintEl = document.getElementById('inv-value-words');
+        else if (e.target.id === 'comm-value') hintEl = document.getElementById('comm-value-words');
+        
+        if (!hintEl) {
+          hintEl = e.target.parentNode.querySelector('.num-hint');
+          if (!hintEl) {
+            hintEl = document.createElement('div');
+            hintEl.className = 'num-hint';
+            hintEl.style.fontSize = '11px';
+            hintEl.style.color = 'var(--gold-l)';
+            hintEl.style.fontWeight = '700';
+            hintEl.style.marginTop = '4px';
+            e.target.parentNode.insertBefore(hintEl, e.target.nextSibling);
           }
-        } catch (err) {}
-        hintEl.innerText = wordsForm ? `💬 ${shortForm} (${wordsForm})` : `💬 ${shortForm}`;
-      } else {
-        hintEl.innerText = '';
+        }
+        
+        if (!isNaN(val) && val > 0) {
+          let numericValue = val;
+          if (id === 'filter-proj-price-min' || id === 'filter-proj-price-max') {
+            numericValue = val * 10000000; // Convert Cr to raw Rupees
+          }
+          const shortForm = formatPriceToWords(numericValue);
+          let wordsForm = '';
+          try {
+            if (typeof window.priceToWords === 'function') {
+              wordsForm = window.priceToWords(Math.round(numericValue));
+            }
+          } catch (err) {}
+          hintEl.innerText = wordsForm ? `💬 ${shortForm} (${wordsForm})` : `💬 ${shortForm}`;
+        } else {
+          hintEl.innerText = '';
+        }
       }
     }
   });
 });
+
+function priceToWords(num) {
+  if (num === 0 || num === '0') return 'Zero Rupees';
+  const parsed = parseInt(num);
+  if (isNaN(parsed) || parsed <= 0) return '';
+  
+  const a = [
+    '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+    'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'
+  ];
+  const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+  function numToWords100(n) {
+    if (n < 20) return a[n];
+    const digit = n % 10;
+    return b[Math.floor(n / 10)] + (digit ? ' ' + a[digit] : '');
+  }
+
+  function numToWords1000(n) {
+    const hundred = Math.floor(n / 100);
+    const rest = n % 100;
+    let res = '';
+    if (hundred) {
+      res += a[hundred] + ' Hundred';
+    }
+    if (rest) {
+      if (res) res += ' and ';
+      res += numToWords100(rest);
+    }
+    return res;
+  }
+
+  let result = '';
+  const crore = Math.floor(parsed / 10000000);
+  let rem = parsed % 10000000;
+  const lakh = Math.floor(rem / 100000);
+  rem = rem % 100000;
+  const thousand = Math.floor(rem / 1000);
+  rem = rem % 1000;
+  
+  if (crore) {
+    result += numToWords1000(crore) + ' Crore ';
+  }
+  if (lakh) {
+    result += numToWords1000(lakh) + ' Lakh ';
+  }
+  if (thousand) {
+    result += numToWords1000(thousand) + ' Thousand ';
+  }
+  if (rem) {
+    if (result && rem < 100) {
+      result += 'and ';
+    }
+    result += numToWords1000(rem);
+  }
+  
+  return result.trim() + ' Rupees Only';
+}
+window.priceToWords = priceToWords;
 
 // App State Cache
 let state = {
@@ -3233,11 +3311,16 @@ async function loadProjects() {
     const container = document.getElementById('projects-list-container');
     if (data.length === 0) {
       container.innerHTML = `<div class="empty"><div class="empty-txt">No primary projects loaded.</div></div>`;
+      if (typeof window.updateComparisonTable === 'function') {
+        window.updateComparisonTable([]);
+      }
       return;
     }
 
     const searchVal = (document.getElementById('filter-proj-search')?.value || '').toLowerCase().trim();
     const stageVal = document.getElementById('filter-proj-stage')?.value || '';
+    const configVal = document.getElementById('filter-proj-config')?.value || '';
+    const typeVal = document.getElementById('filter-proj-type')?.value || '';
     
     const minArea = parseFloat(document.getElementById('filter-proj-area-min')?.value);
     const maxArea = parseFloat(document.getElementById('filter-proj-area-max')?.value);
@@ -3251,7 +3334,7 @@ async function loadProjects() {
       return matches ? matches.map(Number) : [];
     };
 
-    const filteredData = data.filter(p => {
+    const filteredDataAll = data.filter(p => {
       // 1. Search text match
       const nameMatch = p.project_name.toLowerCase().includes(searchVal) ||
                         p.builder_name.toLowerCase().includes(searchVal) ||
@@ -3260,8 +3343,32 @@ async function loadProjects() {
                         
       // 2. Stage match
       const stageMatch = !stageVal || p.uc_rtmi === stageVal;
+
+      // 3. Config match
+      let configMatch = true;
+      if (configVal) {
+        configMatch = (p.configuration || '').toLowerCase().includes(configVal.toLowerCase());
+      }
       
-      // 3. Area match
+      // 4. Type match
+      let typeMatch = true;
+      if (typeVal) {
+        const lowerType = typeVal.toLowerCase();
+        const lowerConfig = (p.configuration || '').toLowerCase();
+        const lowerName = (p.project_name || '').toLowerCase();
+        
+        if (lowerType === 'apartment') {
+          typeMatch = lowerConfig.includes('bhk') || lowerConfig.includes('apartment') || lowerConfig.includes('flat') || (!lowerConfig.includes('villa') && !lowerConfig.includes('plot'));
+        } else if (lowerType === 'villa') {
+          typeMatch = lowerConfig.includes('villa') || lowerConfig.includes('row house') || lowerConfig.includes('rowhouse') || lowerName.includes('villa');
+        } else if (lowerType === 'plot') {
+          typeMatch = lowerConfig.includes('plot') || lowerConfig.includes('land') || lowerName.includes('plot') || lowerName.includes('land');
+        } else if (lowerType === 'penthouse') {
+          typeMatch = lowerConfig.includes('penthouse') || lowerName.includes('penthouse');
+        }
+      }
+      
+      // 5. Area match
       let areaMatch = true;
       if (!isNaN(minArea) || !isNaN(maxArea)) {
         let areas = extractNumbers(p.carpet_area);
@@ -3281,7 +3388,7 @@ async function loadProjects() {
         }
       }
 
-      // 4. Price match (assuming prices entered in filter are in Cr)
+      // 6. Price match (assuming prices entered in filter are in Cr)
       let priceMatch = true;
       if (!isNaN(minPrice) || !isNaN(maxPrice)) {
         let prices = [];
@@ -3316,24 +3423,44 @@ async function loadProjects() {
         }
       }
       
-      return nameMatch && stageMatch && areaMatch && priceMatch;
+      return nameMatch && stageMatch && configMatch && typeMatch && areaMatch && priceMatch;
     });
 
-    if (filteredData.length === 0) {
+    if (filteredDataAll.length === 0) {
       container.innerHTML = `<div class="empty"><div class="empty-txt">No projects matched active criteria.</div></div>`;
+      if (typeof window.updateComparisonTable === 'function') {
+        window.updateComparisonTable([]);
+      }
       return;
     }
 
-    if (state.viewModes.projects === 'card') {
-      const itemsPerPage = 50;
+    const itemsPerPage = 50;
     const totalPages = Math.ceil(filteredDataAll.length / itemsPerPage) || 1;
     const startIdx = (state.projPage - 1) * itemsPerPage;
     const filteredData = filteredDataAll.slice(startIdx, startIdx + itemsPerPage);
-    
-    container.innerHTML = filteredData.map(p => `
-        <div class="card" style="background: linear-gradient(135deg, rgba(30, 42, 58, 0.45), rgba(184, 134, 11, 0.04)); cursor:pointer;" onclick="showProjectDetails(${p.id})">
-          <div style="position: absolute; top: 12px; right: 12px; z-index: 10;"><input type="checkbox" class="row-checkbox-projects" value="${p.id}" onchange="updateBulkSelectionState('projects')" style="transform: scale(1.3); cursor: pointer;" onclick="event.stopPropagation()"></div>
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; padding-right: 35px;">
+
+    // Update Project Comparison Table
+    if (typeof window.updateComparisonTable === 'function') {
+      window.updateComparisonTable(filteredDataAll);
+    }
+
+    if (state.viewModes.projects === 'card') {
+      container.innerHTML = filteredData.map(p => {
+        const isFocused = p.special_tags && p.special_tags.split(',').map(t=>t.trim().toLowerCase()).includes('focused');
+        const cardStyle = isFocused 
+          ? `background: linear-gradient(135deg, rgba(30, 42, 58, 0.55), rgba(184, 134, 11, 0.08)); border: 1.5px solid var(--gold); box-shadow: 0 0 10px rgba(184, 134, 11, 0.25); cursor:pointer; position:relative;`
+          : `background: linear-gradient(135deg, rgba(30, 42, 58, 0.45), rgba(184, 134, 11, 0.04)); cursor:pointer; position:relative;`;
+          
+        return `
+        <div class="card" style="${cardStyle}" onclick="showProjectDetails(${p.id})">
+          <div style="position: absolute; top: 12px; right: 12px; z-index: 10;">
+            <input type="checkbox" class="row-checkbox-projects" value="${p.id}" onchange="updateBulkSelectionState('projects')" style="transform: scale(1.3); cursor: pointer;" onclick="event.stopPropagation()">
+          </div>
+          <div style="position: absolute; top: 12px; left: 12px; z-index: 10;" onclick="event.stopPropagation(); window.toggleFocusProject(${p.id}, ${isFocused})">
+            <span style="font-size: 18px; color: ${isFocused ? 'var(--gold)' : 'rgba(255,255,255,0.2)'}; cursor: pointer;" title="Toggle Project Focus"><i class="ti ${isFocused ? 'ti-star-filled' : 'ti-star'}"></i></span>
+          </div>
+          
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; padding-right: 35px; padding-left: 20px;">
             <div>
               <div class="card-title" style="font-size:16px; font-weight:700; color:var(--gold-l);"><i class="ti ti-building-skyscraper"></i> ${p.project_name}</div>
               <div class="card-sub">Builder/Developer: <strong>${p.builder_name}</strong></div>
@@ -3348,7 +3475,7 @@ async function loadProjects() {
             <div class="stat" style="background:rgba(0,0,0,0.25)"><div class="stat-label">Metro Station</div><div class="stat-val" style="font-size:13px; color:var(--blue-light); font-weight:700;">${p.metro_station || 'N/A'}</div></div>
           </div>
 
-          <div style="font-size:12.5px; display:flex; flex-direction:column; gap:6px;">
+          <div style="font-size:12.5px; display:flex; flex-direction:column; gap:6px; padding-left: 20px;">
             <div>📐 Configurations: <strong>${p.configuration}</strong></div>
             <div>📏 Land Parcel: <strong>${p.land_parcel || 'N/A'}</strong> | Towers: <strong>${p.tower || 'N/A'}</strong></div>
             <div>📏 Carpet Area Range: <strong>${p.carpet_area}</strong></div>
@@ -3357,7 +3484,7 @@ async function loadProjects() {
             <div>📈 Floor Rise: <strong>${p.floor_rise || 'N/A'}</strong></div>
           </div>
 
-          <div class="sop" style="margin-top: 12px; margin-bottom: 0;">
+          <div class="sop" style="margin-top: 12px; margin-bottom: 0; margin-left: 20px;">
             <div class="sop-title">Location USPs & Proximities</div>
             <div>📌 Location: <strong>${p.location}</strong></div>
             <div>🌟 Location USP: <strong>${p.location_usp || 'N/A'}</strong></div>
@@ -3365,16 +3492,16 @@ async function loadProjects() {
           </div>
 
           <!-- Special Tags block -->
-          <div style="margin-top: 12px; display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+          <div style="margin-top: 12px; margin-left: 20px; display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
             ${(p.special_tags || '').split(',').filter(t => t.trim() !== '').map(tag => `
-              <span class="tag" style="background:rgba(255,255,255,0.05); color:var(--gold-l); border: 0.5px solid var(--border);">${tag.trim()}</span>
+              <span class="tag" style="background:rgba(255,255,255,0.05); color:var(--gold-l); border: 0.5px solid var(--border); cursor:pointer;" onclick="event.stopPropagation(); window.removeProjectTag(${p.id}, '${tag.trim()}')" title="Click to remove tag">${tag.trim()} &times;</span>
             `).join('')}
             <span class="tag" style="background:rgba(184,134,11,0.15); color:var(--gold-l); border: 1.5px dashed var(--gold); cursor:pointer; font-weight:700;" onclick="event.stopPropagation(); promptAddTag(${p.id}, 'projects')">+ Tag</span>
             <button class="btn btn-ghost btn-sm" style="padding: 2px 6px; font-size:10px; font-weight:700; color:var(--gold-l);" onclick="event.stopPropagation(); editProject(${p.id})"><i class="ti ti-edit"></i> Edit</button>
             <button class="btn btn-ghost btn-sm" style="padding: 2px 6px; font-size:10px; font-weight:700; color:var(--gold-l);" onclick="event.stopPropagation(); cloneProject(${p.id})">📋 Clone</button>
           </div>
         </div>
-      `).join('');
+      `; }).join('');
     } else {
       // TABLE VIEW
       container.innerHTML = `
@@ -3383,6 +3510,7 @@ async function loadProjects() {
             <thead>
               <tr>
                 <th style="width: 40px;"><input type="checkbox" id="check-all-projects" onchange="toggleAllRowCheckboxes('projects', this.checked)"></th>
+                <th>Focus</th>
                 <th>ID</th>
                 <th>Project Name</th>
                 <th>Builder</th>
@@ -3400,9 +3528,16 @@ async function loadProjects() {
               </tr>
             </thead>
             <tbody>
-              ${filteredData.map(p => `
-                <tr>
+              ${filteredData.map(p => {
+                const isFocused = p.special_tags && p.special_tags.split(',').map(t=>t.trim().toLowerCase()).includes('focused');
+                return `
+                <tr style="${isFocused ? 'background: rgba(184, 134, 11, 0.08);' : ''}">
                   <td><input type="checkbox" class="row-checkbox-projects" value="${p.id}" onchange="updateBulkSelectionState('projects')"></td>
+                  <td>
+                    <span onclick="window.toggleFocusProject(${p.id}, ${isFocused})" style="font-size: 16px; color: ${isFocused ? 'var(--gold)' : 'rgba(255,255,255,0.2)'}; cursor: pointer;">
+                      <i class="ti ${isFocused ? 'ti-star-filled' : 'ti-star'}"></i>
+                    </span>
+                  </td>
                   <td><span class="chip chip-cold btn-sm" style="font-size:9px; cursor:pointer;" onclick="editID('projects', ${p.id}, '${p.proj_id || ''}')">${p.proj_id || 'N/A'}</span></td>
                   <td><strong>${p.project_name}</strong></td>
                   <td>${p.builder_name}</td>
@@ -3424,7 +3559,7 @@ async function loadProjects() {
                     </div>
                   </td>
                 </tr>
-              `).join('')}
+              `; }).join('')}
             </tbody>
           </table>
         </div>
@@ -3435,6 +3570,93 @@ async function loadProjects() {
     console.error(err);
   }
 }
+
+window.updateComparisonTable = function(projects) {
+  const tableContainer = document.getElementById('project-comparison-container');
+  if (!tableContainer) return;
+  
+  if (projects.length === 0) {
+    tableContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:12px;">No projects match the current filters for comparison.</div>`;
+    return;
+  }
+  
+  const compareList = projects.slice(0, 4);
+  
+  let html = `
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>Ecosystem parameter</th>
+          ${compareList.map(p => `<th>${p.project_name}<br><span style="font-size:10px; color:var(--text-secondary);">${p.builder_name}</span></th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Location</strong></td>
+          ${compareList.map(p => `<td>${p.location || 'N/A'}</td>`).join('')}
+        </tr>
+        <tr>
+          <td><strong>Budget (Starting Price)</strong></td>
+          ${compareList.map(p => `<td style="color:var(--green); font-weight:700;">${formatPriceToWords(p.price_final)}</td>`).join('')}
+        </tr>
+        <tr>
+          <td><strong>BHK Configurations</strong></td>
+          ${compareList.map(p => `<td>${p.configuration || 'N/A'}</td>`).join('')}
+        </tr>
+        <tr>
+          <td><strong>Unit Sizes (Carpet Area)</strong></td>
+          ${compareList.map(p => `<td>${p.carpet_area || 'N/A'}</td>`).join('')}
+        </tr>
+        <tr>
+          <td><strong>Construction Stage</strong></td>
+          ${compareList.map(p => `<td>${p.uc_rtmi || 'UC'}</td>`).join('')}
+        </tr>
+        <tr>
+          <td><strong>Structural Elevation</strong></td>
+          ${compareList.map(p => `<td>${p.elevation || 'N/A'}</td>`).join('')}
+        </tr>
+        <tr>
+          <td><strong>Possession Handover</strong></td>
+          ${compareList.map(p => `<td>${p.possession || 'N/A'}</td>`).join('')}
+        </tr>
+        <tr>
+          <td><strong>Payment Schemes</strong></td>
+          ${compareList.map(p => `<td>${p.subvention || 'N/A'}</td>`).join('')}
+        </tr>
+      </tbody>
+    </table>
+  `;
+  tableContainer.innerHTML = html;
+};
+
+window.removeProjectTag = async function(id, tag) {
+  if (!confirm(`Are you sure you want to remove tag "${tag}"?`)) return;
+  try {
+    const res = await fetch(`/api/projects/${id}/tag`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tag, action: 'remove' })
+    });
+    if (res.ok) {
+      showToast(`Tag "${tag}" removed.`);
+      loadProjects();
+    }
+  } catch(e) { console.error(e); }
+};
+
+window.toggleFocusProject = async function(id, isFocused) {
+  try {
+    const res = await fetch(`/api/projects/${id}/tag`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tag: 'Focused', action: isFocused ? 'remove' : 'add' })
+    });
+    if (res.ok) {
+      showToast(isFocused ? 'Removed focus highlight.' : 'Marked project as FOCUSED!');
+      loadProjects();
+    }
+  } catch(e) { console.error(e); }
+};
 
 // ------------------------------------------
 // 6. ASSOCIATES & DIRECTORY
@@ -5178,7 +5400,17 @@ async function submitAddProject(e) {
     google_map_url: document.getElementById('proj-google-map')?.value || '',
     unit_details: JSON.stringify(units),
     builder_poc_details: JSON.stringify(pocs),
-    admin_comments: document.getElementById('proj-admin-comments').value
+    admin_comments: document.getElementById('proj-admin-comments').value,
+    brochure_link: document.getElementById('proj-brochure').value,
+    floor_plans: document.getElementById('proj-floor-plans').value,
+    mother_docs: document.getElementById('proj-mother-docs').value,
+    assignments: document.getElementById('proj-assignments').value,
+    kyc_docs: document.getElementById('proj-kyc-docs').value,
+    photos: document.getElementById('proj-photos').value,
+    videos: document.getElementById('proj-videos').value,
+    cp_agreements: document.getElementById('proj-cp-agreements').value,
+    finance_info: document.getElementById('proj-finance-info').value,
+    analytics_info: document.getElementById('proj-analytics-info').value
   };
 
   saveCustomDropdownValue('projectBuilders', data.builder_name);
@@ -5937,6 +6169,17 @@ window.cloneProject = function(id) {
   const mapInput = document.getElementById('proj-google-map');
   if(mapInput) mapInput.value = p.google_map_url || '';
 
+  setVal('proj-brochure', p.brochure_link);
+  setVal('proj-floor-plans', p.floor_plans);
+  setVal('proj-mother-docs', p.mother_docs);
+  setVal('proj-assignments', p.assignments);
+  setVal('proj-kyc-docs', p.kyc_docs);
+  setVal('proj-photos', p.photos);
+  setVal('proj-videos', p.videos);
+  setVal('proj-cp-agreements', p.cp_agreements);
+  setVal('proj-finance-info', p.finance_info);
+  setVal('proj-analytics-info', p.analytics_info);
+
   const unitContainer = document.getElementById('unit-details-container');
   unitContainer.innerHTML = '';
   if (p.unit_details) {
@@ -6016,6 +6259,27 @@ window.editProject = function(id) {
   
   const adminCommentsInput = document.getElementById('proj-admin-comments');
   if(adminCommentsInput) adminCommentsInput.value = p.admin_comments || '';
+
+  const brochureInput = document.getElementById('proj-brochure');
+  if(brochureInput) brochureInput.value = p.brochure_link || '';
+  const floorPlansInput = document.getElementById('proj-floor-plans');
+  if(floorPlansInput) floorPlansInput.value = p.floor_plans || '';
+  const motherDocsInput = document.getElementById('proj-mother-docs');
+  if(motherDocsInput) motherDocsInput.value = p.mother_docs || '';
+  const assignmentsInput = document.getElementById('proj-assignments');
+  if(assignmentsInput) assignmentsInput.value = p.assignments || '';
+  const kycDocsInput = document.getElementById('proj-kyc-docs');
+  if(kycDocsInput) kycDocsInput.value = p.kyc_docs || '';
+  const photosInput = document.getElementById('proj-photos');
+  if(photosInput) photosInput.value = p.photos || '';
+  const videosInput = document.getElementById('proj-videos');
+  if(videosInput) videosInput.value = p.videos || '';
+  const cpAgreementsInput = document.getElementById('proj-cp-agreements');
+  if(cpAgreementsInput) cpAgreementsInput.value = p.cp_agreements || '';
+  const financeInfoInput = document.getElementById('proj-finance-info');
+  if(financeInfoInput) financeInfoInput.value = p.finance_info || '';
+  const analyticsInfoInput = document.getElementById('proj-analytics-info');
+  if(analyticsInfoInput) analyticsInfoInput.value = p.analytics_info || '';
 
   // Load dynamic units
   const unitContainer = document.getElementById('unit-details-container');
@@ -6822,6 +7086,7 @@ window.showShareModal = function(id) {
   const p = state.properties.find(item => item.id === id);
   if (!p) return;
   state.selectedPropertyForShare = p;
+  state.selectedProjectForShare = null;
 
   const senderName = document.getElementById('share-sender-name').value || 'Vasu Jain';
   const senderCompany = document.getElementById('share-sender-company').value || 'REALPro CRM';
@@ -6854,35 +7119,95 @@ window.showShareModal = function(id) {
   openModal('modal-share-card');
 };
 
-function refreshPitchText() {
-  const p = state.selectedPropertyForShare;
+window.shareProjectData = function() {
+  const projectId = document.getElementById('detail-proj-id').value;
+  if (!projectId) return;
+  const p = state.projects.find(item => item.id == projectId);
   if (!p) return;
   
-  const senderName = document.getElementById('share-sender-name').value;
-  const senderCompany = document.getElementById('share-sender-company').value;
-  const senderPhone = document.getElementById('share-sender-phone').value;
-  const senderEmail = document.getElementById('share-sender-email').value;
+  state.selectedPropertyForShare = null;
+  state.selectedProjectForShare = p;
+  
+  const senderName = document.getElementById('share-sender-name').value || 'Vasu Jain';
+  const senderCompany = document.getElementById('share-sender-company').value || 'REALPro CRM';
+  const senderPhone = document.getElementById('share-sender-phone').value || '+91 99454 03202';
+  const senderEmail = document.getElementById('share-sender-email').value || 'vasu@realpro.com';
 
-  let pitch = `🏠 *PREMIUM PROPERTY FOR MATCH* 🏠\n\n`;
-  pitch += `📍 *Society/Project:* ${p.society}\n`;
-  pitch += `📍 *Location:* ${p.location}\n`;
-  pitch += `📐 *Typology:* ${p.configuration}\n`;
-  pitch += `📏 *Super Built Area:* ${p.area_sqft} Sqft\n`;
-  pitch += `💰 *Pricing:* ${formatPriceToWords(p.price)}\n`;
-  pitch += `🛋️ *Furnishing Status:* ${p.interiors || 'Unfurnished'}\n`;
-  if (p.facing) pitch += `🚪 *Facing:* ${p.facing}\n`;
-  if (p.amenities) pitch += `🌟 *Amenities:* ${p.amenities}\n`;
-  if (p.possession) pitch += `🔑 *Handover Status:* ${p.possession}\n`;
-  if (p.video_link) pitch += `🔗 *Walkthrough Video:* ${p.video_link}\n`;
-  if (p.photo_link) pitch += `📸 *Photos Gallery:* ${p.photo_link}\n`;
+  let pitch = `🏗️ *PREMIUM BUILDER PROJECT PITCH* 🏗️\n\n`;
+  pitch += `📍 *Project Name:* ${p.project_name || 'N/A'}\n`;
+  pitch += `👷 *Builder Name:* ${p.builder_name || 'N/A'}\n`;
+  pitch += `📍 *Location:* ${p.location || 'N/A'}\n`;
+  pitch += `📐 *Configuration:* ${p.configuration || 'N/A'}\n`;
+  pitch += `💰 *Pricing:* ${p.price_final || 'N/A'}\n`;
+  if (p.possession) pitch += `🔑 *Possession:* ${p.possession}\n`;
+  if (p.subvention) pitch += `💵 *Subvention Scheme:* ${p.subvention}\n`;
+  if (p.location_usp) pitch += `📍 *Location USP:* ${p.location_usp}\n`;
+  if (p.metro_station) pitch += `🚇 *Metro Station:* ${p.metro_station}\n`;
+  if (p.other_usp) pitch += `🌟 *USPs:* ${p.other_usp}\n`;
   if (p.brochure_link) pitch += `📄 *PDF Brochure:* ${p.brochure_link}\n`;
+  if (p.photos) pitch += `📸 *Photos Link:* ${p.photos}\n`;
+  if (p.videos) pitch += `🎥 *Videos Link:* ${p.videos}\n`;
   
   pitch += `\n*🧑💼 Pitch Prepared By:* \n`;
   pitch += `Name: *${senderName}*\n`;
   pitch += `Company: *${senderCompany}*\n`;
   pitch += `Phone: *${senderPhone}*\n`;
   pitch += `Email: *${senderEmail}*\n\n`;
-  pitch += `Contact us immediately for site visits and exclusive booking negotiations!`;
+  pitch += `Contact us immediately for site visits and developer bookings!`;
+
+  document.getElementById('share-pitch-text').value = pitch;
+  openModal('modal-share-card');
+};
+
+function refreshPitchText() {
+  const p = state.selectedPropertyForShare;
+  const proj = state.selectedProjectForShare;
+  
+  const senderName = document.getElementById('share-sender-name').value;
+  const senderCompany = document.getElementById('share-sender-company').value;
+  const senderPhone = document.getElementById('share-sender-phone').value;
+  const senderEmail = document.getElementById('share-sender-email').value;
+
+  let pitch = '';
+  if (p) {
+    pitch = `🏠 *PREMIUM PROPERTY FOR MATCH* 🏠\n\n`;
+    pitch += `📍 *Society/Project:* ${p.society}\n`;
+    pitch += `📍 *Location:* ${p.location}\n`;
+    pitch += `📐 *Typology:* ${p.configuration}\n`;
+    pitch += `📏 *Super Built Area:* ${p.area_sqft} Sqft\n`;
+    pitch += `💰 *Pricing:* ${formatPriceToWords(p.price)}\n`;
+    pitch += `🛋️ *Furnishing Status:* ${p.interiors || 'Unfurnished'}\n`;
+    if (p.facing) pitch += `🚪 *Facing:* ${p.facing}\n`;
+    if (p.amenities) pitch += `🌟 *Amenities:* ${p.amenities}\n`;
+    if (p.possession) pitch += `🔑 *Handover Status:* ${p.possession}\n`;
+    if (p.video_link) pitch += `🔗 *Walkthrough Video:* ${p.video_link}\n`;
+    if (p.photo_link) pitch += `📸 *Photos Gallery:* ${p.photo_link}\n`;
+    if (p.brochure_link) pitch += `📄 *PDF Brochure:* ${p.brochure_link}\n`;
+  } else if (proj) {
+    pitch = `🏗️ *PREMIUM BUILDER PROJECT PITCH* 🏗️\n\n`;
+    pitch += `📍 *Project Name:* ${proj.project_name || 'N/A'}\n`;
+    pitch += `👷 *Builder Name:* ${proj.builder_name || 'N/A'}\n`;
+    pitch += `📍 *Location:* ${proj.location || 'N/A'}\n`;
+    pitch += `📐 *Configuration:* ${proj.configuration || 'N/A'}\n`;
+    pitch += `💰 *Pricing:* ${proj.price_final || 'N/A'}\n`;
+    if (proj.possession) pitch += `🔑 *Possession:* ${proj.possession}\n`;
+    if (proj.subvention) pitch += `💵 *Subvention Scheme:* ${proj.subvention}\n`;
+    if (proj.location_usp) pitch += `📍 *Location USP:* ${proj.location_usp}\n`;
+    if (proj.metro_station) pitch += `🚇 *Metro Station:* ${proj.metro_station}\n`;
+    if (proj.other_usp) pitch += `🌟 *USPs:* ${proj.other_usp}\n`;
+    if (proj.brochure_link) pitch += `📄 *PDF Brochure:* ${proj.brochure_link}\n`;
+    if (proj.photos) pitch += `📸 *Photos Link:* ${proj.photos}\n`;
+    if (proj.videos) pitch += `🎥 *Videos Link:* ${proj.videos}\n`;
+  } else {
+    return;
+  }
+  
+  pitch += `\n*🧑💼 Pitch Prepared By:* \n`;
+  pitch += `Name: *${senderName}*\n`;
+  pitch += `Company: *${senderCompany}*\n`;
+  pitch += `Phone: *${senderPhone}*\n`;
+  pitch += `Email: *${senderEmail}*\n\n`;
+  pitch += `Contact us immediately for details, site visits, and bookings!`;
 
   document.getElementById('share-pitch-text').value = pitch;
 }
@@ -9633,7 +9958,7 @@ window.removeLeadDocument = async function(leadId, idx) {
 
 // --- PROJECT COMMAND CENTER ---
 window.switchProjTab = function(tabId) {
-  const tabs = ['overview', 'docs', 'leads', 'finance', 'analytics'];
+  const tabs = ['overview', 'units', 'builder', 'docs', 'finance', 'leads', 'properties', 'analytics'];
   tabs.forEach(t => {
     const btn = document.getElementById(`tab-proj-${t}`);
     const pane = document.getElementById(`pane-proj-${t}`);
@@ -9648,6 +9973,10 @@ window.switchProjTab = function(tabId) {
       if (t === 'leads') {
         const projId = document.getElementById('detail-proj-id').value;
         loadProjectLeads(projId);
+      }
+      if (t === 'properties') {
+        const projId = document.getElementById('detail-proj-id').value;
+        loadProjectProperties(projId);
       }
     } else {
       if (btn) {
@@ -9689,12 +10018,14 @@ window.showProjectDetails = async function(projectId) {
 
     const mapContainer = document.getElementById('det-proj-map-container');
     if (proj.google_map_url) {
-      let embedUrl = proj.google_map_url;
-      // Simple transform if it's a raw google maps link instead of embed, though users should provide embed
-      if(embedUrl.includes('<iframe')) {
-        mapContainer.innerHTML = embedUrl;
+      let embedUrl = proj.google_map_url.trim();
+      if (embedUrl.includes('<iframe')) {
+        let cleanIframe = embedUrl.replace(/width="[0-9%]+"/, 'width="100%"').replace(/height="[0-9%]+"/, 'height="100%"');
+        mapContainer.innerHTML = cleanIframe;
+      } else if (embedUrl.startsWith('http') || embedUrl.length > 5) {
+        mapContainer.innerHTML = `<iframe width="100%" height="100%" style="border:0;" loading="lazy" allowfullscreen src="https://maps.google.com/maps?q=${encodeURIComponent(embedUrl)}&output=embed"></iframe>`;
       } else {
-        mapContainer.innerHTML = `<a href="${embedUrl}" target="_blank" style="color:var(--gold); font-weight:700;"><i class="ti ti-map"></i> Open Google Maps Link</a>`;
+        mapContainer.innerHTML = 'Invalid Map URL Provided';
       }
     } else {
       mapContainer.innerHTML = 'No Map URL Provided';
@@ -9750,12 +10081,17 @@ window.showProjectDetails = async function(projectId) {
     document.getElementById('det-proj-clp').innerText = proj.clp_due || 'N/A';
     document.getElementById('det-proj-floorrise').innerText = proj.floor_rise || 'N/A';
     
+    const isEmployee = state.systemSettings.userRole === 'Employee' || !state.systemSettings.showMaskedFields;
     if (proj.cp_agreements) {
-      document.getElementById('det-proj-cp-link').innerHTML = `<a href="${proj.cp_agreements}" target="_blank" style="color:var(--gold-l); font-weight:700;"><i class="ti ti-link"></i> View Agreement PDF</a>`;
+      if (isEmployee) {
+        document.getElementById('det-proj-cp-link').innerHTML = '🔐 Hidden (Admin locked)';
+      } else {
+        document.getElementById('det-proj-cp-link').innerHTML = `<a href="${proj.cp_agreements}" target="_blank" style="color:var(--gold-l); font-weight:700;"><i class="ti ti-link"></i> View Agreement PDF</a>`;
+      }
     } else {
       document.getElementById('det-proj-cp-link').innerHTML = 'No CP Agreement linked.';
     }
-    document.getElementById('det-proj-finance-info').innerText = proj.finance_info || 'No finance notes added.';
+    document.getElementById('det-proj-finance-info').innerText = isEmployee ? '🔐 Hidden' : (proj.finance_info || 'No finance notes added.');
     
     // Analytics Tab
     document.getElementById('det-proj-analytics-info').innerText = proj.analytics_info || 'No analytics available.';
@@ -9764,7 +10100,7 @@ window.showProjectDetails = async function(projectId) {
     const docsGrid = document.getElementById('det-proj-docs-grid');
     docsGrid.innerHTML = '';
     
-    if (!state.systemSettings.showMaskedFields) {
+    if (isEmployee) {
       docsGrid.innerHTML = '<div style="font-size:12px; color:#f87171; grid-column:span 2;"><i class="ti ti-lock"></i> Vault documents locked in Employee Mode.</div>';
     } else {
       const docsList = [
@@ -9794,6 +10130,41 @@ window.showProjectDetails = async function(projectId) {
     
   } catch(e) {
     console.error(e);
+  }
+};
+
+window.loadProjectProperties = async function(projId) {
+  const tbody = document.getElementById('det-proj-properties-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading linked properties...</td></tr>';
+  try {
+    const res = await fetch('/api/properties');
+    const props = await res.json();
+    const filtered = props.filter(p => p.project_id == projId);
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">No resale/rental listings linked to this project yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = filtered.map(p => {
+      const isEmployee = state.systemSettings.userRole === 'Employee' || !state.systemSettings.showMaskedFields;
+      const ownerContact = isEmployee ? '🔐 Hidden (Admin locked)' : `${p.owner_name || 'N/A'} (${p.owner_phone || 'N/A'})`;
+      return `
+        <tr>
+          <td><strong>${p.prop_id || ('#' + p.id)}</strong></td>
+          <td><span class="badge badge-primary">${p.available_for || p.property_type || 'Sale'}</span></td>
+          <td>${p.society || 'N/A'}${p.unit_no ? ' / ' + p.unit_no : ''}</td>
+          <td>${p.configuration || 'N/A'}</td>
+          <td style="color:var(--green); font-weight:700;">${p.price_raw || p.price || 'N/A'}</td>
+          <td>${ownerContact}</td>
+          <td>
+            <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); closeModal('modal-project-detail'); window.editFullProperty(${p.id})"><i class="ti ti-edit"></i> View/Edit</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (e) {
+    console.error(e);
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--red);">Error loading properties.</td></tr>';
   }
 };
 
@@ -10135,8 +10506,11 @@ window.printProjectCard = function() {
 
 window.loadProjectLeads = async function(projectId) {
   const container = document.getElementById('det-proj-leads-container');
+  const assignedContainer = document.getElementById('det-proj-assigned-leads-container');
+  const select = document.getElementById('assign-lead-select');
+  if (!container || !assignedContainer || !select) return;
+  
   try {
-    // Basic implementation: fetch all leads and see if they loosely match project type / location
     const [leadsRes, projRes] = await Promise.all([
       fetch('/api/leads'), fetch('/api/projects')
     ]);
@@ -10145,8 +10519,33 @@ window.loadProjectLeads = async function(projectId) {
     const proj = projects.find(p => p.id == projectId);
     if (!proj) return;
     
-    // Attempt match: configuration includes lead config OR location is similar
+    // 1. Populate the select element for lead assignment (exclude already assigned)
+    const unassignedLeads = leads.filter(l => l.project_id != projectId);
+    select.innerHTML = '<option value="">-- Select Lead to Assign --</option>' + 
+      unassignedLeads.map(l => `<option value="${l.id}">${l.name} (${l.phone || 'No Phone'})</option>`).join('');
+      
+    // 2. Render manually assigned leads
+    const assignedLeads = leads.filter(l => l.project_id == projectId);
+    if (assignedLeads.length === 0) {
+      assignedContainer.innerHTML = `<div style="font-size:12px; color:var(--text-muted);">No leads manually assigned to this project.</div>`;
+    } else {
+      assignedContainer.innerHTML = assignedLeads.map(l => `
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); padding:10px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:13px; font-weight:700; color:var(--gold-l);">${l.name} <span class="badge badge-primary" style="font-size:9px;">Assigned</span></div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Phone: ${l.phone || 'N/A'} | Email: ${l.email || 'N/A'}</div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-ghost btn-sm" onclick="showLeadDetails(${l.id})" style="padding:4px 10px;">Profile</button>
+            <button class="btn btn-d btn-sm" onclick="removeLeadAssignment(${l.id}, ${projectId})" style="padding:4px 10px; color:var(--red);">Unassign</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 3. Render auto-matched leads (BHK match, exclude manually assigned)
     const matches = leads.filter(l => {
+      if (l.project_id == projectId) return false;
       if (!l.config_bhk || !proj.configuration) return false;
       const b1 = l.config_bhk.charAt(0);
       return proj.configuration.includes(b1);
@@ -10161,7 +10560,7 @@ window.loadProjectLeads = async function(projectId) {
       <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:10px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <div style="font-size:13px; font-weight:700; color:var(--gold-l);">${l.name} <span class="badge" style="font-size:9px; background:rgba(0,0,0,0.4);">${l.status}</span></div>
-          <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">BHK: ${l.config_bhk || 'N/A'} | Budget: ₹${(l.budget_max/100000).toFixed(0)}L</div>
+          <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">BHK: ${l.config_bhk || 'N/A'} | Budget: ₹${l.budget_max ? (l.budget_max/100000).toFixed(0) + 'L' : 'N/A'}</div>
         </div>
         <button class="btn btn-primary btn-sm" onclick="showLeadDetails(${l.id})" style="padding:4px 10px;">Profile</button>
       </div>
@@ -10169,6 +10568,62 @@ window.loadProjectLeads = async function(projectId) {
   } catch(e) {
     console.error(e);
   }
+};
+
+window.submitLeadAssignment = async function() {
+  const select = document.getElementById('assign-lead-select');
+  const leadId = select.value;
+  const projectId = document.getElementById('detail-proj-id').value;
+  if (!leadId) {
+    showToast('Please select a lead first.', 'error');
+    return;
+  }
+  try {
+    const res = await fetch(`/api/leads/${leadId}/assign-project`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ project_id: parseInt(projectId) })
+    });
+    if (res.ok) {
+      showToast('Lead successfully assigned to project!');
+      loadProjectLeads(projectId);
+    } else {
+      const err = await res.json();
+      showToast(err.error || 'Failed to assign lead.', 'error');
+    }
+  } catch (e) {
+    console.error(e);
+    showToast('Network error during lead assignment.', 'error');
+  }
+};
+
+window.removeLeadAssignment = async function(leadId, projectId) {
+  if (!confirm('Are you sure you want to unassign this lead?')) return;
+  try {
+    const res = await fetch(`/api/leads/${leadId}/assign-project`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ project_id: null })
+    });
+    if (res.ok) {
+      showToast('Lead unassigned from project.');
+      loadProjectLeads(projectId);
+    } else {
+      const err = await res.json();
+      showToast(err.error || 'Failed to unassign lead.', 'error');
+    }
+  } catch (e) {
+    console.error(e);
+    showToast('Network error during lead unassignment.', 'error');
+  }
+};
+
+window.assignLeadToProject = function() {
+  switchProjTab('leads');
 };
 
 // ─── SMART LISTS FILTER LOGIC ───
