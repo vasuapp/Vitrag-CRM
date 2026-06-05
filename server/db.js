@@ -31,7 +31,7 @@ const db = {
 
 (async () => {
   try {
-    await pool.query(`CREATE TABLE leads (
+    await pool.query(`CREATE TABLE IF NOT EXISTS leads (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     phone TEXT,
@@ -49,7 +49,7 @@ const db = {
     associate_id INTEGER,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   , agent_id INTEGER, agent_name TEXT, special_tags TEXT, documents TEXT, location_preference TEXT, config_bhk TEXT, timeline_preference TEXT, rental_expiry_date TEXT, lead_score INTEGER DEFAULT 0, deleted_at TEXT, admin_comments TEXT, property_requirement TEXT);
-CREATE TABLE properties (
+CREATE TABLE IF NOT EXISTS properties (
     id SERIAL PRIMARY KEY,
     prop_id TEXT,
     mandate_type TEXT,
@@ -94,7 +94,7 @@ CREATE TABLE properties (
     special_tags TEXT,
     last_updated TEXT DEFAULT CURRENT_TIMESTAMP,
     sync_status TEXT DEFAULT 'NOT_SYNCED', zone TEXT, onboarded_year TEXT, plot_dimension TEXT, house_facing TEXT, plot_facing TEXT, holder_type TEXT, deleted_at TEXT, admin_comments TEXT, project_id INTEGER, agent_id INTEGER, commission_agreed TEXT, google_map_url TEXT, road_width TEXT, fsi TEXT, closure_site_visit BOOLEAN DEFAULT false, closure_negotiation BOOLEAN DEFAULT false, closure_agreement BOOLEAN DEFAULT false, closure_registration BOOLEAN DEFAULT false, closure_closed BOOLEAN DEFAULT false, closure_buyer_name TEXT, closure_buyer_phone TEXT, closure_deal_value NUMERIC, closure_commission_pct NUMERIC, closure_date TEXT, closure_notes TEXT);
-CREATE TABLE builder_projects (
+CREATE TABLE IF NOT EXISTS builder_projects (
     id SERIAL PRIMARY KEY,
     builder_name TEXT NOT NULL,
     project_name TEXT NOT NULL,
@@ -116,14 +116,14 @@ CREATE TABLE builder_projects (
     special_tags TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   , brochure_link TEXT, floor_plans TEXT, mother_docs TEXT, assignments TEXT, kyc_docs TEXT, photos TEXT, videos TEXT, cp_agreements TEXT, builder_details TEXT, finance_info TEXT, analytics_info TEXT, zone TEXT, onboarded_year TEXT, proj_id TEXT, google_map_url TEXT, unit_details TEXT, builder_poc_details TEXT, plot_dimension TEXT, plot_size TEXT, house_facing TEXT, plot_facing TEXT, deleted_at TEXT, admin_comments TEXT);
-CREATE TABLE daily_checklist (
+CREATE TABLE IF NOT EXISTS daily_checklist (
     id SERIAL PRIMARY KEY,
     item_name TEXT NOT NULL,
     routine_type TEXT NOT NULL,
     is_checked INTEGER DEFAULT 0,
     routine_date TEXT NOT NULL
   );
-CREATE TABLE associates (
+CREATE TABLE IF NOT EXISTS associates (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     company TEXT,
@@ -134,7 +134,7 @@ CREATE TABLE associates (
     speciality_zones TEXT,
     linked_inventories TEXT
   , is_inner_circle INTEGER DEFAULT 0, agent_id INTEGER);
-CREATE TABLE commissions (
+CREATE TABLE IF NOT EXISTS commissions (
     id SERIAL PRIMARY KEY,
     deal_name TEXT NOT NULL,
     deal_value NUMERIC,
@@ -145,24 +145,24 @@ CREATE TABLE commissions (
     payment_status TEXT DEFAULT 'Pending',
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   , booking_date TEXT, agreement_date TEXT, registration_date TEXT, handover_date TEXT, commission_amount NUMERIC);
-CREATE TABLE todo_tasks (
+CREATE TABLE IF NOT EXISTS todo_tasks (
     id SERIAL PRIMARY KEY,
     task TEXT NOT NULL,
     status TEXT DEFAULT 'Incomplete',
     due_date TEXT
   , priority TEXT DEFAULT 'Medium');
-CREATE TABLE scratchpad (
+CREATE TABLE IF NOT EXISTS scratchpad (
     id SERIAL PRIMARY KEY,
     content TEXT,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
-CREATE TABLE habits (
+CREATE TABLE IF NOT EXISTS habits (
     id SERIAL PRIMARY KEY,
     habit_name TEXT NOT NULL,
     habit_date TEXT NOT NULL,
     is_done INTEGER DEFAULT 0
   , agent_id INTEGER);
-CREATE TABLE agents (
+CREATE TABLE IF NOT EXISTS agents (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     email TEXT,
@@ -171,7 +171,7 @@ CREATE TABLE agents (
     location_specialty TEXT,
     leads_assigned INTEGER DEFAULT 0
   , role TEXT DEFAULT 'Agent', login_pin TEXT, allowed_pages TEXT, performance_rating INTEGER DEFAULT 5);
-CREATE TABLE drip_campaigns (
+CREATE TABLE IF NOT EXISTS drip_campaigns (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     channel TEXT NOT NULL,
@@ -179,7 +179,7 @@ CREATE TABLE drip_campaigns (
     sequence_data TEXT NOT NULL,
     is_active INTEGER DEFAULT 1
   );
-CREATE TABLE drip_logs (
+CREATE TABLE IF NOT EXISTS drip_logs (
     id SERIAL PRIMARY KEY,
     lead_id INTEGER,
     lead_name TEXT,
@@ -191,12 +191,12 @@ CREATE TABLE drip_logs (
     sent_date TEXT DEFAULT CURRENT_TIMESTAMP,
     status TEXT DEFAULT 'SENT'
   );
-CREATE TABLE auto_assignment_settings (
+CREATE TABLE IF NOT EXISTS auto_assignment_settings (
     id SERIAL PRIMARY KEY,
     rule_type TEXT DEFAULT 'ROUND_ROBIN',
     is_active INTEGER DEFAULT 1
   );
-CREATE TABLE telephony_calls (
+CREATE TABLE IF NOT EXISTS telephony_calls (
     id SERIAL PRIMARY KEY,
     lead_id INTEGER,
     lead_name TEXT,
@@ -207,7 +207,7 @@ CREATE TABLE telephony_calls (
     call_notes TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
-CREATE TABLE proposals (
+CREATE TABLE IF NOT EXISTS proposals (
     id SERIAL PRIMARY KEY,
     token TEXT UNIQUE,
     lead_id INTEGER,
@@ -215,27 +215,27 @@ CREATE TABLE proposals (
     intro_message TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
-CREATE TABLE proposal_items (
+CREATE TABLE IF NOT EXISTS proposal_items (
     id SERIAL PRIMARY KEY,
     proposal_id INTEGER,
     property_id INTEGER,
     agent_comments TEXT
   );
-CREATE TABLE client_messages (
+CREATE TABLE IF NOT EXISTS client_messages (
     id SERIAL PRIMARY KEY,
     lead_id INTEGER,
     sender TEXT,
     message TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
-CREATE TABLE lead_timeline (
+CREATE TABLE IF NOT EXISTS lead_timeline (
     id SERIAL PRIMARY KEY,
     lead_id INTEGER NOT NULL,
-    event_type TEXT NOT NULL, -- STAGE_CHANGE, CALL_LOG, CHAT_MESSAGE, WEBHOOK, SYSTEM
+    event_type TEXT NOT NULL,
     event_description TEXT NOT NULL,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
-CREATE TABLE lead_scorecards (
+CREATE TABLE IF NOT EXISTS lead_scorecards (
     id SERIAL PRIMARY KEY,
     lead_id INTEGER UNIQUE NOT NULL,
     budget INTEGER DEFAULT 3,
@@ -245,7 +245,7 @@ CREATE TABLE lead_scorecards (
     clarity INTEGER DEFAULT 3,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
-CREATE TABLE attendance_logs (
+CREATE TABLE IF NOT EXISTS attendance_logs (
     id SERIAL PRIMARY KEY,
     agent_id INTEGER NOT NULL,
     agent_name TEXT,
@@ -253,33 +253,33 @@ CREATE TABLE attendance_logs (
     clock_out TEXT,
     attendance_date TEXT NOT NULL
   );
-CREATE TABLE interaction_logs (
+CREATE TABLE IF NOT EXISTS interaction_logs (
     id SERIAL PRIMARY KEY,
     lead_id INTEGER NOT NULL,
-    interaction_type TEXT NOT NULL, -- Call, WhatsApp, Email
+    interaction_type TEXT NOT NULL,
     notes TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
-CREATE TABLE sequence_counters (
+CREATE TABLE IF NOT EXISTS sequence_counters (
     category_key TEXT,
     last_value INTEGER DEFAULT 150,
     PRIMARY KEY (category_key)
   );
-CREATE TABLE lead_activities (
+CREATE TABLE IF NOT EXISTS lead_activities (
       id SERIAL PRIMARY KEY,
       lead_id INTEGER NOT NULL,
       type TEXT NOT NULL,
       description TEXT,
       timestamp TEXT DEFAULT CURRENT_TIMESTAMP
     );
-CREATE TABLE lead_property_interest (
+CREATE TABLE IF NOT EXISTS lead_property_interest (
       id SERIAL PRIMARY KEY,
       lead_id INTEGER NOT NULL,
       property_id INTEGER NOT NULL,
       status TEXT DEFAULT 'Interested',
       timestamp TEXT DEFAULT CURRENT_TIMESTAMP
     );
-CREATE TABLE invoices (
+CREATE TABLE IF NOT EXISTS invoices (
     id SERIAL PRIMARY KEY,
     invoice_no TEXT UNIQUE,
     invoice_date TEXT,
@@ -308,13 +308,13 @@ CREATE TABLE invoices (
     uploaded_file_path TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   , items TEXT);
-CREATE TABLE sops (
+CREATE TABLE IF NOT EXISTS sops (
       id SERIAL PRIMARY KEY,
       title TEXT NOT NULL,
       steps TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
-CREATE TABLE communication_templates (
+CREATE TABLE IF NOT EXISTS communication_templates (
       id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
       platform TEXT NOT NULL,
@@ -322,7 +322,6 @@ CREATE TABLE communication_templates (
       content TEXT NOT NULL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
-
       `);
     console.log("PostgreSQL tables verified/created successfully.");
     
