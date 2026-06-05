@@ -2555,36 +2555,33 @@ html, body {
     width: 100%;
   }
 
-  /* 2. Sidebar Navigation adjustments */
-  .sidebar {
-    width: 240px !important;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-    z-index: 10000 !important;
+  /* 2. Sidebar Navigation adjustments - Persistent side ribbon */
+  .sidebar,
+  .sidebar.locked-expanded,
+  .sidebar.locked-collapsed {
+    position: static !important;
+    width: 60px !important;
+    transform: none !important;
+    transition: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: 100 !important;
+    overflow: hidden !important;
   }
   .sidebar.mobile-open {
-    transform: translateX(0);
+    transform: none !important;
   }
   .main-content {
     margin-left: 0 !important;
     padding-top: 10px;
   }
   
-  /* Create Hamburger Button for Mobile */
-  .mobile-nav-toggle {
-    display: flex !important;
-    background: var(--gold);
-    color: #1a1714;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-weight: 700;
-    cursor: pointer;
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 99999;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  /* Hide hamburger button */
+  .mobile-nav-toggle,
+  #mobile-nav-toggle {
+    display: none !important;
   }
 
   /* 3. Ensure full table visibility via horizontal scroll */
@@ -2718,12 +2715,12 @@ html, body {
 /* ═══ COMPREHENSIVE MOBILE LAYOUT FIX ═══ */
 @media (max-width: 768px) {
 
-  /* App container: allow vertical scroll, fix 100vh on mobile */
+  /* App container: keep flex row for persistent side ribbon */
   .app {
-    flex-direction: column;
-    height: auto;
-    min-height: 100dvh;
-    overflow-x: hidden;
+    flex-direction: row !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    overflow: hidden !important;
   }
 
   /* Premium Modal & Overlay Mobile Overflow Fix */
@@ -2739,23 +2736,27 @@ html, body {
     max-width: 100% !important;
   }
 
-  /* Sidebar: full slide-out drawer on mobile */
-  .sidebar {
-    position: fixed !important;
-    top: 0;
-    left: 0;
-    height: 100dvh;
-    width: 260px !important;
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-    z-index: 99999 !important;
-    overflow-y: auto;
+  /* Sidebar: persistent side ribbon on mobile */
+  .sidebar,
+  .sidebar.locked-expanded,
+  .sidebar.locked-collapsed {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    width: 60px !important;
+    height: 100dvh !important;
+    transform: none !important;
+    transition: none !important;
+    z-index: 100 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
   .sidebar.mobile-open {
-    transform: translateX(0) !important;
-    box-shadow: 4px 0 30px rgba(0,0,0,0.7);
+    transform: none !important;
+    box-shadow: none !important;
   }
-  /* Sidebar: show all text on mobile when open */
+  /* Sidebar: hide text elements on mobile for thin ribbon */
   .sidebar .logo-text-details,
   .sidebar .sb-user-details,
   .sidebar .nav-section,
@@ -2764,28 +2765,76 @@ html, body {
   .sidebar details details,
   .sidebar details > summary span:not(.icon),
   .sidebar details > summary i.ti-chevron-down,
-  .sidebar .nav-sub-item {
-    display: block !important;
+  .sidebar .nav-sub-item,
+  .sidebar .sidebar button {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
   }
   .sidebar .logo {
     width: 100% !important;
-    padding: 0 16px !important;
-    justify-content: flex-start !important;
+    padding: 10px 0 !important;
+    height: 56px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+  }
+  .sidebar .sb-user {
+    width: 100% !important;
+    padding: 10px 0 !important;
+    height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+  }
+  .sidebar .nav {
+    padding: 10px 0 !important;
+    width: 100% !important;
   }
   .sidebar .nav-item {
+    width: 44px !important;
+    height: 44px !important;
+    margin: 6px auto !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    border-radius: var(--radius-md) !important;
+  }
+  .sidebar .nav-item .icon {
     width: 100% !important;
-    height: auto !important;
-    padding: 10px 14px !important;
-    justify-content: flex-start !important;
-    gap: 10px !important;
+    height: 100% !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 20px !important;
+  }
+  .sidebar .nav-item .nb {
+    top: 2px;
+    right: 2px;
+    width: 8px;
+    height: 8px;
+    min-width: 8px;
+    padding: 0;
+    border-radius: 50%;
+    font-size: 0;
+    background: var(--red);
+    box-shadow: 0 0 6px var(--red);
   }
 
-  /* Main: full width, push below fixed topbar */
+  /* Main: take remaining width, scroll internally */
   .main {
-    width: 100% !important;
+    width: calc(100% - 60px) !important;
     margin-left: 0 !important;
-    overflow-x: hidden;
-    min-height: 100dvh;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: 100vh !important;
+    height: 100dvh !important;
   }
 
   /* Topbar: stack elements vertically */
@@ -2804,14 +2853,7 @@ html, body {
     justify-content: space-between;
   }
   .btn-burger {
-    display: inline-flex !important;
-    background: transparent;
-    border: none;
-    color: #fff;
-    font-size: 22px;
-    cursor: pointer;
-    padding: 4px;
-    margin-right: 8px;
+    display: none !important;
   }
   .topbar-title {
     font-size: 15px !important;
