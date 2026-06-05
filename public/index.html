@@ -3455,17 +3455,35 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Video Link</label>
-              <input class="form-input" type="text" id="prop-video" placeholder="YouTube or Drive link">
+              <div style="display:flex; gap:5px;">
+                <input class="form-input" type="text" id="prop-video" placeholder="YouTube or Drive link" style="flex:1;">
+                <label class="btn btn-ghost btn-sm" style="padding: 8px; margin:0; display:flex; align-items:center; cursor:pointer;" title="Upload Video">
+                  <i class="ti ti-upload"></i>
+                  <input type="file" style="display:none;" onchange="uploadFileToField(event, 'prop-video')">
+                </label>
+              </div>
             </div>
             <div class="form-group">
               <label class="form-label">Photo Link</label>
-              <input class="form-input" type="text" id="prop-photo" placeholder="Photo gallery URL">
+              <div style="display:flex; gap:5px;">
+                <input class="form-input" type="text" id="prop-photo" placeholder="Photo gallery URL" style="flex:1;">
+                <label class="btn btn-ghost btn-sm" style="padding: 8px; margin:0; display:flex; align-items:center; cursor:pointer;" title="Upload Photos">
+                  <i class="ti ti-upload"></i>
+                  <input type="file" style="display:none;" onchange="uploadFileToField(event, 'prop-photo')">
+                </label>
+              </div>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Brochure Link</label>
-              <input class="form-input" type="text" id="prop-brochure" placeholder="Brochure PDF URL">
+              <div style="display:flex; gap:5px;">
+                <input class="form-input" type="text" id="prop-brochure" placeholder="Brochure PDF URL" style="flex:1;">
+                <label class="btn btn-ghost btn-sm" style="padding: 8px; margin:0; display:flex; align-items:center; cursor:pointer;" title="Upload Brochure">
+                  <i class="ti ti-upload"></i>
+                  <input type="file" style="display:none;" onchange="uploadFileToField(event, 'prop-brochure')">
+                </label>
+              </div>
             </div>
             <div class="form-group">
               <label class="form-label">Khata & Registration Status</label>
@@ -3723,17 +3741,35 @@
             </div>
             <div class="form-group">
               <label class="form-label">Video Link</label>
-              <input class="form-input" type="text" id="rental-video" placeholder="Video tour link">
+              <div style="display:flex; gap:5px;">
+                <input class="form-input" type="text" id="rental-video" placeholder="Video tour link" style="flex:1;">
+                <label class="btn btn-ghost btn-sm" style="padding: 8px; margin:0; display:flex; align-items:center; cursor:pointer;" title="Upload Video">
+                  <i class="ti ti-upload"></i>
+                  <input type="file" style="display:none;" onchange="uploadFileToField(event, 'rental-video')">
+                </label>
+              </div>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Photo Link</label>
-              <input class="form-input" type="text" id="rental-photo" placeholder="Photo album link">
+              <div style="display:flex; gap:5px;">
+                <input class="form-input" type="text" id="rental-photo" placeholder="Photo album link" style="flex:1;">
+                <label class="btn btn-ghost btn-sm" style="padding: 8px; margin:0; display:flex; align-items:center; cursor:pointer;" title="Upload Photos">
+                  <i class="ti ti-upload"></i>
+                  <input type="file" style="display:none;" onchange="uploadFileToField(event, 'rental-photo')">
+                </label>
+              </div>
             </div>
             <div class="form-group">
               <label class="form-label">Brochure Link</label>
-              <input class="form-input" type="text" id="rental-brochure" placeholder="Brochure document URL">
+              <div style="display:flex; gap:5px;">
+                <input class="form-input" type="text" id="rental-brochure" placeholder="Brochure document URL" style="flex:1;">
+                <label class="btn btn-ghost btn-sm" style="padding: 8px; margin:0; display:flex; align-items:center; cursor:pointer;" title="Upload Brochure">
+                  <i class="ti ti-upload"></i>
+                  <input type="file" style="display:none;" onchange="uploadFileToField(event, 'rental-brochure')">
+                </label>
+              </div>
             </div>
           </div>
           <div class="form-row" style="background: rgba(184, 134, 11, 0.05); padding: 8px; border-radius: var(--radius-sm); border: 1px dashed var(--gold);">
@@ -3936,17 +3972,35 @@
             </div>
             <div class="form-group">
               <label class="form-label">Video Link</label>
-              <input class="form-input" type="text" id="comm-video" placeholder="Video tour link">
+              <div style="display:flex; gap:5px;">
+                <input class="form-input" type="text" id="comm-video" placeholder="Video tour link" style="flex:1;">
+                <label class="btn btn-ghost btn-sm" style="padding: 8px; margin:0; display:flex; align-items:center; cursor:pointer;" title="Upload Video">
+                  <i class="ti ti-upload"></i>
+                  <input type="file" style="display:none;" onchange="uploadFileToField(event, 'comm-video')">
+                </label>
+              </div>
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Photo Link</label>
-              <input class="form-input" type="text" id="comm-photo" placeholder="Photo link">
+              <div style="display:flex; gap:5px;">
+                <input class="form-input" type="text" id="comm-photo" placeholder="Photo link" style="flex:1;">
+                <label class="btn btn-ghost btn-sm" style="padding: 8px; margin:0; display:flex; align-items:center; cursor:pointer;" title="Upload Photos">
+                  <i class="ti ti-upload"></i>
+                  <input type="file" style="display:none;" onchange="uploadFileToField(event, 'comm-photo')">
+                </label>
+              </div>
             </div>
             <div class="form-group">
               <label class="form-label">Brochure Link</label>
-              <input class="form-input" type="text" id="comm-brochure" placeholder="Brochure PDF link">
+              <div style="display:flex; gap:5px;">
+                <input class="form-input" type="text" id="comm-brochure" placeholder="Brochure PDF link" style="flex:1;">
+                <label class="btn btn-ghost btn-sm" style="padding: 8px; margin:0; display:flex; align-items:center; cursor:pointer;" title="Upload Brochure">
+                  <i class="ti ti-upload"></i>
+                  <input type="file" style="display:none;" onchange="uploadFileToField(event, 'comm-brochure')">
+                </label>
+              </div>
             </div>
           </div>
           <div class="form-row" style="background: rgba(184, 134, 11, 0.05); padding: 8px; border-radius: var(--radius-sm); border: 1px dashed var(--gold);">
@@ -4349,41 +4403,89 @@
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Brochure URL</label>
-                <input class="form-input" type="text" id="proj-brochure" placeholder="https://drive.google.com/...">
+                <div style="display:flex; gap:5px;">
+                  <input class="form-input" type="text" id="proj-brochure" placeholder="https://drive.google.com/..." style="flex:1;">
+                  <label class="btn btn-ghost btn-sm" style="padding: 8px; margin:0; display:flex; align-items:center; cursor:pointer;" title="Upload Brochure">
+                    <i class="ti ti-upload"></i>
+                    <input type="file" style="display:none;" onchange="uploadFileToField(event, 'proj-brochure')">
+                  </label>
+                </div>
               </div>
               <div class="form-group">
                 <label class="form-label">Floor Plans URL</label>
-                <input class="form-input" type="text" id="proj-floor-plans" placeholder="https://drive.google.com/...">
+                <div style="display:flex; gap:5px;">
+                  <input class="form-input" type="text" id="proj-floor-plans" placeholder="https://drive.google.com/..." style="flex:1;">
+                  <label class="btn btn-ghost btn-sm" style="padding: 8px; margin:0; display:flex; align-items:center; cursor:pointer;" title="Upload Floor Plans">
+                    <i class="ti ti-upload"></i>
+                    <input type="file" style="display:none;" onchange="uploadFileToField(event, 'proj-floor-plans')">
+                  </label>
+                </div>
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Mother Docs URL</label>
-                <input class="form-input" type="text" id="proj-mother-docs" placeholder="https://drive.google.com/...">
+                <div style="display:flex; gap:5px;">
+                  <input class="form-input" type="text" id="proj-mother-docs" placeholder="https://drive.google.com/..." style="flex:1;">
+                  <label class="btn btn-ghost btn-sm" style="padding: 8px; margin:0; display:flex; align-items:center; cursor:pointer;" title="Upload Mother Docs">
+                    <i class="ti ti-upload"></i>
+                    <input type="file" style="display:none;" onchange="uploadFileToField(event, 'proj-mother-docs')">
+                  </label>
+                </div>
               </div>
               <div class="form-group">
                 <label class="form-label">Assignments URL</label>
-                <input class="form-input" type="text" id="proj-assignments" placeholder="https://drive.google.com/...">
+                <div style="display:flex; gap:5px;">
+                  <input class="form-input" type="text" id="proj-assignments" placeholder="https://drive.google.com/..." style="flex:1;">
+                  <label class="btn btn-ghost btn-sm" style="padding: 8px; margin:0; display:flex; align-items:center; cursor:pointer;" title="Upload Assignments">
+                    <i class="ti ti-upload"></i>
+                    <input type="file" style="display:none;" onchange="uploadFileToField(event, 'proj-assignments')">
+                  </label>
+                </div>
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">KYC Docs URL</label>
-                <input class="form-input" type="text" id="proj-kyc-docs" placeholder="https://drive.google.com/...">
+                <div style="display:flex; gap:5px;">
+                  <input class="form-input" type="text" id="proj-kyc-docs" placeholder="https://drive.google.com/..." style="flex:1;">
+                  <label class="btn btn-ghost btn-sm" style="padding: 8px; margin:0; display:flex; align-items:center; cursor:pointer;" title="Upload KYC Docs">
+                    <i class="ti ti-upload"></i>
+                    <input type="file" style="display:none;" onchange="uploadFileToField(event, 'proj-kyc-docs')">
+                  </label>
+                </div>
               </div>
               <div class="form-group">
                 <label class="form-label">Photos Link</label>
-                <input class="form-input" type="text" id="proj-photos" placeholder="https://drive.google.com/...">
+                <div style="display:flex; gap:5px;">
+                  <input class="form-input" type="text" id="proj-photos" placeholder="https://drive.google.com/..." style="flex:1;">
+                  <label class="btn btn-ghost btn-sm" style="padding: 8px; margin:0; display:flex; align-items:center; cursor:pointer;" title="Upload Photos">
+                    <i class="ti ti-upload"></i>
+                    <input type="file" style="display:none;" onchange="uploadFileToField(event, 'proj-photos')">
+                  </label>
+                </div>
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Videos Link</label>
-                <input class="form-input" type="text" id="proj-videos" placeholder="https://drive.google.com/...">
+                <div style="display:flex; gap:5px;">
+                  <input class="form-input" type="text" id="proj-videos" placeholder="https://drive.google.com/..." style="flex:1;">
+                  <label class="btn btn-ghost btn-sm" style="padding: 8px; margin:0; display:flex; align-items:center; cursor:pointer;" title="Upload Videos">
+                    <i class="ti ti-upload"></i>
+                    <input type="file" style="display:none;" onchange="uploadFileToField(event, 'proj-videos')">
+                  </label>
+                </div>
               </div>
               <div class="form-group">
                 <label class="form-label">CP Agreements URL</label>
-                <input class="form-input" type="text" id="proj-cp-agreements" placeholder="https://drive.google.com/...">
+                <div style="display:flex; gap:5px;">
+                  <input class="form-input" type="text" id="proj-cp-agreements" placeholder="https://drive.google.com/..." style="flex:1;">
+                  <label class="btn btn-ghost btn-sm" style="padding: 8px; margin:0; display:flex; align-items:center; cursor:pointer;" title="Upload CP Agreement">
+                    <i class="ti ti-upload"></i>
+                    <input type="file" style="display:none;" onchange="uploadFileToField(event, 'proj-cp-agreements')">
+                  </label>
+                </div>
               </div>
             </div>
           </div>
@@ -5262,10 +5364,16 @@
           <div class="info-purple" style="margin-bottom:15px; font-size:12px;">
             Attach external drive links or URLs for KYC, identity, and associated transaction documents for this lead.
           </div>
-          <div style="display:flex; gap:10px; margin-bottom:15px;">
-            <input type="text" class="form-input" id="new-lead-doc-name" placeholder="Doc Name (e.g., Aadhar Card)" style="flex:1;">
-            <input type="text" class="form-input" id="new-lead-doc-url" placeholder="Drive URL Link" style="flex:2;">
-            <button class="btn btn-primary" onclick="addLeadDocument()"><i class="ti ti-link"></i> Add Link</button>
+          <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px; background:rgba(255,255,255,0.02); padding:12px; border-radius:6px; border:1px solid rgba(255,255,255,0.05);">
+            <div style="display:flex; gap:10px; align-items:center;">
+              <input type="text" class="form-input" id="new-lead-doc-name" placeholder="Doc Name (e.g., Aadhar Card)" style="flex:1;">
+              <input type="text" class="form-input" id="new-lead-doc-url" placeholder="Drive URL Link or Uploaded Path" style="flex:2;">
+              <button class="btn btn-primary" onclick="addLeadDocument()"><i class="ti ti-link"></i> Add Link</button>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; font-size:11px;">
+              <span style="color:var(--text-muted);">OR upload directly:</span>
+              <input type="file" id="lead-doc-file-upload" onchange="uploadFileToField(event, 'new-lead-doc-url')" style="font-size:11px; max-width:200px;">
+            </div>
           </div>
           <div id="lead-docs-container" style="display:flex; flex-direction:column; gap:8px;">
             <!-- Docs injected by JS -->

@@ -1088,7 +1088,7 @@ app.post('/api/leads', async (req, res) => {
 
     // Duplicate Phone Detection
     if (phone && phone.trim() !== '') {
-      const existing = (await db.query("SELECT id, name FROM leads WHERE phone = $1", [phone.trim()])).rows[0];
+      const existing = (await db.query("SELECT id, name FROM leads WHERE phone = $1 AND deleted_at IS NULL", [phone.trim()])).rows[0];
       if (existing) {
         return res.status(409).json({
           error: `Duplicate Mobile Number! This number is already registered under the lead "${existing.name}" (ID: ${existing.id}).`
@@ -1884,9 +1884,9 @@ app.post('/api/properties', async (req, res) => {
         })();
       } else {
         await (async () => {
-          const r = await db.query("INSERT INTO sequence_counters (category_key, last_value) VALUES ($1, $2) RETURNING id", [logic.counterKey, nextVal]);
+          const r = await db.query("INSERT INTO sequence_counters (category_key, last_value) VALUES ($1, $2) RETURNING category_key", [logic.counterKey, nextVal]);
           return {
-            lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
+            lastInsertRowid: null,
             changes: r.rowCount
           };
         })();
@@ -2484,9 +2484,9 @@ app.post('/api/projects', async (req, res) => {
         })();
       } else {
         await (async () => {
-          const r = await db.query("INSERT INTO sequence_counters (category_key, last_value) VALUES ($1, $2) RETURNING id", [counterKey, nextVal]);
+          const r = await db.query("INSERT INTO sequence_counters (category_key, last_value) VALUES ($1, $2) RETURNING category_key", [counterKey, nextVal]);
           return {
-            lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
+            lastInsertRowid: null,
             changes: r.rowCount
           };
         })();

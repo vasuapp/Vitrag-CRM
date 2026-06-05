@@ -10622,8 +10622,40 @@ window.removeLeadAssignment = async function(leadId, projectId) {
   }
 };
 
-window.assignLeadToProject = function() {
-  switchProjTab('leads');
+window.uploadFileToField = async function(event, targetId) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const statusEl = document.getElementById(targetId + '-status');
+  if (statusEl) statusEl.innerText = 'Uploading...';
+  
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  try {
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const input = document.getElementById(targetId);
+      if (input) {
+        input.value = window.location.origin + data.filePath;
+        input.dispatchEvent(new Event('input'));
+      }
+      showToast('File uploaded successfully!');
+      if (statusEl) statusEl.innerText = 'Uploaded!';
+    } else {
+      const err = await res.json();
+      showToast(err.error || 'Upload failed', 'error');
+      if (statusEl) statusEl.innerText = 'Failed';
+    }
+  } catch (e) {
+    console.error(e);
+    showToast('Network error during file upload', 'error');
+    if (statusEl) statusEl.innerText = 'Error';
+  }
 };
 
 // ─── SMART LISTS FILTER LOGIC ───
