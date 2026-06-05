@@ -95,7 +95,7 @@ html, body {
   overflow: hidden;
 }
 @media (hover: hover) {
-  .sidebar:hover {
+  .sidebar:not(.locked-expanded):not(.locked-collapsed):hover {
     width: 260px;
   }
 }
@@ -286,37 +286,52 @@ html, body {
 
 /* Collapsed Transitions */
 @media (hover: hover) {
-  .sidebar:not(:hover) .logo-text-details,
-  .sidebar:not(:hover) .sb-user-details,
-  .sidebar:not(:hover) .nav-section,
-  .sidebar:not(:hover) .nav-item span:not(.icon):not(.nb),
-  .sidebar:not(:hover) .sidebar-footer,
-  .sidebar:not(:hover) details details,
-  .sidebar:not(:hover) details > summary span:not(.icon),
-  .sidebar:not(:hover) details > summary i.ti-chevron-down,
-  .sidebar:not(:hover) .nav-sub-item,
-  .sidebar:not(:hover) .sidebar button {
+  .sidebar:not(.locked-expanded):not(:hover) .logo-text-details,
+  .sidebar.locked-collapsed .logo-text-details,
+  .sidebar:not(.locked-expanded):not(:hover) .sb-user-details,
+  .sidebar.locked-collapsed .sb-user-details,
+  .sidebar:not(.locked-expanded):not(:hover) .nav-section,
+  .sidebar.locked-collapsed .nav-section,
+  .sidebar:not(.locked-expanded):not(:hover) .nav-item span:not(.icon):not(.nb),
+  .sidebar.locked-collapsed .nav-item span:not(.icon):not(.nb),
+  .sidebar:not(.locked-expanded):not(:hover) .sidebar-footer,
+  .sidebar.locked-collapsed .sidebar-footer,
+  .sidebar:not(.locked-expanded):not(:hover) details details,
+  .sidebar.locked-collapsed details details,
+  .sidebar:not(.locked-expanded):not(:hover) details > summary span:not(.icon),
+  .sidebar.locked-collapsed details > summary span:not(.icon),
+  .sidebar:not(.locked-expanded):not(:hover) details > summary i.ti-chevron-down,
+  .sidebar.locked-collapsed details > summary i.ti-chevron-down,
+  .sidebar:not(.locked-expanded):not(:hover) .nav-sub-item,
+  .sidebar.locked-collapsed .nav-sub-item,
+  .sidebar:not(.locked-expanded):not(:hover) .sidebar button,
+  .sidebar.locked-collapsed .sidebar button {
     opacity: 0 !important;
     visibility: hidden !important;
     display: none !important;
     pointer-events: none;
   }
-  .sidebar:not(:hover) .logo {
+  .sidebar:not(.locked-expanded):not(:hover) .logo,
+  .sidebar.locked-collapsed .logo {
     padding: 14px 15px;
     justify-content: center;
   }
-  .sidebar:not(:hover) .sb-user {
+  .sidebar:not(.locked-expanded):not(:hover) .sb-user,
+  .sidebar.locked-collapsed .sb-user {
     padding: 12px 17px;
     justify-content: center;
   }
-  .sidebar:not(:hover) .nav {
+  .sidebar:not(.locked-expanded):not(:hover) .nav,
+  .sidebar.locked-collapsed .nav {
     padding: 10px 6px;
   }
-  .sidebar:not(:hover) .nav-item {
+  .sidebar:not(.locked-expanded):not(:hover) .nav-item,
+  .sidebar.locked-collapsed .nav-item {
     padding: 10px;
     justify-content: center;
   }
-  .sidebar:not(:hover) .nav-item .nb {
+  .sidebar:not(.locked-expanded):not(:hover) .nav-item .nb,
+  .sidebar.locked-collapsed .nav-item .nb {
     top: 4px;
     right: 4px;
     width: 8px;
@@ -331,37 +346,37 @@ html, body {
 }
 
 @media (hover: none) {
-  .sidebar .logo-text-details,
-  .sidebar .sb-user-details,
-  .sidebar .nav-section,
-  .sidebar .nav-item span:not(.icon):not(.nb),
-  .sidebar .sidebar-footer,
-  .sidebar details details,
-  .sidebar details > summary span:not(.icon),
-  .sidebar details > summary i.ti-chevron-down,
-  .sidebar .nav-sub-item,
-  .sidebar .sidebar button {
+  .sidebar:not(.locked-expanded) .logo-text-details,
+  .sidebar:not(.locked-expanded) .sb-user-details,
+  .sidebar:not(.locked-expanded) .nav-section,
+  .sidebar:not(.locked-expanded) .nav-item span:not(.icon):not(.nb),
+  .sidebar:not(.locked-expanded) .sidebar-footer,
+  .sidebar:not(.locked-expanded) details details,
+  .sidebar:not(.locked-expanded) details > summary span:not(.icon),
+  .sidebar:not(.locked-expanded) details > summary i.ti-chevron-down,
+  .sidebar:not(.locked-expanded) .nav-sub-item,
+  .sidebar:not(.locked-expanded) .sidebar button {
     opacity: 0 !important;
     visibility: hidden !important;
     display: none !important;
     pointer-events: none;
   }
-  .sidebar .logo {
+  .sidebar:not(.locked-expanded) .logo {
     padding: 14px 15px;
     justify-content: center;
   }
-  .sidebar .sb-user {
+  .sidebar:not(.locked-expanded) .sb-user {
     padding: 12px 17px;
     justify-content: center;
   }
-  .sidebar .nav {
+  .sidebar:not(.locked-expanded) .nav {
     padding: 10px 6px;
   }
-  .sidebar .nav-item {
+  .sidebar:not(.locked-expanded) .nav-item {
     padding: 10px;
     justify-content: center;
   }
-  .sidebar .nav-item .nb {
+  .sidebar:not(.locked-expanded) .nav-item .nb {
     top: 4px;
     right: 4px;
     width: 8px;
@@ -2171,15 +2186,21 @@ html, body {
 }
 
 /* ─── COLLAPSIBLE SIDEBAR COLLAPSED CENTERING FIXED ─── */
-.sidebar:not(:hover) .logo-text-details,
-.sidebar:not(:hover) .sb-user-details,
-.sidebar:not(:hover) .nav-section,
-.sidebar:not(:hover) .nav-item span:not(.icon):not(.nb),
-.sidebar:not(:hover) .sidebar-footer {
+.sidebar:not(.locked-expanded):not(:hover) .logo-text-details,
+.sidebar.locked-collapsed .logo-text-details,
+.sidebar:not(.locked-expanded):not(:hover) .sb-user-details,
+.sidebar.locked-collapsed .sb-user-details,
+.sidebar:not(.locked-expanded):not(:hover) .nav-section,
+.sidebar.locked-collapsed .nav-section,
+.sidebar:not(.locked-expanded):not(:hover) .nav-item span:not(.icon):not(.nb),
+.sidebar.locked-collapsed .nav-item span:not(.icon):not(.nb),
+.sidebar:not(.locked-expanded):not(:hover) .sidebar-footer,
+.sidebar.locked-collapsed .sidebar-footer {
   display: none !important;
 }
 
-.sidebar:not(:hover) .logo {
+.sidebar:not(.locked-expanded):not(:hover) .logo,
+.sidebar.locked-collapsed .logo {
   width: 48px !important;
   height: 56px !important;
   margin: 0 auto !important;
@@ -2188,7 +2209,8 @@ html, body {
   align-items: center !important;
   justify-content: center !important;
 }
-.sidebar:not(:hover) .sb-user {
+.sidebar:not(.locked-expanded):not(:hover) .sb-user,
+.sidebar.locked-collapsed .sb-user {
   width: 48px !important;
   height: 48px !important;
   margin: 12px auto !important;
@@ -2197,10 +2219,12 @@ html, body {
   align-items: center !important;
   justify-content: center !important;
 }
-.sidebar:not(:hover) .nav {
+.sidebar:not(.locked-expanded):not(:hover) .nav,
+.sidebar.locked-collapsed .nav {
   padding: 10px 0 !important;
 }
-.sidebar:not(:hover) .nav-item {
+.sidebar:not(.locked-expanded):not(:hover) .nav-item,
+.sidebar.locked-collapsed .nav-item {
   width: 48px !important;
   height: 48px !important;
   margin: 6px auto !important;
@@ -2211,7 +2235,8 @@ html, body {
   gap: 0 !important;
   border-radius: var(--radius-md) !important;
 }
-.sidebar:not(:hover) .nav-item .icon {
+.sidebar:not(.locked-expanded):not(:hover) .nav-item .icon,
+.sidebar.locked-collapsed .nav-item .icon {
   width: 100% !important;
   height: 100% !important;
   margin: 0 !important;
@@ -2220,7 +2245,8 @@ html, body {
   justify-content: center !important;
   font-size: 20px !important;
 }
-.sidebar:not(:hover) .nav-item .nb {
+.sidebar:not(.locked-expanded):not(:hover) .nav-item .nb,
+.sidebar.locked-collapsed .nav-item .nb {
   top: 4px;
   right: 4px;
   width: 8px;
