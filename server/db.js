@@ -353,7 +353,29 @@ CREATE TABLE IF NOT EXISTS communication_templates (
       await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS closure_commission_amt NUMERIC;');
       await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS closure_notes TEXT;');
       
-      console.log("Migration: Added new columns to properties and leads tables successfully.");
+      // Create indexes for properties closure milestones and land parameters
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_properties_closure_site_visit ON properties(closure_site_visit);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_properties_closure_negotiation ON properties(closure_negotiation);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_properties_closure_agreement ON properties(closure_agreement);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_properties_closure_registration ON properties(closure_registration);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_properties_closure_closed ON properties(closure_closed);');
+      
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_properties_road_width ON properties(road_width);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_properties_fsi ON properties(fsi);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_properties_zone ON properties(zone);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_properties_plot_dimension ON properties(plot_dimension);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_properties_plot_size ON properties(plot_size);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_properties_plot_facing ON properties(plot_facing);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_properties_google_map_url ON properties(google_map_url);');
+
+      // Create indexes for leads closure milestones
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_leads_closure_site_visit ON leads(closure_site_visit);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_leads_closure_negotiation ON leads(closure_negotiation);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_leads_closure_agreement ON leads(closure_agreement);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_leads_closure_registration ON leads(closure_registration);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_leads_closure_closed ON leads(closure_closed);');
+      
+      console.log("Migration: Added new columns and indexes to properties and leads tables successfully.");
     } catch (migErr) {
       console.log("Migration skipped or failed:", migErr.message);
     }

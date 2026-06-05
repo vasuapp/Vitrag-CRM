@@ -153,6 +153,30 @@ function getParsedAllowedPages(user) {
   }
 }
 
+function maskProperty(l, user) {
+  const isAdmin = !user || user.role === 'Admin';
+  const isEmployee = user && user.role === 'Employee';
+  const allowed = getParsedAllowedPages(user);
+  const hasPhoneAccess = isAdmin || allowed.includes('*') || allowed.includes('phone_access');
+  
+  const shouldMaskContact = !isAdmin && !hasPhoneAccess && l.agent_id !== user.id || !systemSettings.showMaskedFields || isEmployee;
+  if (shouldMaskContact) {
+    return {
+      ...l,
+      owner_name: '🔐 Hidden (Admin locked)',
+      owner_phone: '🔐 Hidden',
+      owner_email: '🔐 Hidden',
+      comments: '🔐 Hidden comments',
+      admin_comments: '🔐 Hidden admin comments',
+      unit_no: '🔐 Hidden',
+      commission_agreed: '🔐 Hidden',
+      closure_commission_pct: null,
+      closure_commission_amt: null
+    };
+  }
+  return l;
+}
+
 // ----------------------------------------------------
 // 1. SYSTEM SETTINGS API
 // ----------------------------------------------------
@@ -1756,25 +1780,11 @@ app.get('/api/properties', async (req, res) => {
     // Stale listing check: last_updated older than 7 days
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Mask sensitive fields if showMaskedFields is FALSE or if not Admin/Owner/Creator and has no phone access
     const processedListings = await Promise.all(listings.map(async l => {
       const isStale = l.last_updated < sevenDaysAgo;
-      const shouldMaskContact = !isAdmin && !hasPhoneAccess && l.agent_id !== user.id || !systemSettings.showMaskedFields;
-      if (shouldMaskContact) {
-        // MASK SENSITIVE FIELDS FOR EMPLOYEES
-        return {
-          ...l,
-          is_stale: isStale,
-          owner_name: '🔐 Hidden (Admin locked)',
-          owner_phone: '🔐 Hidden',
-          owner_email: '🔐 Hidden',
-          comments: '🔐 Hidden comments',
-          admin_comments: '🔐 Hidden admin comments',
-          unit_no: '🔐 Hidden'
-        };
-      }
+      const masked = maskProperty(l, user);
       return {
-        ...l,
+        ...masked,
         is_stale: isStale
       };
     }));
@@ -1953,7 +1963,9 @@ app.patch('/api/properties/:id/inline', async (req, res) => {
       return res.status(404).json({ error: 'Property not found' });
     }
     
-    res.json({ success: true, property: result.rows[0] });
+    const user = getRequestUser(req);
+    const maskedProperty = maskProperty(result.rows[0], user);
+    res.json({ success: true, property: maskedProperty });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -2369,9 +2381,13 @@ app.get('/api/projects', async (req, res) => {
     
     const projects = (await db.query(query, params)).rows;
 
-    // Mask sensitive fields if showMaskedFields is FALSE (Phase 7 RBAC Task 5)
+    const user = getRequestUser(req);
+    const isAdmin = !user || user.role === 'Admin';
+    const isEmployee = user && user.role === 'Employee';
+
+    // Mask sensitive fields if showMaskedFields is FALSE (Phase 7 RBAC Task 5) or user is Employee
     const processedProjects = await Promise.all(projects.map(async p => {
-      if (!systemSettings.showMaskedFields) {
+      if (!systemSettings.showMaskedFields || isEmployee) {
         return {
           ...p,
           builder_poc_details: '[]',
