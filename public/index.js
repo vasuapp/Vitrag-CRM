@@ -510,6 +510,7 @@ window.secureLockSession = function() {
 
   state.currentUser = null;
   localStorage.removeItem('crm_active_member_session');
+  localStorage.removeItem('crm_active_page');
   resetPinInput();
   showLockProfileSelect();
   
@@ -618,7 +619,14 @@ function applyAuthenticatedPermissions(user) {
     const pageId = item.getAttribute('data-page');
     if (!pageId) {
       // Always show Lock/Logout so employees can switch accounts or secure session
-      if (item.getAttribute('onclick')?.includes('secureLockSession') || item.innerText.toLowerCase().includes('lock') || item.innerText.toLowerCase().includes('logout')) {
+      // and always show Smart List summaries/menus
+      if (
+        item.getAttribute('onclick')?.includes('secureLockSession') || 
+        item.innerText.toLowerCase().includes('lock') || 
+        item.innerText.toLowerCase().includes('logout') ||
+        item.tagName === 'SUMMARY' ||
+        item.innerText.toLowerCase().includes('smart list')
+      ) {
         item.classList.remove('hidden');
         item.style.display = '';
       } else {
@@ -654,6 +662,10 @@ async function initApp() {
         lockScreen.style.visibility = 'hidden';
         lockScreen.style.opacity = '0';
       }
+
+      // Restore active page on refresh
+      const savedPage = localStorage.getItem('crm_active_page') || 'dashboard';
+      navToPage(savedPage);
     } catch (e) {
       console.error("Failed to parse cached session:", e);
       secureLockSession();
@@ -876,6 +888,7 @@ function navToPage(pageId) {
   }
 
   state.activePage = pageId;
+  localStorage.setItem('crm_active_page', pageId);
   
   // Update active sidebar item
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -3021,6 +3034,9 @@ function switchInventoryTab(tabId) {
   document.getElementById('inventory-rental-pane').style.display = tabId === 'rental' ? 'block' : 'none';
   document.getElementById('inventory-commercial-pane').style.display = tabId === 'commercial' ? 'block' : 'none';
   document.getElementById('inventory-masked-pane').style.display = tabId === 'masked' ? 'block' : 'none';
+  
+  const landPane = document.getElementById('inventory-land-pane');
+  if (landPane) landPane.style.display = tabId === 'land' ? 'block' : 'none';
   
   loadProperties(true);
 }
