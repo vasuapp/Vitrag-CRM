@@ -220,6 +220,9 @@
           <div class="nav-item" data-page="enquiry">
             <span class="icon"><i class="ti ti-checklist"></i></span><span>Enquiry Log</span>
           </div>
+          <div class="nav-item" data-page="documents">
+            <span class="icon"><i class="ti ti-folder"></i></span><span>Document Vault</span>
+          </div>
         </details>
         
         <details open>
@@ -389,6 +392,18 @@
             
             <div id="today-activity-feed" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
               <div style="font-size:12px; color:var(--text-muted); text-align:center; padding:15px;">No activity logged yet today.</div>
+            </div>
+          </div>
+
+          <!-- Rental Lead Expiry / Renewal Reminders Segment -->
+          <div class="card" style="margin-bottom: 20px; border-top: 3px solid var(--amber);">
+            <div class="chr">
+              <div class="card-title" style="color: var(--gold-l);"><i class="ti ti-calendar-stats"></i> Upcoming Rental Renewals (30 Days)</div>
+              <span class="badge badge-amber" id="rental-renewals-count">0 renewals</span>
+            </div>
+            <div class="card-sub">Active rental leads with leases expiring soon or already expired</div>
+            <div id="rental-renewals-feed" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+              <div style="font-size:12px; color:var(--text-muted); text-align:center; padding:15px;">No upcoming rental renewals reported.</div>
             </div>
           </div>
           
@@ -1450,7 +1465,7 @@
               <div class="form-row">
                 <div class="form-group">
                   <label class="form-label">Next Callback Date</label>
-                  <input class="form-input" type="date" id="lead-followup">
+                  <input class="form-input" type="datetime-local" id="lead-followup">
                 </div>
                 <div class="form-group">
                   <label class="form-label">Lead Temperature / Status *</label>
@@ -1564,6 +1579,31 @@
                 </div>
               </div>
               <div class="card-sub">Complete customer enquiries register matching pipeline stages</div>
+              
+              <!-- Advanced Filters for Enquiries -->
+              <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:10px 12px; border-radius:6px; margin: 10px 0; display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+                <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:120px;">
+                  <label style="font-size:9.5px; color:var(--gold-l); font-weight:700; text-transform:uppercase;">Date From</label>
+                  <input type="date" class="form-input" id="filter-enq-date-start" style="padding:4px 8px; font-size:11.5px; height:28px;" onchange="loadEnquiries()">
+                </div>
+                <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:120px;">
+                  <label style="font-size:9.5px; color:var(--gold-l); font-weight:700; text-transform:uppercase;">Date To</label>
+                  <input type="date" class="form-input" id="filter-enq-date-end" style="padding:4px 8px; font-size:11.5px; height:28px;" onchange="loadEnquiries()">
+                </div>
+                <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:120px;">
+                  <label style="font-size:9.5px; color:var(--gold-l); font-weight:700; text-transform:uppercase;">Assigned Agent</label>
+                  <select class="form-select" id="filter-enq-agent" style="padding:4px 8px; font-size:11.5px; height:28px;" onchange="loadEnquiries()">
+                    <option value="">All Agents</option>
+                  </select>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:140px;">
+                  <label style="font-size:9.5px; color:var(--gold-l); font-weight:700; text-transform:uppercase;">Budget Range (Cr)</label>
+                  <div style="display:flex; gap:4px;">
+                    <input type="number" step="0.01" class="form-input" id="filter-enq-budget-min" placeholder="Min" style="padding:4px 8px; font-size:11.5px; height:28px; width:100%;" oninput="loadEnquiries()">
+                    <input type="number" step="0.01" class="form-input" id="filter-enq-budget-max" placeholder="Max" style="padding:4px 8px; font-size:11.5px; height:28px; width:100%;" oninput="loadEnquiries()">
+                  </div>
+                </div>
+              </div>
               <div class="tw" id="enquiry-log-table-wrapper" style="margin-top: 10px;">
                 <!-- Table will be dynamically loaded here by loadEnquiries() -->
               </div>
@@ -2067,6 +2107,82 @@
               </div>
             </div>
 
+          </div>
+        </div>
+
+        <!-- ================= PAGE: DOCUMENT VAULT ================= -->
+        <div class="page" id="page-documents">
+          <div class="card">
+            <div class="chr">
+              <div class="card-title" style="color: var(--gold-l);"><i class="ti ti-folder"></i> Document Vault & Archival System</div>
+              <button class="btn btn-primary btn-sm" onclick="document.getElementById('doc-create-block').style.display='block'"><i class="ti ti-plus"></i> Add New Document</button>
+            </div>
+            <div class="card-sub">Centralized repository for KYC, agreements, and blueprints linked to prospects, inventory listings, or closed deal transactions.</div>
+
+            <!-- Create Document Inline Form -->
+            <div id="doc-create-block" style="display:none; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; background: rgba(255,255,255,0.01); padding: 15px; border-radius: 6px; border: 1px solid var(--border);">
+              <div style="font-weight: 700; font-size: 13px; color: var(--gold-l); margin-bottom: 10px;"><i class="ti ti-link"></i> Attach New Document or File</div>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                <div class="form-group">
+                  <label class="form-label">Document Name *</label>
+                  <input class="form-input" type="text" id="new-vault-doc-name" placeholder="e.g. KYC Aadhar, Registration Draft" style="font-size:12px;">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Reference Type *</label>
+                  <select class="form-select" id="new-vault-doc-ref-type" onchange="loadVaultRefDropdown()" style="font-size:12px;">
+                    <option value="Lead">Lead (Prospect)</option>
+                    <option value="Inventory">Inventory (Property Listing)</option>
+                    <option value="Transaction">Transaction (Commission Deal)</option>
+                  </select>
+                </div>
+              </div>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:10px;">
+                <div class="form-group">
+                  <label class="form-label">Linked Reference Item *</label>
+                  <select class="form-select" id="new-vault-doc-ref-id" style="font-size:12px;">
+                    <!-- Dynamically populated -->
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Document Path / Google Drive URL *</label>
+                  <input class="form-input" type="text" id="new-vault-doc-url" placeholder="Paste drive link or select uploaded file" style="font-size:12px;">
+                </div>
+              </div>
+              <div style="margin-top:10px; font-size:11px;">
+                <span style="color:var(--text-muted);">OR upload directly:</span>
+                <input type="file" id="vault-doc-file-upload" onchange="uploadFileToField(event, 'new-vault-doc-url')" style="font-size:11px;">
+              </div>
+              <div style="display: flex; gap: 10px; margin-top: 15px; justify-content: flex-end;">
+                <button class="btn btn-primary btn-sm" onclick="saveVaultDocument()"><i class="ti ti-save"></i> Save Document</button>
+                <button class="btn btn-ghost btn-sm" onclick="document.getElementById('doc-create-block').style.display='none'">Cancel</button>
+              </div>
+            </div>
+
+            <!-- Filter Toolbar -->
+            <div style="display: flex; gap: 10px; margin-top: 15px; align-items: center; background: rgba(255,255,255,0.02); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); flex-wrap: wrap;">
+              <span style="font-size: 11px; font-weight: 700; color: var(--gold-l);">FILTER REFERENCE:</span>
+              <span class="chip" id="doc-filter-All" onclick="setDocFilter('All')" style="cursor:pointer; padding: 3px 8px; border-radius: 4px; background: var(--gold); color: #000; font-weight: 700; font-size: 11px;">All</span>
+              <span class="chip" id="doc-filter-Lead" onclick="setDocFilter('Lead')" style="cursor:pointer; padding: 3px 8px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 11px;">Leads</span>
+              <span class="chip" id="doc-filter-Inventory" onclick="setDocFilter('Inventory')" style="cursor:pointer; padding: 3px 8px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 11px;">Inventory</span>
+              <span class="chip" id="doc-filter-Transaction" onclick="setDocFilter('Transaction')" style="cursor:pointer; padding: 3px 8px; border-radius: 4px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; font-size: 11px;">Transactions</span>
+            </div>
+
+            <div style="margin-top: 15px; overflow-x: auto;">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th>Doc Name</th>
+                    <th>Linked Ref Type</th>
+                    <th>Linked Ref Name (ID)</th>
+                    <th>Uploaded By / Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="vault-documents-list-container">
+                  <!-- Documents loaded dynamically -->
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
         
@@ -4944,7 +5060,65 @@
       </div>
     </div>
   </div>
-  
+
+  <!-- PROPERTY ACTIVITY LOG (SHARES & SITE VISITS) -->
+  <div class="mbg hidden" id="modal-property-activity">
+    <div class="modal" style="max-width: 650px; width: 90%;">
+      <div class="mhd">
+        <div class="mtitle" id="prop-activity-title">📂 Property Activity & Share Logs</div>
+        <button class="mclose" onclick="closeModal('modal-property-activity')">&times;</button>
+      </div>
+      <div class="mbdy" style="padding: 20px; overflow-y: auto; max-height: 70vh;">
+        <input type="hidden" id="activity-prop-id" value="">
+        <input type="hidden" id="activity-prop-name" value="">
+        
+        <!-- Tabs -->
+        <div style="display:flex; border-bottom:1px solid rgba(255,255,255,0.06); margin-bottom:15px; gap:4px;">
+          <button id="tab-prop-shares" class="btn btn-ghost btn-sm active" onclick="switchPropActivityTab('shares')" style="border-radius:0; border-bottom:2px solid var(--gold); padding:8px 12px; font-weight:700;">📢 Share History</button>
+          <button id="tab-prop-visits" class="btn btn-ghost btn-sm" onclick="switchPropActivityTab('visits')" style="border-radius:0; border-bottom:2px solid transparent; padding:8px 12px; font-weight:700;">🚶 Site Visits</button>
+        </div>
+
+        <!-- SHARES PANE -->
+        <div class="prop-activity-pane" id="pane-prop-shares">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <span style="font-size:12.5px; color:var(--text-muted);">Associates who received this property listing.</span>
+            <button class="btn btn-primary btn-sm" onclick="openShareWithAssociateFromInventory()" style="background:var(--gold); border:none; color:#000;"><i class="ti ti-share"></i> Share with Associate</button>
+          </div>
+
+          <!-- Quick Share Form (Hidden by default) -->
+          <div id="prop-quick-share-container" class="hidden" style="background:rgba(255,255,255,0.03); border:1px solid var(--border); padding:12px; border-radius:6px; margin-bottom:15px; display:flex; gap:8px; align-items:flex-end;">
+            <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+              <label style="font-size:10px; font-weight:700; color:var(--gold-l);">Select Associate to Share With</label>
+              <select class="form-select" id="prop-quick-share-select" style="font-size:12px; background:rgba(0,0,0,0.3); border: 1px solid var(--border); width: 100%;">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="submitQuickShareProperty()">Log Share</button>
+            <button class="btn btn-ghost btn-sm" onclick="toggleQuickShareForm(false)">Cancel</button>
+          </div>
+
+          <div id="prop-shares-list" style="display:flex; flex-direction:column; gap:8px;">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- VISITS PANE -->
+        <div class="prop-activity-pane hidden" id="pane-prop-visits">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <span style="font-size:12.5px; color:var(--text-muted);">Prospective clients who visited this property.</span>
+            <button class="btn btn-primary btn-sm" id="prop-visit-closure-btn" style="background:var(--green); border:none;"><i class="ti ti-flag"></i> Log Site Visit / Closure</button>
+          </div>
+          <div id="prop-visits-list" style="display:flex; flex-direction:column; gap:8px;">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+      <div class="mft">
+        <button class="btn btn-ghost" onclick="closeModal('modal-property-activity')">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 7. UNIFIED CSV IMPORT MODAL -->
   <div class="mbg hidden" id="modal-import-csv">
     <div class="modal" style="max-width: 700px;">
@@ -5194,7 +5368,7 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Next Callback Date</label>
-              <input class="form-input" type="date" id="edit-lead-followup">
+              <input class="form-input" type="datetime-local" id="edit-lead-followup">
             </div>
             <div class="form-group">
               <label class="form-label">Lead Temperature / Status *</label>
@@ -5306,7 +5480,7 @@
             <div style="display:flex; flex-direction:column; gap:6px; border-left:1px solid var(--border); padding-left:12px;">
               <div style="font-size:10px; color:var(--gold-l); font-weight:700; text-transform:uppercase;">Next Follow-up Action</div>
               <div style="display:flex; align-items:center; gap:8px;">
-                <input type="date" class="form-input" id="detail-followup-date" style="padding:4px 8px; font-size:11px; max-width:130px; height:26px;">
+                <input type="datetime-local" class="form-input" id="detail-followup-date" style="padding:4px 8px; font-size:11px; max-width:160px; height:26px;">
                 <button class="btn btn-primary btn-sm" onclick="saveLeadFollowupDate()" style="padding:4px 10px; height:26px;">Update</button>
               </div>
               <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Transaction Link: <span id="detail-transaction-status" style="color:var(--green); font-weight:700;">No Deal Linked</span></div>

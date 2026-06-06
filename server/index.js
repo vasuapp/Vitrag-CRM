@@ -957,22 +957,69 @@ app.get('/api/leads', async (req, res) => {
     const processedLeads = await Promise.all(leads.map(async l => {
       let score = 15; // base
       try {
-        const callsCount = (await db.query("SELECT COUNT(*) as count FROM interaction_logs WHERE lead_id = $1 AND interaction_type = $2", [l.id, 'Calls'])).rows[0]?.count || 0;
+        const callsCount = (await db.query("SELECT COUNT(*) as count FROM interaction_logs WHERE lead_id = $1 AND (interaction_type = $2 OR interaction_type = $3)", [l.id, 'Calls', 'Phone Call'])).rows[0]?.count || 0;
+        const telCallsCount = (await db.query("SELECT COUNT(*) as count FROM telephony_calls WHERE lead_id = $1", [l.id])).rows[0]?.count || 0;
+        const totalCalls = parseInt(callsCount) + parseInt(telCallsCount);
+
         const chatsCount = (await db.query("SELECT COUNT(*) as count FROM interaction_logs WHERE lead_id = $1 AND interaction_type = $2", [l.id, 'WhatsApp'])).rows[0]?.count || 0;
+
         const visitsCount = (await db.query("SELECT COUNT(*) as count FROM interaction_logs WHERE lead_id = $1 AND interaction_type = $2", [l.id, 'Site Visit'])).rows[0]?.count || 0;
+        const actVisitsCount = (await db.query("SELECT COUNT(*) as count FROM lead_activities WHERE lead_id = $1 AND type = $2", [l.id, 'Site Visit'])).rows[0]?.count || 0;
+        const totalVisits = parseInt(visitsCount) + parseInt(actVisitsCount);
+
         const propsCount = (await db.query("SELECT COUNT(*) as count FROM proposals WHERE lead_id = $1", [l.id])).rows[0]?.count || 0;
         const card = (await db.query("SELECT * FROM lead_scorecards WHERE lead_id = $1", [l.id])).rows[0];
-        score += callsCount * 15;
+
+        score += totalCalls * 15;
         score += chatsCount * 5;
-        score += visitsCount * 30;
+        score += totalVisits * 30;
         score += propsCount * 20;
+
         if (card) {
           score += (card.budget + card.timeline + card.funding + card.responsiveness + card.clarity) * 1.5;
+        }
+
+        // Days Active: +2 points per day (max 20 points / 10 days)
+        const daysActive = l.created_at ? Math.max(0, Math.floor((new Date() - new Date(l.created_at)) / (1000 * 60 * 60 * 24))) : 0;
+        score += Math.min(20, daysActive * 2);
+
+        // Age Decay based on last interaction date
+        let lastDate = l.created_at ? new Date(l.created_at) : null;
+        const [maxInter, maxTele, maxAct, maxTime] = await Promise.all([
+          db.query("SELECT MAX(created_at) as val FROM interaction_logs WHERE lead_id = $1", [l.id]),
+          db.query("SELECT MAX(created_at) as val FROM telephony_calls WHERE lead_id = $1", [l.id]),
+          db.query("SELECT MAX(timestamp) as val FROM lead_activities WHERE lead_id = $1", [l.id]),
+          db.query("SELECT MAX(created_at) as val FROM lead_timeline WHERE lead_id = $1", [l.id])
+        ]);
+
+        const dates = [
+          maxInter.rows[0]?.val,
+          maxTele.rows[0]?.val,
+          maxAct.rows[0]?.val,
+          maxTime.rows[0]?.val
+        ].filter(Boolean).map(v => new Date(v));
+
+        if (dates.length > 0) {
+          const maxD = new Date(Math.max(...dates));
+          if (!lastDate || maxD > lastDate) {
+            lastDate = maxD;
+          }
+        }
+
+        if (lastDate) {
+          const daysSinceLast = Math.max(0, Math.floor((new Date() - lastDate) / (1000 * 60 * 60 * 24)));
+          if (daysSinceLast > 30) {
+            score *= 0.4; // 60% decay
+          } else if (daysSinceLast > 14) {
+            score *= 0.6; // 40% decay
+          } else if (daysSinceLast > 7) {
+            score *= 0.8; // 20% decay
+          }
         }
       } catch (errScore) {
         console.error('Failed to compute lead score dynamically:', errScore);
       }
-      const finalScore = Math.min(99, Math.round(score));
+      const finalScore = Math.min(99, Math.max(1, Math.round(score)));
       const resLead = {
         ...l,
         lead_score: finalScore
@@ -1087,11 +1134,12 @@ app.post('/api/leads', async (req, res) => {
     } = req.body;
 
     // Duplicate Phone Detection
-    if (phone && phone.trim() !== '') {
+    if (phone && phone.trim() !== '' && req.query.force !== 'true') {
       const existing = (await db.query("SELECT id, name FROM leads WHERE phone = $1 AND deleted_at IS NULL", [phone.trim()])).rows[0];
       if (existing) {
         return res.status(409).json({
-          error: `Duplicate Mobile Number! This number is already registered under the lead "${existing.name}" (ID: ${existing.id}).`
+          error: `Duplicate Mobile Number! This number is already registered under the lead "${existing.name}".`,
+          existingId: existing.id
         });
       }
     }
@@ -1373,7 +1421,13 @@ app.post('/api/leads/:id/interest', async (req, res) => {
       status
     } = req.body;
     await (async () => {
-      const r = await db.query("INSERT INTO lead_property_interest (lead_id, property_id, status) VALUES ($1, $2, $3) RETURNING id", [req.params.id, property_id, status]);
+      const existing = (await db.query("SELECT id FROM lead_property_interest WHERE lead_id = $1 AND property_id = $2", [req.params.id, property_id])).rows[0];
+      let r;
+      if (existing) {
+        r = await db.query("UPDATE lead_property_interest SET status = $1 WHERE id = $2 RETURNING id", [status, existing.id]);
+      } else {
+        r = await db.query("INSERT INTO lead_property_interest (lead_id, property_id, status) VALUES ($1, $2, $3) RETURNING id", [req.params.id, property_id, status]);
+      }
       return {
         lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
         changes: r.rowCount
@@ -1529,13 +1583,39 @@ app.patch('/api/leads/:id/closure', async (req, res) => {
       req.params.id
     ]);
 
-    // If deal is closed, automatically log a closed deal activity
+    // If deal is closed, automatically log a closed deal activity and link to commissions
     if (closure_closed === true || closure_closed === 'true') {
       await db.query("INSERT INTO lead_activities (lead_id, type, description) VALUES ($1, 'Deal Closed', $2)", 
         [req.params.id, `Closed deal on Property ${closure_prop_id || 'N/A'} for commission ₹${closure_commission_amt || 0}`]);
       
       // Also update lead pipeline stage to 'Sale Closed' / 'Closed'
       await db.query("UPDATE leads SET stage = 'Sale Closed', status = 'Closed' WHERE id = $1", [req.params.id]);
+
+      // Auto-register transaction in commissions ledger
+      try {
+        const lead = (await db.query("SELECT name, associate_id FROM leads WHERE id = $1", [req.params.id])).rows[0];
+        const propIdInt = closure_prop_id ? parseInt(closure_prop_id) : null;
+        let property = null;
+        if (propIdInt && !isNaN(propIdInt)) {
+          property = (await db.query("SELECT society, price FROM properties WHERE id = $1", [propIdInt])).rows[0];
+        }
+
+        const dealName = `${lead ? lead.name : 'Client'} - ${property ? property.society : 'Deal closure'}`;
+        const dealValue = property ? parseFloat(property.price || 0) : 0;
+        const commAmt = closure_commission_amt ? parseFloat(closure_commission_amt) : 0;
+        const commPct = dealValue > 0 ? (commAmt / dealValue) * 100 : 0;
+        const assocId = lead ? lead.associate_id : null;
+
+        const commCheck = await db.query("SELECT id FROM commissions WHERE lead_id = $1", [req.params.id]);
+        if (commCheck.rows.length === 0) {
+          await db.query(`
+            INSERT INTO commissions (deal_name, deal_value, commission_percentage, commission_amount, payment_status, booking_date, created_at, lead_id, property_id, associate_id)
+            VALUES ($1, $2, $3, $4, 'Pending', CURRENT_DATE, CURRENT_TIMESTAMP, $5, $6, $7)
+          `, [dealName, dealValue, commPct, commAmt, req.params.id, propIdInt, assocId]);
+        }
+      } catch (errComm) {
+        console.error("Failed to auto-register commission during lead closure:", errComm);
+      }
     }
     
     res.json({
@@ -1746,7 +1826,18 @@ app.get('/api/properties', async (req, res) => {
     const isAdmin = !user || user.role === 'Admin';
     const allowed = getParsedAllowedPages(user);
     const hasPhoneAccess = isAdmin || allowed.includes('*') || allowed.includes('phone_access');
-    let query = 'SELECT p.*, a.name AS associate_name, a.company AS associate_company FROM properties p LEFT JOIN associates a ON p.associate_id = a.id WHERE p.deleted_at IS NULL';
+    let query = `
+      SELECT p.*, 
+             a.name AS associate_name, 
+             a.company AS associate_company,
+             (SELECT COUNT(*) FROM associate_shares WHERE property_id = p.id) AS total_shares,
+             (SELECT STRING_AGG(DISTINCT a2.name, ', ') FROM associate_shares s2 JOIN associates a2 ON s2.associate_id = a2.id WHERE s2.property_id = p.id) AS shared_with_list,
+             ((SELECT COUNT(*) FROM leads l WHERE (l.closure_prop_id = p.id::text OR (l.closure_prop_id IS NOT NULL AND l.closure_prop_id = p.prop_id)) AND (l.closure_site_visit = true OR l.closure_joint_visit = true)) + (CASE WHEN p.closure_site_visit = true OR p.closure_joint_visit = true THEN 1 ELSE 0 END)) AS total_visits,
+             (SELECT STRING_AGG(DISTINCT COALESCE(l.agent_name, 'Unknown Agent'), ', ') FROM leads l WHERE (l.closure_prop_id = p.id::text OR (l.closure_prop_id IS NOT NULL AND l.closure_prop_id = p.prop_id)) AND (l.closure_site_visit = true OR l.closure_joint_visit = true)) AS visiting_agents_list
+      FROM properties p 
+      LEFT JOIN associates a ON p.associate_id = a.id 
+      WHERE p.deleted_at IS NULL
+    `;
     const params = [];
     if (min_price) {
       query += ' AND p.price >= ?';
@@ -3038,6 +3129,85 @@ app.post('/api/associates/:id/shares', async (req, res) => {
   }
 });
 
+// GET Property Activity Log (Shares & Site Visits)
+app.get('/api/properties/:id/activity-log', async (req, res) => {
+  try {
+    const propId = parseInt(req.params.id);
+    
+    // 1. Get the property's alphanumeric prop_id code
+    const propMeta = await db.query('SELECT prop_id, closure_site_visit, closure_joint_visit, closure_buyer_name, closure_buyer_phone, closure_date, closure_notes, associate_id, (SELECT name FROM associates WHERE id = properties.associate_id) AS associate_name FROM properties WHERE id = $1', [propId]);
+    if (propMeta.rows.length === 0) {
+      return res.status(404).json({ error: 'Property not found' });
+    }
+    const prop = propMeta.rows[0];
+    const alphanumericId = prop.prop_id;
+
+    // 2. Fetch Shares history
+    const sharesQuery = `
+      SELECT s.id AS share_id, s.shared_at, s.shared_by, a.name AS associate_name, a.company AS associate_company
+      FROM associate_shares s
+      JOIN associates a ON s.associate_id = a.id
+      WHERE s.property_id = $1
+      ORDER BY s.id DESC
+    `;
+    const sharesResult = await db.query(sharesQuery, [propId]);
+
+    // 3. Fetch Site Visits history
+    // A: Visits logged directly on property closure journey
+    const visits = [];
+    if (prop.closure_site_visit || prop.closure_joint_visit) {
+      visits.push({
+        visitor_name: prop.closure_buyer_name || 'Direct Closure Lead',
+        visitor_phone: prop.closure_buyer_phone || '',
+        is_joint: prop.closure_joint_visit,
+        associate_name: prop.associate_name || null,
+        visit_date: prop.closure_date || 'N/A',
+        notes: prop.closure_notes || 'Logged during property closure journey',
+        source: 'Property Deal Status'
+      });
+    }
+
+    // B: Visits logged on leads matching either integer ID or alphanumeric prop_id
+    const leadsQuery = `
+      SELECT 
+        l.id AS lead_id, 
+        l.name AS client_name, 
+        l.phone AS client_phone, 
+        l.closure_site_visit, 
+        l.closure_joint_visit, 
+        l.closure_notes, 
+        l.next_followup,
+        l.associate_id,
+        a.name AS associate_name
+      FROM leads l
+      LEFT JOIN associates a ON l.associate_id = a.id
+      WHERE (l.closure_prop_id = $1 OR (l.closure_prop_id IS NOT NULL AND l.closure_prop_id = $2))
+        AND (l.closure_site_visit = true OR l.closure_joint_visit = true)
+      ORDER BY l.id DESC
+    `;
+    const leadsResult = await db.query(leadsQuery, [propId.toString(), alphanumericId]);
+    
+    leadsResult.rows.forEach(row => {
+      visits.push({
+        visitor_name: row.client_name,
+        visitor_phone: row.client_phone || '',
+        is_joint: row.closure_joint_visit,
+        associate_name: row.associate_name || null,
+        visit_date: row.next_followup || 'N/A',
+        notes: row.closure_notes || 'Logged via lead pipeline stage progress',
+        source: `Lead Pipeline (ID: ${row.lead_id})`
+      });
+    });
+
+    res.json({
+      shares: sharesResult.rows,
+      visits: visits
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ----------------------------------------------------
 // 8. COMMISSIONS FINANCE LEDGER
 // ----------------------------------------------------
@@ -3067,13 +3237,15 @@ app.post('/api/commissions', async (req, res) => {
       agreement_date,
       registration_date,
       handover_date,
-      associate_id
+      associate_id,
+      lead_id,
+      property_id
     } = req.body;
     const info = await (async () => {
       const r = await db.query(`
-      INSERT INTO commissions (deal_name, deal_value, commission_percentage, commission_amount, co_broker_payout, billing_invoice, expenses, payment_status, booking_date, agreement_date, registration_date, handover_date, associate_id)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-     RETURNING id`, [deal_name, deal_value || 0, commission_percentage || 0, commission_amount || 0, co_broker_payout || 0, billing_invoice || '', expenses || 0, payment_status || 'Pending', booking_date || '', agreement_date || '', registration_date || '', handover_date || '', associate_id ? parseInt(associate_id) : null]);
+      INSERT INTO commissions (deal_name, deal_value, commission_percentage, commission_amount, co_broker_payout, billing_invoice, expenses, payment_status, booking_date, agreement_date, registration_date, handover_date, associate_id, lead_id, property_id)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+     RETURNING id`, [deal_name, deal_value || 0, commission_percentage || 0, commission_amount || 0, co_broker_payout || 0, billing_invoice || '', expenses || 0, payment_status || 'Pending', booking_date || '', agreement_date || '', registration_date || '', handover_date || '', associate_id ? parseInt(associate_id) : null, lead_id ? parseInt(lead_id) : null, property_id ? parseInt(property_id) : null]);
       return {
         lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
         changes: r.rowCount
@@ -3104,14 +3276,16 @@ app.put('/api/commissions/:id', async (req, res) => {
       agreement_date,
       registration_date,
       handover_date,
-      associate_id
+      associate_id,
+      lead_id,
+      property_id
     } = req.body;
     await (async () => {
       const r = await db.query(`
       UPDATE commissions
-      SET deal_name = $1, deal_value = $2, commission_percentage = $3, commission_amount = $4, co_broker_payout = $5, billing_invoice = $6, expenses = $7, payment_status = $8, booking_date = $9, agreement_date = $10, registration_date = $11, handover_date = $12, associate_id = $13
-      WHERE id = $14
-    `, [deal_name, deal_value, commission_percentage, commission_amount || 0, co_broker_payout, billing_invoice, expenses, payment_status, booking_date, agreement_date, registration_date, handover_date, associate_id ? parseInt(associate_id) : null, req.params.id]);
+      SET deal_name = $1, deal_value = $2, commission_percentage = $3, commission_amount = $4, co_broker_payout = $5, billing_invoice = $6, expenses = $7, payment_status = $8, booking_date = $9, agreement_date = $10, registration_date = $11, handover_date = $12, associate_id = $13, lead_id = $14, property_id = $15
+      WHERE id = $16
+    `, [deal_name, deal_value, commission_percentage, commission_amount || 0, co_broker_payout, billing_invoice, expenses, payment_status, booking_date, agreement_date, registration_date, handover_date, associate_id ? parseInt(associate_id) : null, lead_id ? parseInt(lead_id) : null, property_id ? parseInt(property_id) : null, req.params.id]);
       return {
         lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
         changes: r.rowCount
@@ -4236,12 +4410,63 @@ app.post('/api/client/messages', async (req, res) => {
 // 1. Get Lead Timeline Journey
 app.get('/api/leads/:id/timeline', async (req, res) => {
   try {
-    const {
-      id
-    } = req.params;
-    const timeline = (await db.query("SELECT * FROM lead_timeline WHERE lead_id = $1 ORDER BY id DESC", [id])).rows;
-    res.json(timeline);
+    const { id } = req.params;
+    const leadIdInt = parseInt(id);
 
+    const timelinePromise = db.query("SELECT event_type, event_description, created_at FROM lead_timeline WHERE lead_id = $1", [leadIdInt]);
+    const activitiesPromise = db.query("SELECT type AS event_type, description AS event_description, timestamp AS created_at FROM lead_activities WHERE lead_id = $1", [leadIdInt]);
+    const interactionsPromise = db.query("SELECT interaction_type AS event_type, notes AS event_description, created_at FROM interaction_logs WHERE lead_id = $1", [leadIdInt]);
+    const telephonyPromise = db.query("SELECT 'Telephony Call' AS event_type, duration, call_notes, created_at, agent_name FROM telephony_calls WHERE lead_id = $1", [leadIdInt]);
+
+    const [tRes, aRes, iRes, telRes] = await Promise.all([
+      timelinePromise,
+      activitiesPromise,
+      interactionsPromise,
+      telephonyPromise
+    ]);
+
+    const events = [];
+
+    // Add standard timeline
+    tRes.rows.forEach(r => {
+      events.push({
+        event_type: r.event_type,
+        event_description: r.event_description,
+        created_at: r.created_at
+      });
+    });
+
+    // Add activities
+    aRes.rows.forEach(r => {
+      events.push({
+        event_type: r.event_type,
+        event_description: r.event_description,
+        created_at: r.created_at
+      });
+    });
+
+    // Add interactions
+    iRes.rows.forEach(r => {
+      events.push({
+        event_type: r.event_type,
+        event_description: r.event_description,
+        created_at: r.created_at
+      });
+    });
+
+    // Add telephony calls
+    telRes.rows.forEach(r => {
+      events.push({
+        event_type: 'Telephony Call',
+        event_description: `Agent ${r.agent_name || 'System'} spoke for ${r.duration || 0}s. Memo: "${r.call_notes}"`,
+        created_at: r.created_at
+      });
+    });
+
+    // Sort descending by created_at timestamp
+    events.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    res.json(events);
   } catch (err) {
     res.status(500).json({
       error: err.message
@@ -5468,6 +5693,80 @@ app.get('/api/reports/admin', async (req, res) => {
   } catch (err) {
     console.error("Admin Report API Error:", err);
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// --- DOCUMENT VAULT API ENDPOINTS ---
+app.get('/api/documents', async (req, res) => {
+  try {
+    const { reference_type, reference_id } = req.query;
+    let query = 'SELECT * FROM document_vault';
+    const params = [];
+    if (reference_type && reference_id) {
+      query += ' WHERE reference_type = $1 AND reference_id = $2';
+      params.push(reference_type, parseInt(reference_id));
+    }
+    query += ' ORDER BY id DESC';
+    const docs = (await db.query(query, params)).rows;
+    res.json(docs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/documents', async (req, res) => {
+  try {
+    const { doc_name, doc_url, reference_type, reference_id, uploaded_by } = req.body;
+    if (!doc_name || !doc_url || !reference_type || !reference_id) {
+      return res.status(400).json({ error: 'Missing required document fields.' });
+    }
+
+    let refName = 'Unknown';
+    const refIdInt = parseInt(reference_id);
+    if (reference_type === 'Lead') {
+      const row = (await db.query('SELECT name FROM leads WHERE id = $1', [refIdInt])).rows[0];
+      if (row) refName = row.name;
+    } else if (reference_type === 'Inventory') {
+      const row = (await db.query('SELECT society FROM properties WHERE id = $1', [refIdInt])).rows[0];
+      if (row) refName = row.society;
+    } else if (reference_type === 'Transaction') {
+      const row = (await db.query('SELECT deal_name FROM commissions WHERE id = $1', [refIdInt])).rows[0];
+      if (row) refName = row.deal_name;
+    }
+
+    const user = getRequestUser(req);
+    const uBy = uploaded_by || (user ? user.name : 'System');
+
+    const result = await db.query(
+      `INSERT INTO document_vault (doc_name, doc_url, reference_type, reference_id, reference_name, uploaded_by)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+      [doc_name, doc_url, reference_type, refIdInt, refName, uBy]
+    );
+
+    res.json({ success: true, id: result.rows[0].id, reference_name: refName });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/documents/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.query('DELETE FROM document_vault WHERE id = $1', [parseInt(id)]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- LEAD TRANSACTION LINK ENDPOINT ---
+app.get('/api/leads/:id/transaction', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const comm = (await db.query('SELECT * FROM commissions WHERE lead_id = $1 ORDER BY id DESC LIMIT 1', [parseInt(id)])).rows[0];
+    res.json(comm || null);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

@@ -388,6 +388,20 @@ CREATE TABLE IF NOT EXISTS communication_templates (
         shared_by TEXT
       );`);
 
+      // 10 Features Extensions Migration
+      await pool.query('ALTER TABLE commissions ADD COLUMN IF NOT EXISTS lead_id INTEGER;');
+      await pool.query('ALTER TABLE commissions ADD COLUMN IF NOT EXISTS property_id INTEGER;');
+      await pool.query(`CREATE TABLE IF NOT EXISTS document_vault (
+        id SERIAL PRIMARY KEY,
+        doc_name TEXT NOT NULL,
+        doc_url TEXT NOT NULL,
+        reference_type TEXT NOT NULL,
+        reference_id INTEGER NOT NULL,
+        reference_name TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        uploaded_by TEXT
+      );`);
+
       console.log("Migration: Added new columns and indexes to properties and leads tables successfully.");
     } catch (migErr) {
       console.log("Migration skipped or failed:", migErr.message);

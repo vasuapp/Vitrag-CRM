@@ -36,6 +36,11 @@
   };
 })();
 
+window.getLocalNowStr = function() {
+  const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+  return (new Date(Date.now() - tzoffset)).toISOString().slice(0, 16);
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   initApp();
   
@@ -461,6 +466,8 @@ function showDuplicateModal(message, existingId, addAnywayFn) {
         const el = document.getElementById(`private-contact-${existingId}`) || document.getElementById(`private-contact-row-${existingId}`);
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 500);
+    } else if (message.toLowerCase().includes('lead') || message.toLowerCase().includes('mobile')) {
+      showLeadDetails(existingId);
     } else {
       showProjectDetails(existingId);
     }
@@ -1047,7 +1054,8 @@ function navToPage(pageId) {
     finance: 'Finance Ledger',
     invoices: 'Tax Invoices',
     social: 'Social Campaigns',
-    reports: 'Performance Reports'
+    reports: 'Performance Reports',
+    documents: 'Document Vault'
   };
   document.getElementById('page-header-title').innerText = titles[pageId] || 'REALPro CRM';
 
@@ -1072,6 +1080,7 @@ function navToPage(pageId) {
   else if (pageId === 'sops') loadSOPs();
   else if (pageId === 'templates') loadTemplates();
   else if (pageId === 'reports') loadAdminReportsPage();
+  else if (pageId === 'documents') { loadDocuments(); loadVaultRefDropdown(); }
   else if (pageId === 'analytics') {
     if (typeof loadTelephonyAnalytics === 'function') loadTelephonyAnalytics();
     if (typeof loadGTMAnalyticsDashboard === 'function') loadGTMAnalyticsDashboard();
@@ -1224,13 +1233,11 @@ async function loadDashboardData() {
     loadScratchpad();
     renderCalendar();
     renderPropertyTimelines();
-
-    renderCalendar();
-    renderPropertyTimelines();
     hydrateSegmentPreviews();
     loadTodayActivityFeed();
     renderDynamicCharts();
     loadAdminReport();
+    loadRentalRenewalsFeed();
   } catch (err) {
     console.error('Error fetching dashboard stats:', err);
   }
@@ -2226,6 +2233,29 @@ function renderResaleProperties(listings) {
           </div>
         </div>
 
+        <!-- Activity Summary Indicators -->
+        <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; font-size: 11px;">
+          ${parseInt(p.total_shares || 0) > 0 ? `
+            <span class="chip" style="background: rgba(184, 134, 11, 0.12); border: 0.5px solid rgba(184, 134, 11, 0.4); color: var(--gold-l); cursor: pointer; border-radius: 4px; padding: 2px 6px;" title="Shared with: ${p.shared_with_list || 'N/A'}" onclick="showPropertyActivity(${p.id}, '${(p.society || '').replace(/'/g,"\\'")}'); event.stopPropagation();">
+              📢 Shared: <strong>${p.total_shares}x</strong> (${p.shared_with_list || 'N/A'})
+            </span>
+          ` : `
+            <span class="chip" style="background: rgba(255, 255, 255, 0.02); border: 0.5px solid rgba(255, 255, 255, 0.06); color: var(--text-muted); opacity: 0.6; border-radius: 4px; padding: 2px 6px;">
+              📢 No shares
+            </span>
+          `}
+          
+          ${parseInt(p.total_visits || 0) > 0 ? `
+            <span class="chip" style="background: rgba(46, 204, 113, 0.12); border: 0.5px solid rgba(46, 204, 113, 0.4); color: var(--green); cursor: pointer; border-radius: 4px; padding: 2px 6px;" title="Visits by: ${p.visiting_agents_list || 'N/A'}" onclick="showPropertyActivity(${p.id}, '${(p.society || '').replace(/'/g,"\\'")}'); event.stopPropagation();">
+              🚶 Visits: <strong>${p.total_visits}</strong> (Agents: ${p.visiting_agents_list || 'Direct/Unknown'})
+            </span>
+          ` : `
+            <span class="chip" style="background: rgba(255, 255, 255, 0.02); border: 0.5px solid rgba(255, 255, 255, 0.06); color: var(--text-muted); opacity: 0.6; border-radius: 4px; padding: 2px 6px;">
+              🚶 No visits
+            </span>
+          `}
+        </div>
+
         <div class="inv-tags" style="margin-top:12px;">
           <span class="tag tag-primary">${p.mandate_type || 'Open'} Mandate</span>
           <span class="tag tag-secondary">Parking: ${p.car_park || '1'}</span>
@@ -2243,6 +2273,7 @@ function renderResaleProperties(listings) {
           }
           <button class="btn btn-ghost btn-sm" style="color:var(--gold-l);" onclick="editFullProperty(${p.id})"><i class="ti ti-edit"></i> Edit</button>
           <button class="btn btn-primary btn-sm" onclick="showShareModal(${p.id})">📢 Share Pitch</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--blue-light);" onclick="showPropertyActivity(${p.id}, '${(p.society || '').replace(/'/g,"\\'")}', 'Resale')"><i class="ti ti-history"></i> Activity Log</button>
           <button class="btn btn-ghost btn-sm" onclick="cloneProperty(${p.id})">📋 Clone</button>
           <button class="btn btn-ghost btn-sm" onclick="printPropertyCard(${p.id})">🖨️ Print</button>
           ${p.video_link ? `<a class="btn btn-ghost btn-sm" href="${p.video_link}" target="_blank">🔗 Video Link</a>` : ''}
@@ -2463,6 +2494,29 @@ function renderRentalProperties(listings) {
           </div>
         </div>
 
+        <!-- Activity Summary Indicators -->
+        <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; font-size: 11px;">
+          ${parseInt(p.total_shares || 0) > 0 ? `
+            <span class="chip" style="background: rgba(184, 134, 11, 0.12); border: 0.5px solid rgba(184, 134, 11, 0.4); color: var(--gold-l); cursor: pointer; border-radius: 4px; padding: 2px 6px;" title="Shared with: ${p.shared_with_list || 'N/A'}" onclick="showPropertyActivity(${p.id}, '${(p.society || '').replace(/'/g,"\\'")}'); event.stopPropagation();">
+              📢 Shared: <strong>${p.total_shares}x</strong> (${p.shared_with_list || 'N/A'})
+            </span>
+          ` : `
+            <span class="chip" style="background: rgba(255, 255, 255, 0.02); border: 0.5px solid rgba(255, 255, 255, 0.06); color: var(--text-muted); opacity: 0.6; border-radius: 4px; padding: 2px 6px;">
+              📢 No shares
+            </span>
+          `}
+          
+          ${parseInt(p.total_visits || 0) > 0 ? `
+            <span class="chip" style="background: rgba(46, 204, 113, 0.12); border: 0.5px solid rgba(46, 204, 113, 0.4); color: var(--green); cursor: pointer; border-radius: 4px; padding: 2px 6px;" title="Visits by: ${p.visiting_agents_list || 'N/A'}" onclick="showPropertyActivity(${p.id}, '${(p.society || '').replace(/'/g,"\\'")}'); event.stopPropagation();">
+              🚶 Visits: <strong>${p.total_visits}</strong> (Agents: ${p.visiting_agents_list || 'Direct/Unknown'})
+            </span>
+          ` : `
+            <span class="chip" style="background: rgba(255, 255, 255, 0.02); border: 0.5px solid rgba(255, 255, 255, 0.06); color: var(--text-muted); opacity: 0.6; border-radius: 4px; padding: 2px 6px;">
+              🚶 No visits
+            </span>
+          `}
+        </div>
+
         <div class="inv-tags" style="margin-top:12px;">
           <span class="tag tag-primary">${p.mandate_type || 'Open'} Lease</span>
           <span class="tag tag-secondary">Furnished Status: ${p.interiors}</span>
@@ -2480,6 +2534,7 @@ function renderRentalProperties(listings) {
           }
           <button class="btn btn-ghost btn-sm" style="color:var(--gold-l);" onclick="editFullProperty(${p.id})"><i class="ti ti-edit"></i> Edit</button>
           <button class="btn btn-primary btn-sm" onclick="showShareModal(${p.id})">📢 Share Pitch</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--blue-light);" onclick="showPropertyActivity(${p.id}, '${(p.society || '').replace(/'/g,"\\'")}', 'Rental')"><i class="ti ti-history"></i> Activity Log</button>
           <button class="btn btn-ghost btn-sm" onclick="cloneProperty(${p.id})">📋 Clone</button>
           <button class="btn btn-ghost btn-sm" onclick="printPropertyCard(${p.id})">🖨️ Print</button>
           ${p.video_link ? `<a class="btn btn-ghost btn-sm" href="${p.video_link}" target="_blank">🔗 Video Link</a>` : ''}
@@ -2667,6 +2722,29 @@ function renderCommercialProperties(listings) {
           </div>
         </div>
 
+        <!-- Activity Summary Indicators -->
+        <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; font-size: 11px;">
+          ${parseInt(p.total_shares || 0) > 0 ? `
+            <span class="chip" style="background: rgba(184, 134, 11, 0.12); border: 0.5px solid rgba(184, 134, 11, 0.4); color: var(--gold-l); cursor: pointer; border-radius: 4px; padding: 2px 6px;" title="Shared with: ${p.shared_with_list || 'N/A'}" onclick="showPropertyActivity(${p.id}, '${(p.society || '').replace(/'/g,"\\'")}'); event.stopPropagation();">
+              📢 Shared: <strong>${p.total_shares}x</strong> (${p.shared_with_list || 'N/A'})
+            </span>
+          ` : `
+            <span class="chip" style="background: rgba(255, 255, 255, 0.02); border: 0.5px solid rgba(255, 255, 255, 0.06); color: var(--text-muted); opacity: 0.6; border-radius: 4px; padding: 2px 6px;">
+              📢 No shares
+            </span>
+          `}
+          
+          ${parseInt(p.total_visits || 0) > 0 ? `
+            <span class="chip" style="background: rgba(46, 204, 113, 0.12); border: 0.5px solid rgba(46, 204, 113, 0.4); color: var(--green); cursor: pointer; border-radius: 4px; padding: 2px 6px;" title="Visits by: ${p.visiting_agents_list || 'N/A'}" onclick="showPropertyActivity(${p.id}, '${(p.society || '').replace(/'/g,"\\'")}'); event.stopPropagation();">
+              🚶 Visits: <strong>${p.total_visits}</strong> (Agents: ${p.visiting_agents_list || 'Direct/Unknown'})
+            </span>
+          ` : `
+            <span class="chip" style="background: rgba(255, 255, 255, 0.02); border: 0.5px solid rgba(255, 255, 255, 0.06); color: var(--text-muted); opacity: 0.6; border-radius: 4px; padding: 2px 6px;">
+              🚶 No visits
+            </span>
+          `}
+        </div>
+
         <div class="inv-tags" style="margin-top:12px;">
           <span class="tag tag-primary" style="background:var(--purple); color:white;">${p.mandate_type || 'Open'} Mandate</span>
           <span class="tag tag-secondary">Interiors: ${p.interiors}</span>
@@ -2684,6 +2762,7 @@ function renderCommercialProperties(listings) {
           }
           <button class="btn btn-ghost btn-sm" style="color:var(--gold-l);" onclick="editFullProperty(${p.id})"><i class="ti ti-edit"></i> Edit</button>
           <button class="btn btn-primary btn-sm" onclick="showShareModal(${p.id})">📢 Share Pitch</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--blue-light);" onclick="showPropertyActivity(${p.id}, '${(p.society || '').replace(/'/g,"\\'")}', 'Commercial')"><i class="ti ti-history"></i> Activity Log</button>
           <button class="btn btn-ghost btn-sm" onclick="cloneProperty(${p.id})">📋 Clone</button>
           <button class="btn btn-ghost btn-sm" onclick="printPropertyCard(${p.id})">🖨️ Print</button>
           ${p.video_link ? `<a class="btn btn-ghost btn-sm" href="${p.video_link}" target="_blank">🔗 Video Link</a>` : ''}
@@ -2871,6 +2950,29 @@ function renderLandProperties(listings) {
           </div>
         </div>
 
+        <!-- Activity Summary Indicators -->
+        <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; font-size: 11px;">
+          ${parseInt(p.total_shares || 0) > 0 ? `
+            <span class="chip" style="background: rgba(184, 134, 11, 0.12); border: 0.5px solid rgba(184, 134, 11, 0.4); color: var(--gold-l); cursor: pointer; border-radius: 4px; padding: 2px 6px;" title="Shared with: ${p.shared_with_list || 'N/A'}" onclick="showPropertyActivity(${p.id}, '${(p.society || '').replace(/'/g,"\\'")}'); event.stopPropagation();">
+              📢 Shared: <strong>${p.total_shares}x</strong> (${p.shared_with_list || 'N/A'})
+            </span>
+          ` : `
+            <span class="chip" style="background: rgba(255, 255, 255, 0.02); border: 0.5px solid rgba(255, 255, 255, 0.06); color: var(--text-muted); opacity: 0.6; border-radius: 4px; padding: 2px 6px;">
+              📢 No shares
+            </span>
+          `}
+          
+          ${parseInt(p.total_visits || 0) > 0 ? `
+            <span class="chip" style="background: rgba(46, 204, 113, 0.12); border: 0.5px solid rgba(46, 204, 113, 0.4); color: var(--green); cursor: pointer; border-radius: 4px; padding: 2px 6px;" title="Visits by: ${p.visiting_agents_list || 'N/A'}" onclick="showPropertyActivity(${p.id}, '${(p.society || '').replace(/'/g,"\\'")}'); event.stopPropagation();">
+              🚶 Visits: <strong>${p.total_visits}</strong> (Agents: ${p.visiting_agents_list || 'Direct/Unknown'})
+            </span>
+          ` : `
+            <span class="chip" style="background: rgba(255, 255, 255, 0.02); border: 0.5px solid rgba(255, 255, 255, 0.06); color: var(--text-muted); opacity: 0.6; border-radius: 4px; padding: 2px 6px;">
+              🚶 No visits
+            </span>
+          `}
+        </div>
+
         <div class="inv-tags" style="margin-top:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
           <div style="display:flex; gap:6px;">
             <span class="tag tag-primary">${p.mandate_type || 'Open'} Mandate</span>
@@ -2891,6 +2993,7 @@ function renderLandProperties(listings) {
             }
             <button class="btn btn-ghost btn-sm" style="color:var(--gold-l); font-size:11px;" onclick="editFullProperty(${p.id})"><i class="ti ti-edit"></i> Edit</button>
             <button class="btn btn-primary btn-sm" style="font-size:11px;" onclick="showShareModal(${p.id})">📢 Share</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--blue-light); font-size:11px;" onclick="showPropertyActivity(${p.id}, '${(p.society || '').replace(/'/g,"\\'")}', 'Land')"><i class="ti ti-history"></i> Activity</button>
             <button class="btn btn-ghost btn-sm" style="font-size:11px;" onclick="cloneProperty(${p.id})"><i class="ti ti-copy"></i> Clone</button>
             <button class="btn btn-ghost btn-sm" style="color:var(--gold-l); font-size:11px;" onclick="promptAddTag(${p.id}, 'properties')">+ Tag</button>
           </div>
@@ -4008,7 +4111,23 @@ async function submitCaptureLead(e) {
     if (res.status === 409) {
       const errData = await res.json();
       showDuplicateModal(errData.error, errData.existingId, async () => {
-        // Bypass logic if needed
+        try {
+          const forceRes = await fetch('/api/leads?force=true', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          if (forceRes.ok) {
+            showToast('Client qualifications logged successfully (Duplicate Bypassed).');
+            document.getElementById('form-capture-lead').reset();
+            navToPage('pipeline');
+          } else {
+            const err = await forceRes.json();
+            showToast(err.error || 'Failed to force add lead.', 'error');
+          }
+        } catch (forceErr) {
+          console.error(forceErr);
+        }
       });
       return;
     }
@@ -4154,7 +4273,32 @@ window.submitEditLead = async function(e) {
     
     if (res.status === 409) {
       const errData = await res.json();
-      showToast(errData.error);
+      showDuplicateModal(errData.error, errData.existingId, async () => {
+        try {
+          const forceRes = await fetch(id ? `/api/leads/${id}?force=true` : `/api/leads?force=true`, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          if (forceRes.ok) {
+            showToast(id ? 'Lead details updated successfully (Duplicate Bypassed).' : 'New enquiry registered successfully (Duplicate Bypassed).');
+            const sp = document.getElementById('scratchpad-textarea');
+            if (sp) sp.value = '';
+            closeModal('modal-edit-lead');
+            if (window.refreshActivePageData) {
+              window.refreshActivePageData();
+            } else {
+              loadEnquiries();
+              loadDashboardData();
+            }
+          } else {
+            const err = await forceRes.json();
+            showToast(err.error || 'Failed to force save lead.', 'error');
+          }
+        } catch (forceErr) {
+          console.error(forceErr);
+        }
+      });
       return;
     }
     
@@ -4190,10 +4334,11 @@ async function loadFollowups() {
 
     const overdueContainer = document.getElementById('overdue-followups-container');
     const dueTbody = document.getElementById('due-followups-list-container');
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getLocalNowStr().split('T')[0];
+    const localNow = getLocalNowStr();
 
     // Filter overdue
-    const overdueLeads = data.filter(l => l.next_followup && l.next_followup < todayStr);
+    const overdueLeads = data.filter(l => l.next_followup && l.next_followup < localNow && l.followup_status !== 'Completed');
     
     if (overdueLeads.length === 0) {
       overdueContainer.innerHTML = `<div class="empty"><div class="empty-txt">No overdue follow-ups reported. Clean pipeline!</div></div>`;
@@ -4203,7 +4348,7 @@ async function loadFollowups() {
           <div class="inv-row">
             <div>
               <div class="inv-name" style="cursor:pointer; text-decoration:underline;" onclick="showLeadDetails(${l.id})">${l.name} · BHK requirement: ${l.project_type}</div>
-              <div class="inv-loc">Staging Stage: <strong>${l.stage}</strong> | Scheduled callback date: <strong style="color:var(--red)">${l.next_followup}</strong></div>
+              <div class="inv-loc">Staging Stage: <strong>${l.stage}</strong> | Scheduled callback date: <strong style="color:var(--red)">${l.next_followup.replace('T', ' ')}</strong></div>
             </div>
             <div>
               <button class="btn btn-primary btn-sm" onclick="triggerClickToCall(${l.id}, '${l.name.replace(/'/g, "\\'")}', '${l.phone}')" style="background-color: var(--gold); border-color: var(--gold); color: #000;">📞 Call Lead</button>
@@ -4215,7 +4360,7 @@ async function loadFollowups() {
     }
 
     // Filter due today
-    const dueLeads = data.filter(l => l.next_followup && l.next_followup === todayStr);
+    const dueLeads = data.filter(l => l.next_followup && l.next_followup.split('T')[0] === todayStr && l.followup_status !== 'Completed');
 
     if (dueLeads.length === 0) {
       dueTbody.innerHTML = `<tr><td colspan="5" class="empty">No scheduled callback alerts today!</td></tr>`;
@@ -4281,18 +4426,64 @@ async function loadEnquiries() {
     const data = await res.json();
     state.leads = data;
 
+    // Populate Agent filter if empty
+    const agentSelect = document.getElementById('filter-enq-agent');
+    if (agentSelect && agentSelect.options.length <= 1) {
+      try {
+        const aRes = await fetch('/api/agents');
+        const agents = await aRes.json();
+        agents.forEach(a => {
+          const opt = document.createElement('option');
+          opt.value = a.id;
+          opt.innerText = a.name;
+          agentSelect.appendChild(opt);
+        });
+      } catch (errAgent) {
+        console.error('Failed to load agents for filter:', errAgent);
+      }
+    }
+
+    const dateStart = document.getElementById('filter-enq-date-start')?.value;
+    const dateEnd = document.getElementById('filter-enq-date-end')?.value;
+    const agentId = document.getElementById('filter-enq-agent')?.value;
+    const budgetMinCr = parseFloat(document.getElementById('filter-enq-budget-min')?.value) || 0;
+    const budgetMaxCr = parseFloat(document.getElementById('filter-enq-budget-max')?.value) || Infinity;
+
+    let filteredLeads = data.filter(lead => {
+      // 1. Date filter
+      if (dateStart || dateEnd) {
+        const createdDate = new Date(lead.created_at);
+        if (dateStart && createdDate < new Date(dateStart)) return false;
+        if (dateEnd && createdDate > new Date(dateEnd + 'T23:59:59')) return false;
+      }
+      
+      // 2. Agent filter
+      if (agentId && lead.agent_id != agentId) return false;
+
+      // 3. Budget filter (Lead budgets are stored in raw values. Cr = 1,00,00,000)
+      const leadMinCr = (lead.budget_min || 0) / 10000000;
+      const leadMaxCr = (lead.budget_max || lead.budget_min || Infinity) / 10000000;
+      
+      // If the lead's budget overlaps with the filter budget range
+      if (leadMaxCr < budgetMinCr || leadMinCr > budgetMaxCr) {
+        if (budgetMinCr > 0 || budgetMaxCr !== Infinity) return false;
+      }
+      
+      return true;
+    });
+
     const wrapper = document.getElementById('enquiry-log-table-wrapper');
     if (!wrapper) return;
 
-    if (data.length === 0) {
+    if (filteredLeads.length === 0) {
       wrapper.innerHTML = `<div class="empty"><div class="empty-txt">No client requirement logs found.</div></div>`;
       return;
     }
 
     const itemsPerPage = 50;
-    const totalPages = Math.ceil(data.length / itemsPerPage) || 1;
+    const totalPages = Math.ceil(filteredLeads.length / itemsPerPage) || 1;
     const startIdx = (state.leadsPage - 1) * itemsPerPage;
-    const pagedData = data.slice(startIdx, startIdx + itemsPerPage);
+    const pagedData = filteredLeads.slice(startIdx, startIdx + itemsPerPage);
     
     const pagWrapper = document.getElementById('enquiry-pagination-wrapper');
     if (pagWrapper) pagWrapper.innerHTML = renderPaginationBar('leads', state.leadsPage, totalPages, 'changeLeadsPage');
@@ -6598,6 +6789,146 @@ window.submitSharePropertyWithAssociate = async function() {
     showToast('Failed to share property.');
   }
 };
+
+window.showPropertyActivity = async function(propId, propName, propType) {
+  document.getElementById('activity-prop-id').value = propId;
+  document.getElementById('activity-prop-name').value = propName;
+  document.getElementById('prop-activity-title').innerText = `📂 Activity & Share Logs: ${propName}`;
+
+  document.getElementById('prop-visit-closure-btn').onclick = () => {
+    closeModal('modal-property-activity');
+    closureDeal(propId, propName, propType || 'Resale');
+  };
+
+  switchPropActivityTab('shares');
+  openModal('modal-property-activity');
+
+  await loadPropertyActivityLogs(propId);
+};
+
+window.switchPropActivityTab = function(tabName) {
+  document.querySelectorAll('.prop-activity-pane').forEach(p => p.classList.add('hidden'));
+  document.getElementById('tab-prop-shares').classList.remove('active');
+  document.getElementById('tab-prop-visits').classList.remove('active');
+
+  document.getElementById(`pane-prop-${tabName}`).classList.remove('hidden');
+  document.getElementById(`tab-prop-${tabName}`).classList.add('active');
+};
+
+window.toggleQuickShareForm = async function(show = true) {
+  const container = document.getElementById('prop-quick-share-container');
+  if (!show) {
+    container.classList.add('hidden');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/associates');
+    const data = await res.json();
+    const select = document.getElementById('prop-quick-share-select');
+    select.innerHTML = data.map(a => `<option value="${a.id}">${a.name} (${a.company || 'Broker'})</option>`).join('');
+    if (select.options.length === 0) {
+      select.innerHTML = '<option value="">-- No Associates Available --</option>';
+    }
+    container.classList.remove('hidden');
+  } catch (e) {
+    console.error(e);
+    showToast('Failed to load associates.');
+  }
+};
+
+window.openShareWithAssociateFromInventory = function() {
+  toggleQuickShareForm(true);
+};
+
+window.submitQuickShareProperty = async function() {
+  const propId = document.getElementById('activity-prop-id').value;
+  const assocId = document.getElementById('prop-quick-share-select').value;
+  if (!assocId) {
+    showToast('Please select an associate to share with.');
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/associates/${assocId}/shares`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ property_id: propId })
+    });
+    if (res.ok) {
+      showToast('🎉 Property share logged with associate.');
+      toggleQuickShareForm(false);
+      loadPropertyActivityLogs(propId);
+    } else {
+      const err = await res.json();
+      showToast('Error: ' + err.error);
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to log share.');
+  }
+};
+
+async function loadPropertyActivityLogs(propId) {
+  const sharesList = document.getElementById('prop-shares-list');
+  const visitsList = document.getElementById('prop-visits-list');
+
+  try {
+    const res = await fetch(`/api/properties/${propId}/activity-log`);
+    const data = await res.json();
+
+    // Render Shares
+    if (!data.shares || data.shares.length === 0) {
+      sharesList.innerHTML = `<div style="font-size:12px; color:var(--text-muted); padding:10px;">This property has not been shared with any associates yet.</div>`;
+    } else {
+      sharesList.innerHTML = data.shares.map(s => `
+        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:10px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:13px; font-weight:700; color:var(--gold-l);">${s.associate_name}</div>
+            <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Agency: ${s.associate_company || 'Private'}</div>
+          </div>
+          <div style="text-align:right; font-size:10px; color:var(--text-secondary);">
+            Shared by: <strong>${s.shared_by}</strong><br>
+            Date: ${new Date(s.shared_at).toLocaleDateString()}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Render Visits
+    if (!data.visits || data.visits.length === 0) {
+      visitsList.innerHTML = `<div style="font-size:12px; color:var(--text-muted); padding:10px;">No site visits recorded for this property yet.</div>`;
+    } else {
+      visitsList.innerHTML = data.visits.map(v => `
+        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:10px; border-radius:6px; display:flex; flex-direction:column; gap:4px;">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong style="color:var(--text-light); font-size:13px;">🚶 ${v.visitor_name}</strong>
+              ${v.visitor_phone ? `<span style="font-size:11px; color:var(--text-muted); margin-left:8px;">📞 ${v.visitor_phone}</span>` : ''}
+            </div>
+            <span class="chip btn-sm" style="font-size:9.5px; background:rgba(52,152,219,0.15); color:var(--blue-light); border:0.5px solid var(--blue); font-weight:700;">
+              ${v.source}
+            </span>
+          </div>
+          <div style="font-size:11.5px; color:var(--text-secondary); margin-top:2px;">
+            Date: <strong>${v.visit_date}</strong>
+          </div>
+          ${v.is_joint ? `
+            <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
+              <span class="badge badge-amber" style="font-size:9.5px; padding:2px 6px;">👥 Joint Visit</span>
+              <span style="font-size:11px; color:var(--gold-l);">Accompanied by Associate: <strong>${v.associate_name || 'Network Broker'}</strong></span>
+            </div>
+          ` : ''}
+          ${v.notes ? `<div style="font-size:11px; font-style:italic; color:var(--text-muted); background:rgba(0,0,0,0.1); padding:6px; border-radius:4px; margin-top:4px;">Notes: ${v.notes}</div>` : ''}
+        </div>
+      `).join('');
+    }
+  } catch (err) {
+    console.error(err);
+    sharesList.innerHTML = `<div style="color:var(--red); font-size:12px;">Failed to load activity logs.</div>`;
+    visitsList.innerHTML = `<div style="color:var(--red); font-size:12px;">Failed to load activity logs.</div>`;
+  }
+}
 
 async function loadAssociatesPerformance() {
   const container = document.getElementById('associates-performance-container');
@@ -8946,6 +9277,26 @@ async function showLeadDetails(leadId) {
     if (typeof window.updateClosureFlowUI === 'function') {
       window.updateClosureFlowUI();
     }
+
+    // Fetch transaction link details
+    try {
+      const resTrans = await fetch(`/api/leads/${leadId}/transaction`);
+      if (resTrans.ok) {
+        const trans = await resTrans.json();
+        const statusEl = document.getElementById('detail-transaction-status');
+        if (statusEl) {
+          if (trans) {
+            statusEl.innerHTML = `Deal Active: Value ₹${(parseFloat(trans.deal_value || 0)/10000000).toFixed(2)}Cr | Comm: ₹${(parseFloat(trans.commission_amount || 0)/100000).toFixed(2)}L (${trans.payment_status})`;
+            statusEl.style.color = trans.payment_status === 'Paid' ? 'var(--green-light)' : 'var(--amber)';
+          } else {
+            statusEl.innerHTML = 'No Deal Linked';
+            statusEl.style.color = 'var(--text-muted)';
+          }
+        }
+      }
+    } catch (errTrans) {
+      console.error('Failed to load linked transaction status:', errTrans);
+    }
   } catch (e) {
     console.error(e);
   }
@@ -9436,7 +9787,7 @@ async function triggerSecureExport(table) {
 // Overwrite switchLeadTab to include matches tab
 const prevSwitchLeadTab = window.switchLeadTab;
 window.switchLeadTab = function(tabId) {
-  const tabs = ['timeline', 'scorecard', 'log', 'matches', 'offered', 'docs'];
+  const tabs = ['timeline', 'scorecard', 'log', 'matches', 'offered', 'docs', 'closure'];
   tabs.forEach(t => {
     const btn = document.getElementById(`tab-lead-${t}`);
     const pane = document.getElementById(`pane-lead-${t}`);
@@ -9450,7 +9801,7 @@ window.switchLeadTab = function(tabId) {
       }
       if (t === 'offered') {
         const leadId = parseInt(document.getElementById('detail-lead-id').value);
-        loadLeadOffered(leadId);
+        loadLeadMatches(leadId); // loadLeadMatches loads both offered and matches in a single unified API payload
       }
       if (t === 'docs') {
         const leadId = parseInt(document.getElementById('detail-lead-id').value);
@@ -9490,42 +9841,103 @@ window.loadLeadMatches = async function(leadId) {
     if (unoffered.length === 0) {
       matchContainer.innerHTML = `<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:20px;">No matches found. Check lead budget and preferences!</div>`;
     } else {
-      matchContainer.innerHTML = unoffered.slice(0, 15).map(m => `
-        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:10px 12px; border-radius:6px; font-size:12px; display:flex; flex-direction:column; gap:4px; position:relative; margin-bottom: 6px;">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-weight:700; color:#fff;">${m.society} (${m.bedrooms_bhk || 'Premium unit'})</span>
-            <span class="ai-match-badge" style="cursor:pointer;" onclick="showAIMatchRationale(${m.id}, ${m.score}, ${m.breakdown.locality}, ${m.breakdown.budget}, ${m.breakdown.bhk}, ${m.breakdown.facing}, '${escapeHtml(m.rationale)}')">✨ ${m.score}% Match AI</span>
+      matchContainer.innerHTML = unoffered.slice(0, 15).map(m => {
+        const assocBadge = m.associate_name ? `
+          <div style="font-size:10.5px; color:var(--amber); margin-top:2px; font-weight:700;">
+            🤝 Sourced via Co-Broker: ${m.associate_name} (${m.associate_company || 'Independent'})
           </div>
-          <div style="color:var(--text-muted); font-size:11px;">📍 Locality: ${m.location} | Expected Price: <span style="color:#2ecc71; font-weight:700;">₹${m.price_raw || (m.price ? (m.price/10000000).toFixed(2) + ' Cr' : 'On Request')}</span></div>
-          <div style="color:var(--text-light); margin-top:2px; font-style: italic;">"${m.rationale}"</div>
-          <div style="display:flex; justify-content:flex-end; margin-top:4px;">
-            <button class="btn btn-ghost btn-sm" style="color:var(--gold); font-size:11px; padding:2px 8px;" onclick="markLeadInterest(${leadId}, ${m.id}, 'Offered')">Mark Offered</button>
-          </div>
-        </div>
-      `).join('');
-    }
-    
-    if (!offeredContainer) return;
-    if (offered.length === 0) {
-      offeredContainer.innerHTML = '<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:15px;">No properties have been pitched to this lead yet.</div>';
-    } else {
-      const offeredHtml = offered.map(o => {
-        const p = matches.find(x => x.id === o.property_id) || state.properties.find(x => x.id === o.property_id) || { society: 'Unknown', price_raw: '' };
+        ` : '';
         return `
-          <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:10px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
-            <div>
-              <div style="font-size:13px; font-weight:700; color:var(--gold-l);">${p.society}</div>
-              <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Status: <strong style="color:var(--text-light);">${o.status}</strong></div>
+          <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:10px 12px; border-radius:6px; font-size:12px; display:flex; flex-direction:column; gap:4px; position:relative; margin-bottom: 6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-weight:700; color:#fff;">${m.society} (${m.bedrooms_bhk || 'Premium unit'})</span>
+              <span class="ai-match-badge" style="cursor:pointer;" onclick="showAIMatchRationale(${m.id}, ${m.score}, ${m.breakdown.locality}, ${m.breakdown.budget}, ${m.breakdown.bhk}, ${m.breakdown.facing}, '${escapeHtml(m.rationale)}')">✨ ${m.score}% Match AI</span>
+            </div>
+            <div style="color:var(--text-muted); font-size:11px;">📍 Locality: ${m.location} | Expected Price: <span style="color:#2ecc71; font-weight:700;">₹${m.price_raw || (m.price ? (m.price/10000000).toFixed(2) + ' Cr' : 'On Request')}</span></div>
+            ${assocBadge}
+            <div style="color:var(--text-light); margin-top:4px; font-style: italic;">"${m.rationale}"</div>
+            <div style="display:flex; justify-content:flex-end; margin-top:4px;">
+              <button class="btn btn-ghost btn-sm" style="color:var(--gold); font-size:11px; padding:2px 8px;" onclick="markLeadInterest(${leadId}, ${m.id}, 'Offered')">Mark Offered</button>
             </div>
           </div>
         `;
       }).join('');
-      offeredContainer.innerHTML = offeredHtml;
+    }
+    
+    if (!offeredContainer) return;
+    
+    const pitchAssociateBar = `
+      <div style="display:flex; gap:10px; align-items:center; background:rgba(255,255,255,0.02); padding:8px 12px; border-radius:6px; border:1px solid var(--border); margin-bottom:12px;">
+        <span style="font-size:11.5px; color:var(--text-light); font-weight:700;">Pitch Co-Broker Listing:</span>
+        <select class="form-select btn-sm" id="pitch-associate-prop-select" style="flex:1; font-size:11.5px; height:28px; background:rgba(0,0,0,0.3); border:1px solid var(--border);">
+          <option value="">-- Select Associate Property --</option>
+          ${state.properties.filter(p => p.associate_id).map(p => `<option value="${p.id}">${p.society} (${p.bedrooms_bhk || p.configuration || 'Premium'}) - ${p.price_raw || 'On Request'}</option>`).join('')}
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="submitPitchAssociateProperty(${leadId})" style="height:28px; font-size:11.5px; padding:0 10px;">📤 Pitch</button>
+      </div>
+    `;
+
+    if (offered.length === 0) {
+      offeredContainer.innerHTML = pitchAssociateBar + '<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:15px;">No properties have been pitched to this lead yet.</div>';
+    } else {
+      const offeredHtml = offered.map(o => {
+        const p = matches.find(x => x.id === o.property_id) || state.properties.find(x => x.id === o.property_id) || { society: 'Unknown', price_raw: '' };
+        const assocBadge = p.associate_name ? `
+          <div style="font-size:10px; color:var(--amber); margin-top:2.5px; font-weight:700;">
+            🤝 Sourced via Co-Broker: ${p.associate_name} (${p.associate_company || 'Independent'})
+          </div>
+        ` : '';
+
+        const statusColor = o.status === 'Interested' ? 'var(--green-light)' : o.status === 'Not Interested' ? 'var(--red)' : 'var(--blue-light)';
+        let actionsHtml = '';
+        if (o.status === 'Offered') {
+          actionsHtml = `
+            <div style="display:flex; gap:6px; margin-top:6px;">
+              <button class="btn btn-ghost btn-sm" style="color:var(--green-light); font-size:10px; padding:2px 6px; border: 1px solid rgba(46, 204, 113, 0.2);" onclick="markLeadInterest(${leadId}, ${o.property_id}, 'Interested')">👍 Interested</button>
+              <button class="btn btn-ghost btn-sm" style="color:var(--red); font-size:10px; padding:2px 6px; border: 1px solid rgba(231, 76, 60, 0.2);" onclick="markLeadInterest(${leadId}, ${o.property_id}, 'Not Interested')">👎 Disinterested</button>
+            </div>
+          `;
+        } else if (o.status === 'Interested') {
+          actionsHtml = `
+            <div style="display:flex; gap:10px; align-items:center; margin-top:6px;">
+              <span style="color:var(--green-light); font-size:11px; font-weight:700;"><i class="ti ti-star"></i> Client Interested</span>
+              <button class="btn btn-ghost btn-sm" style="color:var(--text-muted); font-size:9.5px; padding:1px 4px;" onclick="markLeadInterest(${leadId}, ${o.property_id}, 'Offered')">Reset</button>
+            </div>
+          `;
+        } else if (o.status === 'Not Interested') {
+          actionsHtml = `
+            <div style="display:flex; gap:10px; align-items:center; margin-top:6px;">
+              <span style="color:var(--red); font-size:11px; font-weight:700;"><i class="ti ti-circle-x"></i> Disinterested</span>
+              <button class="btn btn-ghost btn-sm" style="color:var(--gold-l); font-size:9.5px; padding:1px 4px;" onclick="markLeadInterest(${leadId}, ${o.property_id}, 'Offered')">Reset</button>
+            </div>
+          `;
+        }
+
+        return `
+          <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:10px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px; flex-wrap:wrap; gap:8px;">
+            <div>
+              <div style="font-size:13px; font-weight:700; color:var(--gold-l);">${p.society}</div>
+              <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">Status: <strong style="color:${statusColor};">${o.status}</strong></div>
+              ${assocBadge}
+            </div>
+            <div>
+              ${actionsHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+      offeredContainer.innerHTML = pitchAssociateBar + offeredHtml;
     }
   } catch (e) {
     console.error(e);
     matchContainer.innerHTML = `<div style="font-size:12px; color:var(--red); text-align:center; padding:20px;">Error running match engine.</div>`;
   }
+};
+
+window.submitPitchAssociateProperty = async function(leadId) {
+  const propId = document.getElementById('pitch-associate-prop-select').value;
+  if (!propId) return showToast('Please select an associate listing first.');
+  await markLeadInterest(leadId, parseInt(propId), 'Offered');
 };
 
 // Render custom Match Rationale Overlay popup
@@ -9546,6 +9958,217 @@ window.showAIMatchRationale = function(propId, score, locality, budget, bhk, fac
   document.getElementById('breakdown-facing-lbl').innerText = `${Math.round(facing * (100 / 15))}%`;
   
   openModal('modal-ai-match-rationale');
+};
+
+
+// --- DOCUMENT VAULT CONTROLLER METHODS ---
+state.docFilter = 'All';
+
+window.loadDocuments = async function() {
+  const container = document.getElementById('vault-documents-list-container');
+  if (!container) return;
+  container.innerHTML = `<tr><td colspan="5" style="text-align:center;">Loading archive vault files...</td></tr>`;
+  try {
+    const res = await fetch('/api/documents');
+    const docs = await res.json();
+    
+    const filter = state.docFilter || 'All';
+    const filtered = filter === 'All' ? docs : docs.filter(d => d.reference_type === filter);
+    
+    if (filtered.length === 0) {
+      container.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:15px;">No documents registered in vault.</td></tr>`;
+      return;
+    }
+    
+    container.innerHTML = filtered.map(d => `
+      <tr>
+        <td><strong>${escapeHtml(d.doc_name)}</strong></td>
+        <td><span class="chip ch-gold">${escapeHtml(d.reference_type)}</span></td>
+        <td>${escapeHtml(d.reference_name || 'N/A')} <span style="font-size:10px; color:var(--text-muted);">(ID: ${d.reference_id})</span></td>
+        <td>
+          <span style="font-weight:700;">${escapeHtml(d.uploaded_by || 'System')}</span><br>
+          <span style="font-size:10px; color:var(--text-muted);">${new Date(d.created_at).toLocaleString()}</span>
+        </td>
+        <td>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-ghost btn-sm" onclick="window.open('${d.doc_url}', '_blank')"><i class="ti ti-link"></i> Open URL</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="deleteVaultDocument(${d.id})"><i class="ti ti-trash"></i> Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--red);">Error loading documents.</td></tr>`;
+  }
+};
+
+window.deleteVaultDocument = async function(id) {
+  if (!confirm('Are you sure you want to permanently delete this document from the vault?')) return;
+  try {
+    await fetch(`/api/documents/${id}`, { method: 'DELETE' });
+    showToast('Document deleted.');
+    loadDocuments();
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to delete document.');
+  }
+};
+
+window.setDocFilter = function(type) {
+  state.docFilter = type;
+  const types = ['All', 'Lead', 'Inventory', 'Transaction'];
+  types.forEach(t => {
+    const chip = document.getElementById(`doc-filter-${t}`);
+    if (chip) {
+      if (t === type) {
+        chip.style.background = 'var(--gold)';
+        chip.style.color = '#000';
+        chip.style.fontWeight = '700';
+      } else {
+        chip.style.background = 'rgba(255,255,255,0.05)';
+        chip.style.color = '#fff';
+        chip.style.fontWeight = 'normal';
+      }
+    }
+  });
+  loadDocuments();
+};
+
+window.loadVaultRefDropdown = async function() {
+  const refType = document.getElementById('new-vault-doc-ref-type').value;
+  const select = document.getElementById('new-vault-doc-ref-id');
+  if (!select) return;
+  select.innerHTML = '<option value="">-- Loading references --</option>';
+  try {
+    if (refType === 'Lead') {
+      const res = await fetch('/api/leads');
+      const leads = await res.json();
+      select.innerHTML = leads.map(l => `<option value="${l.id}">${escapeHtml(l.name)} (ID: ${l.id})</option>`).join('');
+    } else if (refType === 'Inventory') {
+      const res = await fetch('/api/properties');
+      const props = await res.json();
+      select.innerHTML = props.map(p => `<option value="${p.id}">${escapeHtml(p.society)} (${escapeHtml(p.configuration || 'Premium')}) (ID: ${p.id})</option>`).join('');
+    } else if (refType === 'Transaction') {
+      const res = await fetch('/api/commissions');
+      const comms = await res.json();
+      select.innerHTML = comms.map(c => `<option value="${c.id}">${escapeHtml(c.deal_name)} (ID: ${c.id})</option>`).join('');
+    }
+  } catch (err) {
+    console.error(err);
+    select.innerHTML = '<option value="">-- Failed to load --</option>';
+  }
+};
+
+window.saveVaultDocument = async function() {
+  const name = document.getElementById('new-vault-doc-name').value;
+  const refType = document.getElementById('new-vault-doc-ref-type').value;
+  const refId = document.getElementById('new-vault-doc-ref-id').value;
+  const url = document.getElementById('new-vault-doc-url').value;
+  
+  if (!name || !refType || !refId || !url) {
+    showToast('Please fill all required vault document fields.');
+    return;
+  }
+  
+  try {
+    const res = await fetch('/api/documents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        doc_name: name,
+        doc_url: url,
+        reference_type: refType,
+        reference_id: parseInt(refId),
+        uploaded_by: state.systemSettings?.userName || 'System'
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Document saved successfully to vault.');
+      document.getElementById('new-vault-doc-name').value = '';
+      document.getElementById('new-vault-doc-url').value = '';
+      document.getElementById('doc-create-block').style.display = 'none';
+      loadDocuments();
+    } else {
+      showToast('Failed to save: ' + (data.error || 'Unknown error'));
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Error registering vault document.');
+  }
+};
+
+// --- RENTAL RENEWALS FEED METHOD ---
+window.loadRentalRenewalsFeed = async function() {
+  const container = document.getElementById('rental-renewals-feed');
+  const countBadge = document.getElementById('rental-renewals-count');
+  if (!container) return;
+  
+  try {
+    const res = await fetch('/api/leads');
+    const leads = await res.json();
+    state.leads = leads; // Update state.leads cache
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const renewals = leads.filter(l => {
+      const isRental = (l.project_type && l.project_type.toLowerCase().includes('rental')) || 
+                       (l.special_tags && l.special_tags.toLowerCase().includes('rental'));
+      if (!isRental || !l.rental_expiry_date) return false;
+      
+      const expiryDate = new Date(l.rental_expiry_date);
+      if (isNaN(expiryDate.getTime())) return false;
+      expiryDate.setHours(0, 0, 0, 0);
+      
+      const diffTime = expiryDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays <= 30;
+    });
+    
+    renewals.sort((a, b) => new Date(a.rental_expiry_date) - new Date(b.rental_expiry_date));
+    
+    if (countBadge) {
+      countBadge.innerText = `${renewals.length} renewals`;
+    }
+    
+    if (renewals.length === 0) {
+      container.innerHTML = `<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:15px;">No upcoming rental renewals reported.</div>`;
+      return;
+    }
+    
+    container.innerHTML = renewals.map(l => {
+      const expiryDate = new Date(l.rental_expiry_date);
+      expiryDate.setHours(0,0,0,0);
+      const diffTime = expiryDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      let alertClass = 'color: var(--green-light);';
+      let statusText = `Expiring in ${diffDays} days`;
+      if (diffDays < 0) {
+        alertClass = 'color: var(--red); font-weight:700;';
+        statusText = `Expired ${Math.abs(diffDays)} days ago`;
+      } else if (diffDays === 0) {
+        alertClass = 'color: var(--amber); font-weight:700;';
+        statusText = 'Expires Today';
+      } else if (diffDays <= 7) {
+        alertClass = 'color: var(--amber);';
+      }
+      
+      return `
+        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:10px; border-radius:6px; font-size:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <div>
+            <strong style="cursor:pointer; text-decoration:underline;" onclick="showLeadDetails(${l.id})">${escapeHtml(l.name)}</strong><br>
+            <span style="font-size:10px; color:var(--text-muted);">Expiry: ${l.rental_expiry_date} (<span style="${alertClass}">${statusText}</span>)</span>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="rescheduleFollowup(${l.id})" style="padding:2px 8px; font-size:10px;"><i class="ti ti-bell-ringing"></i> Remind</button>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Error loading rental renewals feed:', err);
+  }
 };
 
 
@@ -10080,30 +10703,32 @@ window.loadLeadOffered = async function(leadId) {
 // --- LEAD DOCUMENTS ---
 window.loadLeadDocs = async function(leadId) {
   const container = document.getElementById('lead-docs-container');
+  if (!container) return;
+  
+  if (!state.systemSettings.showMaskedFields) {
+    container.innerHTML = '<div style="font-size:12px; color:#f87171;"><i class="ti ti-lock"></i> Documents are locked in Employee Mode.</div>';
+    return;
+  }
+  
   try {
-    const res = await fetch('/api/leads');
-    const leads = await res.json();
-    const lead = leads.find(l => l.id == leadId);
-    if (!lead || !lead.documents) {
-      container.innerHTML = `<div style="font-size:12px; color:var(--text-muted);">No documents uploaded.</div>`;
-      return;
-    }
-    const docs = JSON.parse(lead.documents || '[]');
+    const res = await fetch(`/api/documents?reference_type=Lead&reference_id=${leadId}`);
+    const docs = await res.json();
     if (docs.length === 0) {
-      container.innerHTML = `<div style="font-size:12px; color:var(--text-muted);">No documents uploaded.</div>`;
+      container.innerHTML = `<div style="font-size:12px; color:var(--text-muted);">No documents registered for this lead.</div>`;
     } else {
-      container.innerHTML = docs.map((d, idx) => `
-        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:8px 12px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
-          <div style="font-size:12px; font-weight:700; color:var(--text-light);"><i class="ti ti-file" style="color:var(--gold);"></i> ${d.name}</div>
+      container.innerHTML = docs.map((d) => `
+        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:8px 12px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <div style="font-size:12px; font-weight:700; color:var(--text-light);"><i class="ti ti-file" style="color:var(--gold);"></i> ${escapeHtml(d.doc_name)}</div>
           <div style="display:flex; gap:8px;">
-            <button class="btn btn-ghost btn-sm" onclick="window.open('${d.url}', '_blank')" style="padding:2px 8px; font-size:10px;">Open URL</button>
-            <button class="btn btn-ghost btn-sm" style="color:var(--red); padding:2px 8px; font-size:10px;" onclick="removeLeadDocument(${leadId}, ${idx})"><i class="ti ti-trash"></i></button>
+            <button class="btn btn-ghost btn-sm" onclick="window.open('${d.doc_url}', '_blank')" style="padding:2px 8px; font-size:10px;">Open URL</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--red); padding:2px 8px; font-size:10px;" onclick="removeLeadDocument(${leadId}, ${d.id})"><i class="ti ti-trash"></i></button>
           </div>
         </div>
       `).join('');
     }
   } catch(e) {
     console.error(e);
+    container.innerHTML = `<div style="font-size:12px; color:var(--red);">Error loading documents.</div>`;
   }
 };
 
@@ -10114,45 +10739,33 @@ window.addLeadDocument = async function() {
   if (!name || !url) return alert('Provide Name and URL');
   
   try {
-    const res = await fetch('/api/leads');
-    const leads = await res.json();
-    const lead = leads.find(l => l.id == leadId);
-    
-    let docs = JSON.parse(lead.documents || '[]');
-    docs.push({ name, url });
-    lead.documents = docs;
-    
-    await fetch(`/api/leads/${leadId}`, {
-      method: 'PUT',
+    await fetch('/api/documents', {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(lead)
+      body: JSON.stringify({
+        doc_name: name,
+        doc_url: url,
+        reference_type: 'Lead',
+        reference_id: parseInt(leadId),
+        uploaded_by: state.systemSettings?.userName || 'System'
+      })
     });
     
     document.getElementById('new-lead-doc-name').value = '';
     document.getElementById('new-lead-doc-url').value = '';
-    showToast('Document link attached.');
+    showToast('Document link attached to vault.');
     loadLeadDocs(leadId);
   } catch (e) {
     console.error(e);
   }
 };
 
-window.removeLeadDocument = async function(leadId, idx) {
+window.removeLeadDocument = async function(leadId, docId) {
+  if (!confirm('Are you sure you want to delete this document from the vault?')) return;
   try {
-    const res = await fetch('/api/leads');
-    const leads = await res.json();
-    const lead = leads.find(l => l.id == leadId);
-    
-    let docs = JSON.parse(lead.documents || '[]');
-    docs.splice(idx, 1);
-    lead.documents = docs;
-    
-    await fetch(`/api/leads/${leadId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(lead)
+    await fetch(`/api/documents/${docId}`, {
+      method: 'DELETE'
     });
-    
     showToast('Document removed.');
     loadLeadDocs(leadId);
   } catch (e) {
@@ -10899,7 +11512,23 @@ window.filterSmartList = async function(filterId) {
       if (filterId === 'converted') leads = leads.filter(l => l.stage === 'Won');
       if (filterId === 'fb_leads') leads = leads.filter(l => l.source === 'Meta Ads');
       if (filterId === 'budget_2cr') leads = leads.filter(l => l.budget_max >= 20000000);
-      if (filterId === 'rental_renewals') leads = leads.filter(l => l.special_tags && l.special_tags.includes('Rental'));
+      if (filterId === 'rental_renewals') {
+        const todayD = new Date();
+        todayD.setHours(0,0,0,0);
+        leads = leads.filter(l => {
+          const isRental = (l.project_type && l.project_type.toLowerCase().includes('rental')) || 
+                           (l.special_tags && l.special_tags.toLowerCase().includes('rental'));
+          if (!isRental || !l.rental_expiry_date) return false;
+          
+          const expiryDate = new Date(l.rental_expiry_date);
+          if (isNaN(expiryDate.getTime())) return false;
+          expiryDate.setHours(0, 0, 0, 0);
+          
+          const diffTime = expiryDate.getTime() - todayD.getTime();
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          return diffDays <= 30;
+        });
+      }
       if (filterId === 'warm_no_contact') leads = leads.filter(l => l.status === 'Warm' && (!l.last_contact_date || l.last_contact_date < new Date(Date.now() - 7*24*60*60*1000).toISOString().split('T')[0]));
       if (filterId === 'commercial_inq') leads = leads.filter(l => l.project_type === 'Commercial');
 
@@ -11013,63 +11642,42 @@ window.loadLeadTimeline = async function(leadId) {
   if (!container) return;
   try {
     const resTimeline = await fetch('/api/leads/' + leadId + '/timeline');
-    const timeline = resTimeline.ok ? await resTimeline.json() : [];
-    
-    const resActs = await fetch('/api/leads/' + leadId + '/activities');
-    const acts = resActs.ok ? await resActs.json() : [];
-    
-    const events = [];
-    timeline.forEach(e => {
-      let icon = '📢';
-      if (e.event_type === 'WEBHOOK') icon = '📡';
-      else if (e.event_type === 'CALL_LOG') icon = '📞';
-      else if (e.event_type === 'CHAT_MESSAGE') icon = '💬';
-      else if (e.event_type === 'STAGE_CHANGE') icon = '💎';
-      
-      events.push({
-        type: e.event_type,
-        description: e.event_description,
-        timestamp: e.created_at,
-        icon: icon
-      });
-    });
-    
-    acts.forEach(a => {
-      let icon = '💬';
-      if (a.type === 'Site Visit') icon = '🏡';
-      else if (a.type === 'Meeting') icon = '🤝';
-      else if (a.type === 'Proposal Sent') icon = '📤';
-      else if (a.type === 'Call Logged' || a.type === 'Phone Call') icon = '📞';
-      
-      events.push({
-        type: a.type,
-        description: a.description,
-        timestamp: a.timestamp,
-        icon: icon
-      });
-    });
-    
-    events.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const events = resTimeline.ok ? await resTimeline.json() : [];
     
     if (events.length === 0) {
       container.innerHTML = '<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:20px;">No timeline events logged yet.</div>';
       return;
     }
     
-    container.innerHTML = events.map(e => `
-      <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:10px 12px; border-radius:6px; font-size:12px; display:flex; gap:12px; align-items:flex-start; margin-bottom:8px;">
-        <div style="background:var(--gold); color:black; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;">
-          <span>${e.icon}</span>
-        </div>
-        <div style="flex:1;">
-          <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-            <span style="font-weight:700; color:var(--gold-l);">${e.type}</span>
-            <span style="font-size:10px; color:var(--text-muted);">${new Date(e.timestamp).toLocaleString()}</span>
+    container.innerHTML = events.map(e => {
+      let icon = '📢';
+      let typeStr = e.event_type || 'SYSTEM';
+      
+      if (typeStr === 'WEBHOOK') icon = '📡';
+      else if (typeStr === 'CALL_LOG' || typeStr === 'Phone Call' || typeStr === 'Calls' || typeStr === 'Telephony Call') icon = '📞';
+      else if (typeStr === 'CHAT_MESSAGE' || typeStr === 'WhatsApp' || typeStr === 'WhatsApp Message') icon = '💬';
+      else if (typeStr === 'STAGE_CHANGE') icon = '💎';
+      else if (typeStr === 'Site Visit') icon = '🏡';
+      else if (typeStr === 'Meeting') icon = '🤝';
+      else if (typeStr === 'Proposal Sent') icon = '📤';
+      else if (typeStr === 'Email' || typeStr === 'Outbound Email') icon = '✉️';
+      else if (typeStr === 'Deal Closed') icon = '🎉';
+      
+      return `
+        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:10px 12px; border-radius:6px; font-size:12px; display:flex; gap:12px; align-items:flex-start; margin-bottom:8px;">
+          <div style="background:var(--gold); color:black; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;">
+            <span>${icon}</span>
           </div>
-          <div style="color:var(--text-light); margin-top:4px; line-height:1.4;">${e.description}</div>
+          <div style="flex:1;">
+            <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+              <span style="font-weight:700; color:var(--gold-l);">${typeStr}</span>
+              <span style="font-size:10px; color:var(--text-muted);">${new Date(e.created_at || e.timestamp || Date.now()).toLocaleString()}</span>
+            </div>
+            <div style="color:var(--text-light); margin-top:4px; line-height:1.4;">${e.event_description || e.description || ''}</div>
+          </div>
         </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   } catch(e) { 
     console.error(e); 
     container.innerHTML = '<div style="font-size:12px; color:var(--red); text-align:center; padding:20px;">Failed to load journey timeline.</div>';
@@ -11137,25 +11745,7 @@ window.addLeadDocument = async function() {
 };
 
 window.renderLeadDocs = function(lead) {
-  const container = document.getElementById('lead-docs-container');
-  if (!state.systemSettings.showMaskedFields) {
-    container.innerHTML = '<div style="font-size:12px; color:#f87171;"><i class="ti ti-lock"></i> Documents are locked in Employee Mode.</div>';
-    return;
-  }
-  let docs = [];
-  try { docs = JSON.parse(lead.documents || '[]'); } catch(e){}
-  
-  if (docs.length === 0) {
-    container.innerHTML = '<div style="font-size:12px; color:var(--text-muted);">No documents added for this lead.</div>';
-    return;
-  }
-  
-  container.innerHTML = docs.map(d => `
-    <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:10px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
-      <span style="font-size:13px; font-weight:700;">📄 ${d.name}</span>
-      <a href="${d.url}" target="_blank" class="btn btn-ghost btn-sm">Open Link</a>
-    </div>
-  `).join('');
+  loadLeadDocs(lead.id);
 };
 
 // ----------------------------------------------------
