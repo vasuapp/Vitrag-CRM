@@ -423,6 +423,21 @@ CREATE TABLE IF NOT EXISTS communication_templates (
         action_taken TEXT DEFAULT 'Pending Review'
       );`);
 
+      // Performance Optimization Indexes
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_leads_stage ON leads(stage);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_leads_phone ON leads(phone);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_leads_email ON leads(email);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_leads_agent_id ON leads(agent_id);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_leads_deleted_at ON leads(deleted_at) WHERE deleted_at IS NULL;');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_properties_status ON properties(status);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_properties_agent_id ON properties(agent_id);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_properties_deleted_at ON properties(deleted_at) WHERE deleted_at IS NULL;');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_interaction_logs_lead_id ON interaction_logs(lead_id);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_telephony_calls_lead_id ON telephony_calls(lead_id);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_lead_activities_lead_id ON lead_activities(lead_id);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_proposals_lead_id ON proposals(lead_id);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_lead_timeline_lead_id ON lead_timeline(lead_id);');
+
       console.log("Migration: Added new columns and indexes to properties and leads tables successfully.");
     } catch (migErr) {
       console.log("Migration skipped or failed:", migErr.message);

@@ -1013,21 +1013,100 @@ app.get('/api/leads', async (req, res) => {
     const leads = (await db.query(query, [params])).rows;
 
     // Mask sensitive fields and compute dynamic lead score (Phase 9)
-    const processedLeads = await Promise.all(leads.map(async l => {
+    // Bulk fetch aggregations to avoid N+1 queries bottleneck
+    let interactionLogsMap = {};
+    let telephonyCallsMap = {};
+    let leadActivitiesMap = {};
+    let proposalsMap = {};
+    let scorecardsMap = {};
+    let leadTimelineMap = {};
+
+    if (leads.length > 0) {
+      const leadIds = leads.map(l => l.id);
+      
+      const [
+        interactionRes,
+        telephonyRes,
+        activitiesRes,
+        proposalsRes,
+        scorecardsRes,
+        timelineRes
+      ] = await Promise.all([
+        db.pool.query(`
+          SELECT lead_id,
+                 COALESCE(SUM(CASE WHEN interaction_type IN ('Calls', 'Phone Call') THEN 1 ELSE 0 END), 0) AS calls_count,
+                 COALESCE(SUM(CASE WHEN interaction_type = 'WhatsApp' THEN 1 ELSE 0 END), 0) AS chats_count,
+                 COALESCE(SUM(CASE WHEN interaction_type = 'Site Visit' THEN 1 ELSE 0 END), 0) AS visits_count,
+                 MAX(created_at) AS max_created
+          FROM interaction_logs
+          WHERE lead_id = ANY($1)
+          GROUP BY lead_id
+        `, [leadIds]),
+        db.pool.query(`
+          SELECT lead_id,
+                 COUNT(*) AS tel_count,
+                 MAX(created_at) AS max_created
+          FROM telephony_calls
+          WHERE lead_id = ANY($1)
+          GROUP BY lead_id
+        `, [leadIds]),
+        db.pool.query(`
+          SELECT lead_id,
+                 COALESCE(SUM(CASE WHEN type = 'Site Visit' THEN 1 ELSE 0 END), 0) AS visits_count,
+                 MAX(timestamp) AS max_timestamp
+          FROM lead_activities
+          WHERE lead_id = ANY($1)
+          GROUP BY lead_id
+        `, [leadIds]),
+        db.pool.query(`
+          SELECT lead_id,
+                 COUNT(*) AS props_count
+          FROM proposals
+          WHERE lead_id = ANY($1)
+          GROUP BY lead_id
+        `, [leadIds]),
+        db.pool.query(`
+          SELECT lead_id, budget, timeline, funding, responsiveness, clarity
+          FROM lead_scorecards
+          WHERE lead_id = ANY($1)
+        `, [leadIds]),
+        db.pool.query(`
+          SELECT lead_id,
+                 MAX(created_at) AS max_created
+          FROM lead_timeline
+          WHERE lead_id = ANY($1)
+          GROUP BY lead_id
+        `, [leadIds])
+      ]);
+
+      interactionRes.rows.forEach(r => { interactionLogsMap[r.lead_id] = r; });
+      telephonyRes.rows.forEach(r => { telephonyCallsMap[r.lead_id] = r; });
+      activitiesRes.rows.forEach(r => { leadActivitiesMap[r.lead_id] = r; });
+      proposalsRes.rows.forEach(r => { proposalsMap[r.lead_id] = r; });
+      scorecardsRes.rows.forEach(r => { scorecardsMap[r.lead_id] = r; });
+      timelineRes.rows.forEach(r => { leadTimelineMap[r.lead_id] = r; });
+    }
+
+    const processedLeads = leads.map(l => {
       let score = 15; // base
       try {
-        const callsCount = (await db.query("SELECT COUNT(*) as count FROM interaction_logs WHERE lead_id = $1 AND (interaction_type = $2 OR interaction_type = $3)", [l.id, 'Calls', 'Phone Call'])).rows[0]?.count || 0;
-        const telCallsCount = (await db.query("SELECT COUNT(*) as count FROM telephony_calls WHERE lead_id = $1", [l.id])).rows[0]?.count || 0;
-        const totalCalls = parseInt(callsCount) + parseInt(telCallsCount);
+        const interactionData = interactionLogsMap[l.id] || {};
+        const telephonyData = telephonyCallsMap[l.id] || {};
+        const activitiesData = leadActivitiesMap[l.id] || {};
+        const proposalsData = proposalsMap[l.id] || {};
+        const card = scorecardsMap[l.id] || null;
 
-        const chatsCount = (await db.query("SELECT COUNT(*) as count FROM interaction_logs WHERE lead_id = $1 AND interaction_type = $2", [l.id, 'WhatsApp'])).rows[0]?.count || 0;
+        const callsCount = parseInt(interactionData.calls_count || 0);
+        const telCallsCount = parseInt(telephonyData.tel_count || 0);
+        const totalCalls = callsCount + telCallsCount;
 
-        const visitsCount = (await db.query("SELECT COUNT(*) as count FROM interaction_logs WHERE lead_id = $1 AND interaction_type = $2", [l.id, 'Site Visit'])).rows[0]?.count || 0;
-        const actVisitsCount = (await db.query("SELECT COUNT(*) as count FROM lead_activities WHERE lead_id = $1 AND type = $2", [l.id, 'Site Visit'])).rows[0]?.count || 0;
-        const totalVisits = parseInt(visitsCount) + parseInt(actVisitsCount);
+        const chatsCount = parseInt(interactionData.chats_count || 0);
 
-        const propsCount = (await db.query("SELECT COUNT(*) as count FROM proposals WHERE lead_id = $1", [l.id])).rows[0]?.count || 0;
-        const card = (await db.query("SELECT * FROM lead_scorecards WHERE lead_id = $1", [l.id])).rows[0];
+        const visitsCount = parseInt(interactionData.visits_count || 0);
+        const actVisitsCount = parseInt(activitiesData.visits_count || 0);
+        const totalVisits = visitsCount + actVisitsCount;
+
+        const propsCount = parseInt(proposalsData.props_count || 0);
 
         score += totalCalls * 15;
         score += chatsCount * 5;
@@ -1035,7 +1114,7 @@ app.get('/api/leads', async (req, res) => {
         score += propsCount * 20;
 
         if (card) {
-          score += (card.budget + card.timeline + card.funding + card.responsiveness + card.clarity) * 1.5;
+          score += (parseInt(card.budget || 0) + parseInt(card.timeline || 0) + parseInt(card.funding || 0) + parseInt(card.responsiveness || 0) + parseInt(card.clarity || 0)) * 1.5;
         }
 
         // Days Active: +2 points per day (max 20 points / 10 days)
@@ -1044,18 +1123,12 @@ app.get('/api/leads', async (req, res) => {
 
         // Age Decay based on last interaction date
         let lastDate = l.created_at ? new Date(l.created_at) : null;
-        const [maxInter, maxTele, maxAct, maxTime] = await Promise.all([
-          db.query("SELECT MAX(created_at) as val FROM interaction_logs WHERE lead_id = $1", [l.id]),
-          db.query("SELECT MAX(created_at) as val FROM telephony_calls WHERE lead_id = $1", [l.id]),
-          db.query("SELECT MAX(timestamp) as val FROM lead_activities WHERE lead_id = $1", [l.id]),
-          db.query("SELECT MAX(created_at) as val FROM lead_timeline WHERE lead_id = $1", [l.id])
-        ]);
-
+        
         const dates = [
-          maxInter.rows[0]?.val,
-          maxTele.rows[0]?.val,
-          maxAct.rows[0]?.val,
-          maxTime.rows[0]?.val
+          interactionData.max_created,
+          telephonyData.max_created,
+          activitiesData.max_timestamp,
+          leadTimelineMap[l.id]?.max_created
         ].filter(Boolean).map(v => new Date(v));
 
         if (dates.length > 0) {
@@ -1093,7 +1166,7 @@ app.get('/api/leads', async (req, res) => {
         };
       }
       return resLead;
-    }));
+    });
     res.json(processedLeads);
 
   } catch (err) {
