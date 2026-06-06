@@ -402,6 +402,27 @@ CREATE TABLE IF NOT EXISTS communication_templates (
         uploaded_by TEXT
       );`);
 
+      // New migrations for persistent branding, lead ID custom formats, and duplicate reviews
+      await pool.query(`CREATE TABLE IF NOT EXISTS system_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );`);
+      
+      await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS custom_lead_id TEXT;');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_leads_custom_lead_id ON leads(custom_lead_id);');
+
+      await pool.query(`CREATE TABLE IF NOT EXISTS duplicate_leads_audit (
+        id SERIAL PRIMARY KEY,
+        lead_name TEXT,
+        phone TEXT,
+        email TEXT,
+        source TEXT,
+        existing_lead_id INTEGER,
+        existing_lead_name TEXT,
+        detected_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        action_taken TEXT DEFAULT 'Pending Review'
+      );`);
+
       console.log("Migration: Added new columns and indexes to properties and leads tables successfully.");
     } catch (migErr) {
       console.log("Migration skipped or failed:", migErr.message);

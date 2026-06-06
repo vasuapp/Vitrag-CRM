@@ -813,7 +813,8 @@
       const wasAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 40;
 
       if (messages.length === 0) {
-        container.innerHTML = `<div style="padding:30px 10px; font-size:12px; color:var(--text-muted); text-align:center;">Secure chat thread initialized. Ask a query to advisor Vasu Jain below!</div>`;
+        const advName = systemSettingsData?.userName || 'Vasu Jain';
+        container.innerHTML = `<div style="padding:30px 10px; font-size:12px; color:var(--text-muted); text-align:center;">Secure chat thread initialized. Ask a query to advisor ${escapeHtml(advName)} below!</div>`;
         return;
       }
 
@@ -854,8 +855,53 @@
       }
     }
 
+    let systemSettingsData = null;
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    async function loadBrandingSettings() {
+      try {
+        const res = await fetch('/api/system/settings');
+        if (res.ok) {
+          systemSettingsData = await res.json();
+          const coName = systemSettingsData.coBrandName || 'Subh Homes';
+          const logoHtml = systemSettingsData.coBrandLogo ? `<img src="${systemSettingsData.coBrandLogo}" style="max-height: 28px; border-radius: 4px; vertical-align: middle; object-fit: contain;">` : `<i class="ti ti-building-skyscraper" style="color:var(--gold-l); margin-right:6px;"></i>`;
+          
+          // Login panel
+          const authTitle = document.querySelector('.auth-panel .auth-title') || document.querySelector('#auth-panel .auth-title');
+          if (authTitle) {
+            authTitle.innerHTML = `${logoHtml} ${escapeHtml(coName)} <span>Client Space</span>`;
+          }
+          // Dashboard Header
+          const brandTitle = document.querySelector('.brand-title');
+          if (brandTitle) {
+            brandTitle.innerHTML = `${logoHtml} ${escapeHtml(coName)} <span>Portal</span>`;
+          }
+          // Footer
+          const footers = document.querySelectorAll('.footer p');
+          footers.forEach(f => {
+            f.innerText = `© 2026 ${coName}. Secured via cryptographically sealed local database structures.`;
+          });
+          // Document Title
+          document.title = `Customer Deal Tracker Portal | ${coName}`;
+        }
+      } catch (e) {
+        console.error('Failed to load portal branding:', e);
+      }
+    }
+    window.addEventListener('DOMContentLoaded', loadBrandingSettings);
+
     function simulateDownload(filename) {
-      alert(`📥 Starting secure local download file link for: ${filename}.\nThis mock file is fully encrypted and served safely via REALPro vault clearance.`);
+      const coName = systemSettingsData?.coBrandName || 'Subh Homes';
+      alert(`📥 Starting secure local download file link for: ${filename}.\nThis mock file is fully encrypted and served safely via ${coName} vault clearance.`);
     }
 
     function clientLogout() {

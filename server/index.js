@@ -116,7 +116,7 @@ let systemSettings = {
   // Admin view: true, Employee view: false
   userName: 'Vasu Jain',
   userRole: 'Owner / Admin',
-  coBrandName: 'REALPro CRM',
+  coBrandName: 'Subh Homes',
   coBrandLogo: '',
   coPhone: '+91 9964985128',
   coEmail: 'vasujain@subhhomes.com',
@@ -130,6 +130,32 @@ let systemSettings = {
   bankBranch: 'IDFC FIRST BANK, KALYAN NAGAR BRANCH',
   invoiceTerms: '1. Please make the payment on or before registration\n2. Service Charges for Seller is 2% plus Gst. For Buyer is 1% plus Gst. For UC properties no Service Charge. Rental Property 1 Month\'s rent plus Gst\n3. Subject to Bangalore Jurisdiction.'
 };
+
+// Synchronize and seed settings and custom Lead IDs
+async function initSystem() {
+  try {
+    // 1. Seed/load system settings
+    for (const [key, val] of Object.entries(systemSettings)) {
+      const exists = (await db.query("SELECT value FROM system_settings WHERE key = $1", [key])).rows[0];
+      if (!exists) {
+        await db.query("INSERT INTO system_settings (key, value) VALUES ($1, $2)", [key, String(val)]);
+      } else {
+        if (key === 'showMaskedFields') {
+          systemSettings[key] = exists.value === 'true';
+        } else {
+          systemSettings[key] = exists.value;
+        }
+      }
+    }
+    
+    // 2. Backfill custom Lead IDs for leads that don't have one
+    await db.query("UPDATE leads SET custom_lead_id = 'LD-' || (1000 + id) WHERE custom_lead_id IS NULL;");
+    console.log("System settings and custom Lead IDs initialized successfully.");
+  } catch (err) {
+    console.error("Failed to initialize system settings/Lead IDs:", err);
+  }
+}
+initSystem();
 
 // Helper functions for parsing agent sessions and checking permissions (RBAC)
 function getRequestUser(req) {
@@ -181,48 +207,52 @@ function maskProperty(l, user) {
 // 1. SYSTEM SETTINGS API
 // ----------------------------------------------------
 app.get('/api/system/settings', async (req, res) => {
-  res.json(systemSettings);
+  try {
+    const rows = (await db.query("SELECT * FROM system_settings")).rows;
+    const settings = { ...systemSettings };
+    rows.forEach(r => {
+      if (r.key === 'showMaskedFields') {
+        settings[r.key] = r.value === 'true';
+      } else {
+        settings[r.key] = r.value;
+      }
+    });
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
+
 app.post('/api/system/settings', async (req, res) => {
   try {
-    const {
-      userName,
-      userRole,
-      showMaskedFields,
-      coBrandName,
-      coBrandLogo,
-      coPhone,
-      coEmail,
-      coAddress,
-      coRera,
-      coGstin,
-      bankName,
-      bankAccount,
-      bankIfsc,
-      bankType,
-      bankBranch,
-      invoiceTerms
-    } = req.body;
-    systemSettings.userName = userName || systemSettings.userName;
-    systemSettings.userRole = userRole || systemSettings.userRole;
-    if (showMaskedFields !== undefined) {
-      systemSettings.showMaskedFields = showMaskedFields;
+    const updates = req.body;
+    for (const [key, val] of Object.entries(updates)) {
+      if (val !== undefined) {
+        await db.query(`
+          INSERT INTO system_settings (key, value)
+          VALUES ($1, $2)
+          ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+        `, [key, String(val)]);
+        
+        // Also update local cache
+        if (key === 'showMaskedFields') {
+          systemSettings[key] = String(val) === 'true';
+        } else {
+          systemSettings[key] = String(val);
+        }
+      }
     }
-    if (coBrandName !== undefined) systemSettings.coBrandName = coBrandName;
-    if (coBrandLogo !== undefined) systemSettings.coBrandLogo = coBrandLogo;
-    if (coPhone !== undefined) systemSettings.coPhone = coPhone;
-    if (coEmail !== undefined) systemSettings.coEmail = coEmail;
-    if (coAddress !== undefined) systemSettings.coAddress = coAddress;
-    if (coRera !== undefined) systemSettings.coRera = coRera;
-    if (coGstin !== undefined) systemSettings.coGstin = coGstin;
-    if (bankName !== undefined) systemSettings.bankName = bankName;
-    if (bankAccount !== undefined) systemSettings.bankAccount = bankAccount;
-    if (bankIfsc !== undefined) systemSettings.bankIfsc = bankIfsc;
-    if (bankType !== undefined) systemSettings.bankType = bankType;
-    if (bankBranch !== undefined) systemSettings.bankBranch = bankBranch;
-    if (invoiceTerms !== undefined) systemSettings.invoiceTerms = invoiceTerms;
-    res.json(systemSettings);
-
+    // Return unified configuration
+    const rows = (await db.query("SELECT * FROM system_settings")).rows;
+    const settings = { ...systemSettings };
+    rows.forEach(r => {
+      if (r.key === 'showMaskedFields') {
+        settings[r.key] = r.value === 'true';
+      } else {
+        settings[r.key] = r.value;
+      }
+    });
+    res.json(settings);
   } catch (err) {
     res.status(500).json({
       error: err.message
@@ -610,6 +640,21 @@ app.post('/api/import-mapped/:table', async (req, res) => {
     try {
       await db.query('BEGIN');
       for (const recordObj of data) {
+        if (table === 'leads') {
+          const rawPhone = recordObj.phone;
+          if (rawPhone && String(rawPhone).trim() !== '') {
+            const cleanPhone = String(rawPhone).trim();
+            const existing = (await db.query("SELECT id, name FROM leads WHERE phone = $1 AND deleted_at IS NULL", [cleanPhone])).rows[0];
+            if (existing) {
+              await db.query(`
+                INSERT INTO duplicate_leads_audit (lead_name, phone, email, source, existing_lead_id, existing_lead_name, action_taken)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+              `, [recordObj.name || 'Unnamed Imported Lead', cleanPhone, recordObj.email || '', recordObj.source || 'Bulk Import', existing.id, existing.name, 'Pending Review (Import Collision)']);
+              continue; // Skip active insert
+            }
+          }
+        }
+
         const activeCols = [];
         const activeValues = [];
         
@@ -629,7 +674,14 @@ app.post('/api/import-mapped/:table', async (req, res) => {
             VALUES (${activeCols.map((_, idx) => '$' + (idx + 1)).join(', ')})
             RETURNING id
           `;
-          await db.query(q, activeValues);
+          const resInsert = await db.query(q, activeValues);
+          const insertedId = resInsert.rows[0].id;
+          
+          if (table === 'leads') {
+            const customLeadId = `IMP-${1000 + insertedId}`;
+            await db.query(`UPDATE leads SET custom_lead_id = $1 WHERE id = $2`, [customLeadId, insertedId]);
+          }
+          
           importCount++;
         }
       }
@@ -1130,22 +1182,49 @@ app.post('/api/leads', async (req, res) => {
       documents,
       admin_comments,
       property_requirement,
-      associate_id
+      associate_id,
+      agent_id
     } = req.body;
 
     // Duplicate Phone Detection
-    if (phone && phone.trim() !== '' && req.query.force !== 'true') {
+    if (phone && phone.trim() !== '') {
       const existing = (await db.query("SELECT id, name FROM leads WHERE phone = $1 AND deleted_at IS NULL", [phone.trim()])).rows[0];
       if (existing) {
-        return res.status(409).json({
-          error: `Duplicate Mobile Number! This number is already registered under the lead "${existing.name}".`,
-          existingId: existing.id
-        });
+        if (req.query.force !== 'true') {
+          // Log manual block audit
+          await db.query(`
+            INSERT INTO duplicate_leads_audit (lead_name, phone, email, source, existing_lead_id, existing_lead_name, action_taken)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+          `, [name, phone.trim(), email || '', source || 'Manual Add', existing.id, existing.name, 'Blocked (Manual Add)']);
+          
+          return res.status(409).json({
+            error: `Duplicate Mobile Number! This number is already registered under the lead "${existing.name}".`,
+            existingId: existing.id
+          });
+        } else {
+          // Log manual bypass audit
+          await db.query(`
+            INSERT INTO duplicate_leads_audit (lead_name, phone, email, source, existing_lead_id, existing_lead_name, action_taken)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+          `, [name, phone.trim(), email || '', source || 'Manual Add', existing.id, existing.name, 'Bypassed (Manual Add)']);
+        }
       }
     }
 
-    // Auto Assignment logic
-    const assignment = await assignLeadToAgent(notes, location_preference || '');
+    // Manual Agent Assignment vs Auto-routing
+    let assignment = { id: null, name: 'Unassigned' };
+    if (agent_id !== undefined && agent_id !== null && agent_id !== '') {
+      const selectedAgent = (await db.query("SELECT id, name FROM agents WHERE id = $1", [parseInt(agent_id)])).rows[0];
+      if (selectedAgent) {
+        assignment = { id: selectedAgent.id, name: selectedAgent.name };
+        // Increment agent lead count
+        await db.query("UPDATE agents SET leads_assigned = leads_assigned + 1 WHERE id = $1", [selectedAgent.id]);
+      } else {
+        assignment = await assignLeadToAgent(notes, location_preference || '');
+      }
+    } else {
+      assignment = await assignLeadToAgent(notes, location_preference || '');
+    }
 
     // Calculate initial rental expiry if rental
     let rental_expiry = '';
@@ -1164,8 +1243,14 @@ app.post('/api/leads', async (req, res) => {
         changes: r.rowCount
       };
     })();
+
+    const leadId = info.lastInsertRowid;
+    const customLeadId = `LD-${1000 + leadId}`;
+    await db.query(`UPDATE leads SET custom_lead_id = $1 WHERE id = $2`, [customLeadId, leadId]);
+
     res.json({
-      id: info.lastInsertRowid,
+      id: leadId,
+      custom_lead_id: customLeadId,
       ...req.body,
       agent_id: assignment.id,
       agent_name: assignment.name,
@@ -1203,22 +1288,40 @@ app.put('/api/leads/:id', async (req, res) => {
       lead_score,
       admin_comments,
       property_requirement,
-      associate_id
+      associate_id,
+      agent_id
     } = req.body;
-    await (async () => {
-      const r = await db.query(`
+
+    const currentLead = (await db.query("SELECT agent_id, agent_name FROM leads WHERE id = $1", [req.params.id])).rows[0];
+    let finalAgentId = currentLead ? currentLead.agent_id : null;
+    let finalAgentName = currentLead ? currentLead.agent_name : 'Unassigned';
+
+    if (agent_id !== undefined && agent_id !== null && agent_id !== '') {
+      const numericAgentId = parseInt(agent_id);
+      if (!currentLead || currentLead.agent_id !== numericAgentId) {
+        const selectedAgent = (await db.query("SELECT id, name FROM agents WHERE id = $1", [numericAgentId])).rows[0];
+        if (selectedAgent) {
+          finalAgentId = selectedAgent.id;
+          finalAgentName = selectedAgent.name;
+          await db.query("UPDATE agents SET leads_assigned = leads_assigned + 1 WHERE id = $1", [selectedAgent.id]);
+        }
+      }
+    } else if (agent_id === null || agent_id === '') {
+      finalAgentId = null;
+      finalAgentName = 'Unassigned';
+    }
+
+    await db.query(`
       UPDATE leads
-      SET name = $1, phone = $2, email = $3, source = $4, status = $5, stage = $6, project_type = $7, budget_min = $8, budget_max = $9, notes = $10, next_followup = $11, followup_status = $12, touchpoint = $13, location_preference = $14, config_bhk = $15, timeline_preference = $16, special_tags = $17, documents = $18, rental_expiry_date = $19, lead_score = $20, admin_comments = $21, property_requirement = $22, associate_id = $23
-      WHERE id = $24
-    `, [name, phone, email, source, status, stage, project_type, budget_min, budget_max, notes, next_followup, followup_status || 'None', touchpoint || 'Calls', location_preference, config_bhk, timeline_preference, special_tags, JSON.stringify(documents || []), rental_expiry_date || '', lead_score || 0, admin_comments || '', property_requirement || '', associate_id ? parseInt(associate_id) : null, req.params.id]);
-      return {
-        lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
-        changes: r.rowCount
-      };
-    })();
+      SET name = $1, phone = $2, email = $3, source = $4, status = $5, stage = $6, project_type = $7, budget_min = $8, budget_max = $9, notes = $10, next_followup = $11, followup_status = $12, touchpoint = $13, location_preference = $14, config_bhk = $15, timeline_preference = $16, special_tags = $17, documents = $18, rental_expiry_date = $19, lead_score = $20, admin_comments = $21, property_requirement = $22, associate_id = $23, agent_id = $24, agent_name = $25
+      WHERE id = $26
+    `, [name, phone, email, source, status, stage, project_type, budget_min, budget_max, notes, next_followup, followup_status || 'None', touchpoint || 'Calls', location_preference, config_bhk, timeline_preference, special_tags, JSON.stringify(documents || []), rental_expiry_date || '', lead_score || 0, admin_comments || '', property_requirement || '', associate_id ? parseInt(associate_id) : null, finalAgentId, finalAgentName, req.params.id]);
+
     res.json({
       id: req.params.id,
-      ...req.body
+      ...req.body,
+      agent_id: finalAgentId,
+      agent_name: finalAgentName
     });
   } catch (err) {
     res.status(500).json({
@@ -3994,10 +4097,10 @@ app.post('/api/proposals', async (req, res) => {
         return { lastInsertRowid: r.rows[0] ? r.rows[0].id : null, changes: r.rowCount };
    }};
 
-    property_ids.forEach(propId => {
+    for (const propId of property_ids) {
       const comment = agent_comments && agent_comments[propId] || '';
-      insertItem.run(proposalId, propId, comment);
-    });
+      await insertItem.run(proposalId, propId, comment);
+    }
 
     // Also insert a log inside lead interaction log
     const lead = (await db.query("SELECT name, notes FROM leads WHERE id = $1", [lead_id])).rows[0];
@@ -4161,7 +4264,8 @@ app.get('/api/public/proposals/:token', async (req, res) => {
     }));
     res.json({
       proposal,
-      properties: sanitizedProperties
+      properties: sanitizedProperties,
+      settings: systemSettings
     });
   } catch (err) {
     res.status(500).json({
@@ -4226,6 +4330,71 @@ app.post('/api/public/proposals/:token/respond', async (req, res) => {
     res.status(500).json({
       error: err.message
     });
+  }
+});
+
+// Duplicates Audit API: Get log
+app.get('/api/duplicate-leads-audit', async (req, res) => {
+  try {
+    const logs = (await db.query("SELECT * FROM duplicate_leads_audit ORDER BY id DESC")).rows;
+    res.json(logs);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Duplicates Audit API: Resolve Log
+app.post('/api/duplicate-leads-audit/resolve/:id', async (req, res) => {
+  try {
+    const { action } = req.body;
+    const auditId = req.params.id;
+    const log = (await db.query("SELECT * FROM duplicate_leads_audit WHERE id = $1", [auditId])).rows[0];
+    if (!log) {
+      return res.status(404).json({ error: "Audit log not found." });
+    }
+
+    if (action === 'dismiss') {
+      await db.query("UPDATE duplicate_leads_audit SET action_taken = 'Resolved (Dismissed)' WHERE id = $1", [auditId]);
+      return res.json({ success: true, message: "Duplicate record dismissed successfully." });
+    }
+
+    if (action === 'dismiss-delete') {
+      await db.query("DELETE FROM duplicate_leads_audit WHERE id = $1", [auditId]);
+      return res.json({ success: true, message: "Duplicate audit record deleted." });
+    }
+
+    if (action === 'merge') {
+      // Append notes to the existing lead
+      const existing = (await db.query("SELECT notes FROM leads WHERE id = $1", [log.existing_lead_id])).rows[0];
+      if (existing) {
+        const todayStr = new Date().toLocaleString();
+        const mergedNotes = `[🔗 Duplicate Merged - ${todayStr}]\n- Name: ${log.lead_name}\n- Source: ${log.source}\n- Email: ${log.email}\n-----------------------\n` + (existing.notes || '');
+        await db.query("UPDATE leads SET notes = $1 WHERE id = $2", [mergedNotes, log.existing_lead_id]);
+      }
+      await db.query("UPDATE duplicate_leads_audit SET action_taken = 'Resolved (Merged)' WHERE id = $1", [auditId]);
+      return res.json({ success: true, message: "Notes merged into existing lead successfully." });
+    }
+
+    if (action === 'allow') {
+      // Auto assign
+      const assignment = await assignLeadToAgent('', '');
+      const r = await db.query(`
+        INSERT INTO leads (name, phone, email, source, status, stage, project_type, budget_min, budget_max, notes, next_followup, followup_status, touchpoint, location_preference, config_bhk, timeline_preference, special_tags, documents, agent_id, agent_name, rental_expiry_date)
+        VALUES ($1, $2, $3, $4, 'Warm', 'New', 'Residential', 0, 0, 'Import duplicate allowed override.', '', 'None', 'Calls', '', '', '', 'Imported', '[]', $5, $6, '')
+        RETURNING id
+      `, [log.lead_name, log.phone, log.email, log.source, assignment.id, assignment.name]);
+      
+      const leadId = r.rows[0].id;
+      const customLeadId = `IMP-${1000 + leadId}`;
+      await db.query(`UPDATE leads SET custom_lead_id = $1 WHERE id = $2`, [customLeadId, leadId]);
+      
+      await db.query("UPDATE duplicate_leads_audit SET action_taken = 'Resolved (Allowed)' WHERE id = $1", [auditId]);
+      return res.json({ success: true, message: "Lead imported successfully with ID: " + customLeadId });
+    }
+
+    res.status(400).json({ error: "Invalid action." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -5110,8 +5279,61 @@ app.post('/api/proposals/generate-pitch', async (req, res) => {
     if (!lead) return res.status(404).json({
       error: "Lead not found."
     });
-    const placeholders = property_ids.map(() => '?').join(',');
-    const properties = (await db.query(`SELECT * FROM properties WHERE id IN (${placeholders})`, [...property_ids])).rows;
+    
+    // Check if a proposal already exists for this lead with these properties
+    let token = null;
+    const existingProposals = (await db.query(`
+      SELECT p.token, p.id FROM proposals p
+      WHERE p.lead_id = $1
+      ORDER BY p.id DESC
+    `, [lead_id])).rows;
+    
+    for (const ep of existingProposals) {
+      const epItems = (await db.query(`
+        SELECT property_id FROM proposal_items WHERE proposal_id = $1
+      `, [ep.id])).rows.map(item => item.property_id);
+      
+      // Compare arrays
+      if (epItems.length === property_ids.length && epItems.every(id => property_ids.includes(id))) {
+        token = ep.token;
+        break;
+      }
+    }
+
+    // Generate on-the-fly proposal if not found
+    if (!token) {
+      const crypto = require('crypto');
+      token = crypto.randomBytes(16).toString('hex');
+      const title = 'Curated Property Shortlist';
+      const intro_message = 'Please review the properties chosen below.';
+      
+      const insertRes = await db.query(`
+        INSERT INTO proposals (token, lead_id, title, intro_message)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id
+      `, [token, lead_id, title, intro_message]);
+      
+      const proposalId = insertRes.rows[0].id;
+      for (const propId of property_ids) {
+        await db.query(`
+          INSERT INTO proposal_items (proposal_id, property_id, agent_comments)
+          VALUES ($1, $2, $3)
+        `, [proposalId, propId, '']);
+      }
+      
+      // Log in lead timeline/notes
+      const todayStr = new Date().toLocaleString();
+      const updatedNotes = `[📢 Proposal Sent - ${todayStr}]\nCurated a portfolio of ${property_ids.length} properties. Access Token: ${token}\n-----------------------\n` + (lead.notes || '');
+      await db.query("UPDATE leads SET notes = $1 WHERE id = $2", [updatedNotes, lead_id]);
+    }
+
+    const host = req.get('host') || 'localhost:5001';
+    const protocol = req.protocol || 'http';
+    const origin = `${protocol}://${host}`;
+
+    const placeholders = property_ids.map((_, idx) => '$' + (idx + 1)).join(',');
+    const properties = (await db.query(`SELECT * FROM properties WHERE id IN (${placeholders})`, property_ids)).rows;
+    
     let pitch = `🏠 *PREMIUM PROPERTY PORTFOLIO FOR ${lead.name.toUpperCase()}* 🏠\n\n`;
     pitch += `Hi ${lead.name}, hope you are doing well!\nBased on your specific requirements, I have curated these exclusive premium residential options for you:\n\n`;
     properties.forEach((p, idx) => {
@@ -5123,16 +5345,31 @@ app.post('/api/proposals/generate-pitch', async (req, res) => {
       if (p.amenities) pitch += `✨ *Amenities*: ${p.amenities.substring(0, 75)}...\n`;
       pitch += `\n`;
     });
+    
     pitch += `🔗 *Interactive Proposal Showroom Link*:\n`;
-    pitch += `http://localhost:5001/client-portal\n\n`;
-    pitch += `📞 *Vasu Jain | REALPro CRM*\n`;
-    pitch += `Luxury Real Estate Advisor\n`;
-    pitch += `📱 +91 99454 03202 | ✉️ vasu@realpro.com\n`;
+    pitch += `${origin}/proposal/${token}\n\n`;
+    
+    // Get branding settings
+    const rows = (await db.query("SELECT * FROM system_settings")).rows;
+    const settings = { ...systemSettings };
+    rows.forEach(r => {
+      if (r.key === 'showMaskedFields') {
+        settings[r.key] = r.value === 'true';
+      } else {
+        settings[r.key] = r.value;
+      }
+    });
+
+    pitch += `📞 *${settings.userName} | ${settings.coBrandName}*\n`;
+    pitch += `${settings.userRole || 'Luxury Real Estate Advisor'}\n`;
+    pitch += `📱 ${settings.coPhone} | ✉️ ${settings.coEmail}\n`;
     pitch += `-------------------------------------------\n`;
     pitch += `*(Direct owner details and direct unit numbers are stripped automatically for secure client sharing)*`;
+    
     res.json({
       success: true,
-      pitch
+      pitch,
+      token
     });
   } catch (err) {
     res.status(500).json({

@@ -889,6 +889,11 @@ async function initApp() {
     initDropdownOptionsConfig();
   } catch (e) { console.error('initDropdownOptionsConfig failed', e); }
 
+  // Populate dynamic agent dropdown selects
+  try {
+    await populateAllAgentSelects();
+  } catch (e) { console.error('populateAllAgentSelects failed', e); }
+
   // Dynamic inline add custom dropdown change event listener
   document.body.addEventListener('change', function(e) {
     if (e.target && e.target.tagName === 'SELECT' && e.target.value === '__ADD_CUSTOM__') {
@@ -1055,7 +1060,8 @@ function navToPage(pageId) {
     invoices: 'Tax Invoices',
     social: 'Social Campaigns',
     reports: 'Performance Reports',
-    documents: 'Document Vault'
+    documents: 'Document Vault',
+    'duplicates-audit': 'Duplicates Review Audit'
   };
   document.getElementById('page-header-title').innerText = titles[pageId] || 'REALPro CRM';
 
@@ -1084,6 +1090,9 @@ function navToPage(pageId) {
   else if (pageId === 'analytics') {
     if (typeof loadTelephonyAnalytics === 'function') loadTelephonyAnalytics();
     if (typeof loadGTMAnalyticsDashboard === 'function') loadGTMAnalyticsDashboard();
+  }
+  else if (pageId === 'duplicates-audit') {
+    loadDuplicateAuditLogs();
   }
 }
 
@@ -4098,7 +4107,8 @@ async function submitCaptureLead(e) {
     config_bhk: document.getElementById('lead-config').value,
     timeline_preference: document.getElementById('lead-timeline').value,
     property_requirement: document.getElementById('lead-requirement').value,
-    associate_id: document.getElementById('lead-associate').value || null
+    associate_id: document.getElementById('lead-associate').value || null,
+    agent_id: document.getElementById('lead-agent').value || null
   };
 
   try {
@@ -4177,6 +4187,11 @@ window.editLeadData = async function(id) {
     const assocSelect = document.getElementById('edit-lead-associate');
     if (assocSelect) {
       assocSelect.value = lead.associate_id || '';
+    }
+
+    const agentSelect = document.getElementById('edit-lead-agent');
+    if (agentSelect) {
+      agentSelect.value = lead.agent_id || '';
     }
 
     const modalTitle = document.querySelector('#modal-edit-lead .mtitle');
@@ -4259,7 +4274,8 @@ window.submitEditLead = async function(e) {
     config_bhk: document.getElementById('edit-lead-config').value,
     timeline_preference: document.getElementById('edit-lead-timeline').value,
     property_requirement: document.getElementById('edit-lead-requirement').value,
-    associate_id: document.getElementById('edit-lead-associate').value || null
+    associate_id: document.getElementById('edit-lead-associate').value || null,
+    agent_id: document.getElementById('edit-lead-agent').value || null
   };
 
   try {
@@ -4515,7 +4531,10 @@ async function loadEnquiries() {
               <tr>
                 <td><input type="checkbox" class="row-checkbox-leads" value="${l.id}" onchange="updateBulkSelectionState('leads')"></td>
                 <td>
-                  <strong style="cursor:pointer; text-decoration:underline;" onclick="showLeadDetails(${l.id})">${l.name}</strong><br>
+                  <div style="display:flex; align-items:center; gap:6px; margin-bottom: 2px;">
+                    <span style="font-size:9.5px; font-weight:700; color:var(--gold-l); background:rgba(201, 153, 26, 0.1); border: 0.5px solid rgba(201,153,26,0.2); padding:1px 4.5px; border-radius:3px; font-family:monospace;">${l.custom_lead_id || ('LD-' + (1000 + l.id))}</span>
+                    <strong style="cursor:pointer; text-decoration:underline;" onclick="showLeadDetails(${l.id})">${l.name}</strong>
+                  </div>
                   ${showCol('leads', 'phone') ? `<span style="font-size:10px; color:var(--text-muted)">${l.phone || ''}${l.email ? ' / ' + l.email : ''}</span>` : ''}
                   <span onclick="triggerClickToCall(${l.id}, '${l.name.replace(/'/g, "\\'")}', '${l.phone}')" style="cursor:pointer; color:var(--gold-l); font-size:11px; margin-left:4px;" title="Click-to-Call"><i class="ti ti-phone"></i></span>
                   ${l.agent_name && !showCol('leads', 'agent') ? `<br><span class="badge" style="background:rgba(201, 153, 26, 0.08); color:var(--gold-l); font-size:9px; padding:1.5px 5px; font-weight:700; margin-top:4px; display:inline-block;"><i class="ti ti-user"></i> ${l.agent_name}</span>` : ''}
@@ -7530,8 +7549,7 @@ function renderMappingUI(data, headers) {
   csvHeaders.forEach((header, index) => {
     let options = '<option value="">-- Ignore Column --</option>';
     dbColumns.forEach(col => {
-      const isMatch = col.val.toLowerCase() === header.toLowerCase() || header.toLowerCase().includes(col.val.toLowerCase());
-      options += `<option value="${col.val}" ${isMatch ? 'selected' : ''}>${col.label}</option>`;
+      options += `<option value="${col.val}">${col.label}</option>`;
     });
 
     tbody.innerHTML += `
@@ -7570,16 +7588,61 @@ window.submitMappedCSV = async () => {
     return;
   }
 
+  const mappedColumns = Object.values(mapping);
+  if (targetTable === 'leads') {
+    if (!mappedColumns.includes('name')) {
+      showToast('Validation Error: The Name field is mandatory for import.');
+      return;
+    }
+    if (!mappedColumns.includes('phone') && !mappedColumns.includes('email')) {
+      showToast('Validation Error: Phone Number and/or Email ID must be mapped.');
+      return;
+    }
+  }
+
   const defaultsStr = document.getElementById('import-target-table').getAttribute('data-defaults');
   let defaults = {};
   if (defaultsStr) {
     try { defaults = JSON.parse(defaultsStr); } catch(e) {}
   }
 
+  const todayStr = new Date().toISOString().split('T')[0];
+  let customTag = '';
+  if (targetTable === 'leads') {
+    const tagInput = document.getElementById('import-lead-tag');
+    customTag = tagInput ? tagInput.value.trim() : '';
+  }
+
   const mappedData = parsedCSVData.map(row => {
     const newRow = { ...defaults };
     for (const [csvHeader, dbColumn] of Object.entries(mapping)) {
-      newRow[dbColumn] = row[csvHeader];
+      const cellValue = row[csvHeader] ? String(row[csvHeader]).trim() : '';
+      if (cellValue) {
+        if (newRow[dbColumn]) {
+          if (dbColumn === 'phone' || dbColumn === 'email') {
+            newRow[dbColumn] = newRow[dbColumn] + ', ' + cellValue;
+          } else {
+            newRow[dbColumn] = cellValue;
+          }
+        } else {
+          newRow[dbColumn] = cellValue;
+        }
+      }
+    }
+
+    if (targetTable === 'leads') {
+      newRow.source = `Import: ${customTag || 'Unspecified'} (${todayStr})`;
+      
+      let tagsList = [];
+      if (newRow.special_tags) {
+        tagsList = newRow.special_tags.split(',').map(t => t.trim()).filter(Boolean);
+      }
+      if (customTag) {
+        tagsList.push(customTag);
+      }
+      tagsList.push('Imported');
+      tagsList.push(`Import-${todayStr}`);
+      newRow.special_tags = tagsList.join(', ');
     }
     return newRow;
   });
@@ -8879,7 +8942,7 @@ async function loadProposalsConsole() {
     
     if (leadSelect) {
       leadSelect.innerHTML = '<option value="">-- Choose active client from leads --</option>' + 
-        leads.map(l => `<option value="${l.id}">${l.name} (${l.phone})</option>`).join('');
+        leads.map(l => `<option value="${l.id}" data-phone="${l.phone || ''}" data-email="${l.email || ''}">${l.name} (${l.phone})</option>`).join('');
     }
 
     // 2. Fetch properties and populate checklist
@@ -8892,11 +8955,16 @@ async function loadProposalsConsole() {
         checklist.innerHTML = '<div style="font-size:11px; color:var(--text-muted);">No properties registered in database.</div>';
       } else {
         checklist.innerHTML = properties.map(pr => `
-          <div style="display:flex; align-items:center; gap:8px; padding: 4px 0; border-bottom: 0.5px solid rgba(255,255,255,0.03);">
-            <input type="checkbox" name="proposal-prop-check" value="${pr.id}" id="check-prop-${pr.id}">
-            <label for="check-prop-${pr.id}" style="font-size:12px; cursor:pointer;">
-              <strong>${pr.society}</strong> (${pr.configuration || 'Config N/A'}) in ${pr.location} — <span style="color:var(--green)">${pr.price_raw}</span>
-            </label>
+          <div style="display:flex; flex-direction:column; gap:4px; padding: 8px 0; border-bottom: 0.5px solid rgba(255,255,255,0.05);">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <input type="checkbox" name="proposal-prop-check" value="${pr.id}" id="check-prop-${pr.id}" onchange="document.getElementById('comment-box-${pr.id}').style.display = this.checked ? 'block' : 'none'">
+              <label for="check-prop-${pr.id}" style="font-size:12px; cursor:pointer; font-weight: 600;">
+                <strong>${pr.society}</strong> (${pr.configuration || 'Config N/A'}) in ${pr.location} — <span style="color:var(--green)">${pr.price_raw}</span>
+              </label>
+            </div>
+            <div id="comment-box-${pr.id}" style="display:none; padding-left: 22px; margin-top: 4px;">
+              <input type="text" class="form-input" id="prop-comment-${pr.id}" placeholder="Add private recommendation comments for client..." style="font-size:11px; padding:4px 8px; height:24px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05);">
+            </div>
           </div>
         `).join('');
       }
@@ -8960,11 +9028,19 @@ window.submitCreateProposal = async function(event) {
     return;
   }
 
+  const agentComments = {};
+  propertyIds.forEach(id => {
+    const el = document.getElementById(`prop-comment-${id}`);
+    if (el) {
+      agentComments[id] = el.value.trim();
+    }
+  });
+
   try {
     const response = await fetch('/api/proposals', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ lead_id: leadId, title, intro_message: introMessage, property_ids: propertyIds })
+      body: JSON.stringify({ lead_id: leadId, title, intro_message: introMessage, property_ids: propertyIds, agent_comments: agentComments })
     });
 
     const result = await response.json();
@@ -9204,6 +9280,11 @@ async function showLeadDetails(leadId) {
     if (!lead) return;
 
     document.getElementById('detail-lead-name').innerText = lead.name;
+    const customLeadIdEl = document.getElementById('detail-custom-lead-id');
+    if (customLeadIdEl) {
+      customLeadIdEl.innerText = lead.custom_lead_id || `LD-${1000 + lead.id}`;
+      customLeadIdEl.style.display = 'inline-block';
+    }
     document.getElementById('detail-lead-temp').innerText = lead.status;
     document.getElementById('detail-lead-temp').className = `badge ${lead.status === 'Hot' ? 'badge-red' : lead.status === 'Cold' ? 'badge-blue' : 'badge-amber'}`;
     
@@ -10225,7 +10306,23 @@ window.shareAIPitchWhatsApp = function() {
     showToast('Compile a pitch copy first.');
     return;
   }
-  const cleanPhone = "+919945403202"; 
+  const leadSelect = document.getElementById('proposal-lead-select');
+  let cleanPhone = "";
+  if (leadSelect && leadSelect.selectedIndex > 0) {
+    const opt = leadSelect.options[leadSelect.selectedIndex];
+    cleanPhone = opt.getAttribute('data-phone') || '';
+  }
+  if (cleanPhone) {
+    if (cleanPhone.includes(',')) {
+      cleanPhone = cleanPhone.split(',')[0].trim();
+    }
+    cleanPhone = cleanPhone.replace(/[^0-9+]/g, '');
+    if (!cleanPhone.startsWith('+') && cleanPhone.length === 10) {
+      cleanPhone = '+91' + cleanPhone;
+    }
+  } else {
+    cleanPhone = "+919945403202";
+  }
   const url = `https://api.whatsapp.com/send?phone=${encodeURIComponent(cleanPhone)}&text=${encodeURIComponent(pitch)}`;
   window.open(url, '_blank');
   showToast('Launching WhatsApp Outbound Channel...');
@@ -10237,7 +10334,20 @@ window.shareAIPitchEmail = function() {
     showToast('Compile a pitch copy first.');
     return;
   }
-  const mailUrl = `mailto:client@gmail.com?subject=Premium Property Portfolio Shortlist Selection&body=${encodeURIComponent(pitch)}`;
+  const leadSelect = document.getElementById('proposal-lead-select');
+  let email = "";
+  if (leadSelect && leadSelect.selectedIndex > 0) {
+    const opt = leadSelect.options[leadSelect.selectedIndex];
+    email = opt.getAttribute('data-email') || '';
+  }
+  if (email) {
+    if (email.includes(',')) {
+      email = email.split(',')[0].trim();
+    }
+  } else {
+    email = "client@gmail.com";
+  }
+  const mailUrl = `mailto:${encodeURIComponent(email)}?subject=Premium Property Portfolio Shortlist Selection&body=${encodeURIComponent(pitch)}`;
   window.open(mailUrl, '_blank');
   showToast('Launching Email Outbound Client Pitch...');
 };
@@ -14236,4 +14346,120 @@ async function loadTodayActivityFeed() {
   }
 }
 window.loadTodayActivityFeed = loadTodayActivityFeed;
+
+async function loadDuplicateAuditLogs() {
+  try {
+    const res = await fetch('/api/duplicate-leads-audit');
+    const logs = await res.json();
+    const pendingLogs = logs.filter(log => log.action_taken === 'Pending Review' || log.action_taken.toLowerCase().includes('pending'));
+    const pendingCountEl = document.getElementById('dup-audit-pending-count');
+    if (pendingCountEl) {
+      pendingCountEl.innerText = `${pendingLogs.length} Pending Review`;
+    }
+    const tbody = document.getElementById('duplicate-audit-list');
+    if (!tbody) return;
+    if (logs.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" class="empty">No duplicate lead audit logs recorded.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = logs.map(log => {
+      let statusClass = 'chip-warm';
+      if (log.action_taken.includes('Merged') || log.action_taken.includes('Allowed')) {
+        statusClass = 'chip-green';
+      } else if (log.action_taken.includes('Dismissed') || log.action_taken.includes('Deleted')) {
+        statusClass = 'chip-cold';
+      }
+      const isPending = log.action_taken === 'Pending Review' || log.action_taken.toLowerCase().includes('pending');
+      const actionButtons = isPending ? `
+        <div style="display:flex; gap:6px;">
+          <button class="btn btn-sm" style="background:var(--green); color:#fff; font-size:11px; padding:3px 8px;" onclick="resolveDuplicateLead(${log.id}, 'allow')"><i class="ti ti-check"></i> Allow Import</button>
+          <button class="btn btn-sm" style="background:var(--gold); color:#000; font-size:11px; padding:3px 8px;" onclick="resolveDuplicateLead(${log.id}, 'merge')"><i class="ti ti-git-merge"></i> Merge Notes</button>
+          <button class="btn btn-sm btn-ghost" style="color:var(--text-muted); font-size:11px; padding:3px 8px;" onclick="resolveDuplicateLead(${log.id}, 'dismiss')">✕ Dismiss</button>
+        </div>
+      ` : `
+        <button class="btn btn-ghost btn-sm" style="color:var(--red); font-size:11px; padding:2px 6px;" onclick="resolveDuplicateLead(${log.id}, 'dismiss-delete')"><i class="ti ti-trash"></i> Delete Log</button>
+      `;
+      const dateStr = log.detected_at ? new Date(log.detected_at).toLocaleString() : 'N/A';
+      return `
+        <tr>
+          <td style="padding: 12px 8px; border-bottom: 1px solid var(--border);">
+            <strong>${log.lead_name}</strong><br>
+            <span style="font-size:11px; color:var(--text-muted)">📱 ${log.phone || 'N/A'} | ✉️ ${log.email || 'N/A'}</span><br>
+            <span style="font-size:10px; color:var(--gold)">Source: ${log.source || 'N/A'}</span><br>
+            <span style="font-size:9.5px; color:var(--text-muted)">Detected: ${dateStr}</span>
+          </td>
+          <td style="padding: 12px 8px; border-bottom: 1px solid var(--border);">
+            ${log.existing_lead_id ? `
+              <strong style="cursor:pointer; text-decoration:underline; color:var(--gold);" onclick="showLeadDetails(${log.existing_lead_id})">${log.existing_lead_name || 'View Lead'}</strong><br>
+              <span style="font-size:10px; color:var(--text-muted)">ID: LD-${1000 + log.existing_lead_id}</span>
+            ` : `<span style="color:var(--text-muted)">No longer exists</span>`}
+          </td>
+          <td style="padding: 12px 8px; border-bottom: 1px solid var(--border);">
+            <span class="chip ${statusClass}">${log.action_taken}</span>
+          </td>
+          <td style="padding: 12px 8px; border-bottom: 1px solid var(--border);">
+            ${actionButtons}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Failed to load duplicate audit logs:', err);
+  }
+}
+window.loadDuplicateAuditLogs = loadDuplicateAuditLogs;
+
+async function resolveDuplicateLead(id, action) {
+  try {
+    const res = await fetch(`/api/duplicate-leads-audit/resolve/${id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action })
+    });
+    const result = await res.json();
+    if (result.success || res.ok) {
+      showToast(result.message || 'Duplicate log resolved successfully.');
+      loadDuplicateAuditLogs();
+      if (typeof loadEnquiries === 'function') loadEnquiries();
+    } else {
+      showToast(result.error || 'Failed to resolve duplicate lead.', 'error');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Network error while resolving duplicate lead.', 'error');
+  }
+}
+window.resolveDuplicateLead = resolveDuplicateLead;
+
+async function populateAllAgentSelects() {
+  try {
+    const aRes = await fetch('/api/agents');
+    const agents = await aRes.json();
+    const selects = [
+      { id: 'lead-agent', defaultText: '-- Assign Agent --' },
+      { id: 'edit-lead-agent', defaultText: '-- Assign Agent --' },
+      { id: 'filter-enq-agent', defaultText: 'All Agents' },
+      { id: 'filter-lead-agent', defaultText: 'All Agents' }
+    ];
+    selects.forEach(selInfo => {
+      const el = document.getElementById(selInfo.id);
+      if (el) {
+        const currentVal = el.value;
+        el.innerHTML = `<option value="">${selInfo.defaultText}</option>`;
+        agents.forEach(a => {
+          const opt = document.createElement('option');
+          opt.value = a.id;
+          opt.innerText = a.name;
+          el.appendChild(opt);
+        });
+        if (currentVal) {
+          el.value = currentVal;
+        }
+      }
+    });
+  } catch (err) {
+    console.error('Failed to populate agent selects:', err);
+  }
+}
+window.populateAllAgentSelects = populateAllAgentSelects;
 
