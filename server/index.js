@@ -603,7 +603,7 @@ app.post('/api/import-mapped/:table', async (req, res) => {
     const numericCols = info.filter(i => i.data_type && numericTypes.includes(i.data_type.toLowerCase())).map(i => i.name);
     const requiredCols = info.filter(i => i.is_nullable === 'NO' && !i.column_default).map(i => i.name);
     
-    const sanitizeValue = (colName, val) => {
+    const sanitizeValue = (colName, val, recordObj) => {
       // 1. If it's a numeric column, parse/clean numeric values
       if (numericCols.includes(colName)) {
         if (val === undefined || val === null || val === '') {
@@ -626,7 +626,11 @@ app.post('/api/import-mapped/:table', async (req, res) => {
       if (val === undefined || val === null || String(val).trim() === '') {
         if (requiredCols.includes(colName)) {
           if (colName === 'society') return 'Unknown Society';
-          if (colName === 'name') return 'Unnamed Lead';
+          if (colName === 'name') {
+            if (recordObj && recordObj.phone) return String(recordObj.phone).trim();
+            if (recordObj && recordObj.email) return String(recordObj.email).trim();
+            return 'Unnamed Lead';
+          }
           return 'N/A';
         }
         return null;
@@ -641,6 +645,9 @@ app.post('/api/import-mapped/:table', async (req, res) => {
       await db.query('BEGIN');
       for (const recordObj of data) {
         if (table === 'leads') {
+          // Force stage to Raw Lead for imports
+          recordObj.stage = 'Raw Lead';
+
           const rawPhone = recordObj.phone;
           if (rawPhone && String(rawPhone).trim() !== '') {
             const cleanPhone = String(rawPhone).trim();
@@ -661,7 +668,7 @@ app.post('/api/import-mapped/:table', async (req, res) => {
         // We iterate over all dbCols. If a column is required, we want sanitizeValue to provide a default fallback even if the column is not mapped!
         dbCols.forEach(col => {
           let val = recordObj[col];
-          let cleanVal = sanitizeValue(col, val);
+          let cleanVal = sanitizeValue(col, val, recordObj);
           if (cleanVal !== null && cleanVal !== undefined && cleanVal !== '') {
             activeCols.push(col);
             activeValues.push(cleanVal);

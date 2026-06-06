@@ -166,6 +166,7 @@ window.priceToWords = priceToWords;
 let state = {
   projPage: 1,
   leadsPage: 1,
+  rawLeadsPage: 1,
   activePage: 'dashboard',
   inventoryTab: 'resale',
   blueprintTab: 'leads',
@@ -820,6 +821,8 @@ async function initApp() {
       if (typeof loadPipeline === 'function') loadPipeline();
     } else if (page === 'enquiry') {
       if (typeof loadEnquiries === 'function') loadEnquiries();
+    } else if (page === 'raw-leads') {
+      if (typeof loadRawLeads === 'function') loadRawLeads();
     } else if (page === 'associates') {
       if (typeof loadAssociates === 'function') loadAssociates();
     } else if (page === 'templates') {
@@ -829,6 +832,7 @@ async function initApp() {
     }
     if (typeof loadDashboardData === 'function') loadDashboardData();
     if (typeof loadFollowups === 'function') loadFollowups();
+    if (typeof updateRawLeadsCountBadge === 'function') updateRawLeadsCountBadge();
   };
 
   // Initialize selection rows cache
@@ -837,7 +841,8 @@ async function initApp() {
     rental: [],
     commercial: [],
     projects: [],
-    leads: []
+    leads: [],
+    'raw-leads': []
   };
 
   setupSidebarNavigation();
@@ -893,6 +898,10 @@ async function initApp() {
   try {
     await populateAllAgentSelects();
   } catch (e) { console.error('populateAllAgentSelects failed', e); }
+
+  try {
+    await updateRawLeadsCountBadge();
+  } catch (e) { console.error('updateRawLeadsCountBadge failed', e); }
 
   // Dynamic inline add custom dropdown change event listener
   document.body.addEventListener('change', function(e) {
@@ -1061,7 +1070,8 @@ function navToPage(pageId) {
     social: 'Social Campaigns',
     reports: 'Performance Reports',
     documents: 'Document Vault',
-    'duplicates-audit': 'Duplicates Review Audit'
+    'duplicates-audit': 'Duplicates Review Audit',
+    'raw-leads': 'Raw Leads Directory'
   };
   document.getElementById('page-header-title').innerText = titles[pageId] || 'REALPro CRM';
 
@@ -1093,6 +1103,9 @@ function navToPage(pageId) {
   }
   else if (pageId === 'duplicates-audit') {
     loadDuplicateAuditLogs();
+  }
+  else if (pageId === 'raw-leads') {
+    loadRawLeads();
   }
 }
 
@@ -3925,6 +3938,7 @@ async function loadPipeline() {
     const budgetMaxCr = parseFloat(document.getElementById('filter-lead-budget-max')?.value) || Infinity;
 
     data = data.filter(lead => {
+      if (lead.stage === 'Raw Lead') return false;
       // 1. Date filter
       if (dateStart || dateEnd) {
         const createdDate = new Date(lead.created_at);
@@ -4088,12 +4102,23 @@ async function submitCaptureLead(e) {
   const locVal = document.getElementById('lead-location').value;
   saveCustomDropdownValue('projectLocations', locVal);
 
+  let stageVal = 'New';
+  const hasRequirement = 
+    (locVal && locVal.trim() !== '') || 
+    (document.getElementById('lead-config').value && document.getElementById('lead-config').value !== '') || 
+    (parseFloat(document.getElementById('lead-budget-min').value || 0) > 0) || 
+    (parseFloat(document.getElementById('lead-budget-max').value || 0) > 0);
+  
+  if (!hasRequirement) {
+    stageVal = 'Raw Lead';
+  }
+
   const data = {
     name: document.getElementById('lead-name').value,
     phone: document.getElementById('lead-phone').value,
     email: document.getElementById('lead-email').value,
     source: sourceVal,
-    stage: 'New',
+    stage: stageVal,
     status: document.getElementById('lead-temp').value,
     project_type: document.getElementById('lead-type').value,
     budget_min: parseFloat(document.getElementById('lead-budget-min').value || 0),
@@ -4130,7 +4155,11 @@ async function submitCaptureLead(e) {
           if (forceRes.ok) {
             showToast('Client qualifications logged successfully (Duplicate Bypassed).');
             document.getElementById('form-capture-lead').reset();
-            navToPage('pipeline');
+            if (stageVal === 'Raw Lead') {
+              navToPage('raw-leads');
+            } else {
+              navToPage('pipeline');
+            }
           } else {
             const err = await forceRes.json();
             showToast(err.error || 'Failed to force add lead.', 'error');
@@ -4144,7 +4173,11 @@ async function submitCaptureLead(e) {
     
     showToast('Client qualifications logged successfully.');
     document.getElementById('form-capture-lead').reset();
-    navToPage('pipeline');
+    if (stageVal === 'Raw Lead') {
+      navToPage('raw-leads');
+    } else {
+      navToPage('pipeline');
+    }
   } catch (err) {
     console.error(err);
   }
@@ -4175,7 +4208,7 @@ window.editLeadData = async function(id) {
     document.getElementById('edit-lead-temp').value = lead.status || 'Hot';
     document.getElementById('edit-lead-followup-status').value = lead.followup_status || 'None';
     document.getElementById('edit-lead-touchpoint').value = lead.touchpoint || 'Calls';
-    document.getElementById('edit-lead-stage').value = lead.stage || 'New';
+    document.getElementById('edit-lead-stage').value = (lead.stage === 'Raw Lead') ? 'New' : (lead.stage || 'New');
     document.getElementById('edit-lead-notes').value = lead.notes || '';
     document.getElementById('edit-lead-admin-comments').value = lead.admin_comments || '';
     
@@ -4466,6 +4499,7 @@ async function loadEnquiries() {
     const budgetMaxCr = parseFloat(document.getElementById('filter-enq-budget-max')?.value) || Infinity;
 
     let filteredLeads = data.filter(lead => {
+      if (lead.stage === 'Raw Lead') return false;
       // 1. Date filter
       if (dateStart || dateEnd) {
         const createdDate = new Date(lead.created_at);
@@ -7590,12 +7624,11 @@ window.submitMappedCSV = async () => {
 
   const mappedColumns = Object.values(mapping);
   if (targetTable === 'leads') {
-    if (!mappedColumns.includes('name')) {
-      showToast('Validation Error: The Name field is mandatory for import.');
-      return;
-    }
-    if (!mappedColumns.includes('phone') && !mappedColumns.includes('email')) {
-      showToast('Validation Error: Phone Number and/or Email ID must be mapped.');
+    const hasName = mappedColumns.includes('name');
+    const hasPhone = mappedColumns.includes('phone');
+    const hasEmail = mappedColumns.includes('email');
+    if (!hasName && !hasPhone && !hasEmail) {
+      showToast('Validation Error: You must map at least one contact field (Name, Phone, or Email).');
       return;
     }
   }
@@ -7608,16 +7641,21 @@ window.submitMappedCSV = async () => {
 
   const todayStr = new Date().toISOString().split('T')[0];
   let customTag = '';
+  let natureTagsVal = '';
   if (targetTable === 'leads') {
     const tagInput = document.getElementById('import-lead-tag');
     customTag = tagInput ? tagInput.value.trim() : '';
+    const natureTagInput = document.getElementById('import-lead-nature-tag');
+    natureTagsVal = natureTagInput ? natureTagInput.value.trim() : '';
   }
 
   const mappedData = parsedCSVData.map(row => {
     const newRow = { ...defaults };
+    let hasAnyVal = false;
     for (const [csvHeader, dbColumn] of Object.entries(mapping)) {
       const cellValue = row[csvHeader] ? String(row[csvHeader]).trim() : '';
       if (cellValue) {
+        hasAnyVal = true;
         if (newRow[dbColumn]) {
           if (dbColumn === 'phone' || dbColumn === 'email') {
             newRow[dbColumn] = newRow[dbColumn] + ', ' + cellValue;
@@ -7631,6 +7669,18 @@ window.submitMappedCSV = async () => {
     }
 
     if (targetTable === 'leads') {
+      const nameVal = newRow.name ? String(newRow.name).trim() : '';
+      const phoneVal = newRow.phone ? String(newRow.phone).trim() : '';
+      const emailVal = newRow.email ? String(newRow.email).trim() : '';
+      
+      if (!nameVal && !phoneVal && !emailVal) {
+        return null;
+      }
+
+      if (!nameVal) {
+        newRow.name = phoneVal || emailVal || 'Unnamed Lead';
+      }
+
       newRow.source = `Import: ${customTag || 'Unspecified'} (${todayStr})`;
       
       let tagsList = [];
@@ -7640,12 +7690,23 @@ window.submitMappedCSV = async () => {
       if (customTag) {
         tagsList.push(customTag);
       }
+      if (natureTagsVal) {
+        natureTagsVal.split(',').forEach(t => {
+          const cleanT = t.trim();
+          if (cleanT) tagsList.push(cleanT);
+        });
+      }
       tagsList.push('Imported');
       tagsList.push(`Import-${todayStr}`);
       newRow.special_tags = tagsList.join(', ');
     }
     return newRow;
-  });
+  }).filter(Boolean);
+
+  if (mappedData.length === 0) {
+    showToast('No valid records found in CSV.');
+    return;
+  }
 
   try {
     const res = await fetch(`/api/import-mapped/${targetTable}`, {
@@ -7667,6 +7728,7 @@ window.submitMappedCSV = async () => {
       if (targetTable === 'properties') loadProperties();
       else if (targetTable === 'leads') {
         loadEnquiries();
+        if (typeof loadRawLeads === 'function') loadRawLeads();
         loadDashboardData();
       } else if (targetTable === 'builder_projects') loadProjects();
     } else {
@@ -8111,6 +8173,29 @@ window.updateBulkSelectionState = function(pane) {
         <button class="btn btn-ghost btn-sm" onclick="showToast('Bulk WhatsApp blast queued for ' + selectedIds.length + ' leads'); clearAllSelections()" style="color:var(--green); border:1px solid rgba(46, 204, 113, 0.4);"><i class="ti ti-brand-whatsapp"></i> Send WhatsApp</button>
         <button class="btn btn-ghost btn-sm" onclick="showToast('Bulk Email blast queued for ' + selectedIds.length + ' leads'); clearAllSelections()" style="color:var(--blue-light); border:1px solid rgba(52, 152, 219, 0.4);"><i class="ti ti-mail"></i> Send Mail</button>
       `;
+    } else if (pane === 'raw-leads') {
+      html = `
+        <button class="btn btn-ghost btn-sm" onclick="triggerBulkDelete('leads', '${pane}')" style="color:var(--red); border:1px solid rgba(192, 57, 43, 0.4);"><i class="ti ti-trash"></i> Bulk Delete</button>
+        
+        <select class="form-select btn-sm" id="bulk-raw-leads-agent" style="font-size:11px; padding:4px 8px; width: 140px; border:0.5px solid var(--border);" onchange="triggerBulkUpdate('leads', '${pane}', 'agent_id', this.value)">
+          <option value="">-- Assign Agent --</option>
+        </select>
+        
+        <button class="btn btn-ghost btn-sm" onclick="triggerBulkTag('leads', '${pane}')" style="color:var(--gold-l); border:1px solid rgba(197, 168, 103, 0.4);"><i class="ti ti-tag"></i> Add tag</button>
+      `;
+      setTimeout(async () => {
+        const sel = document.getElementById('bulk-raw-leads-agent');
+        if (sel) {
+          const res = await fetch('/api/agents');
+          const agents = await res.json();
+          agents.forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = a.id;
+            opt.innerText = a.name;
+            sel.appendChild(opt);
+          });
+        }
+      }, 0);
     }
     
     controlsContainer.innerHTML = html;
@@ -11615,6 +11700,7 @@ window.filterSmartList = async function(filterId) {
       const today = new Date().toISOString().split('T')[0];
       
       // Apply filters
+      leads = leads.filter(l => l.stage !== 'Raw Lead');
       if (filterId === 'hot_leads') leads = leads.filter(l => l.status === 'Hot');
       if (filterId === 'missed_followups') leads = leads.filter(l => l.next_followup && l.next_followup < today);
       if (filterId === 'missed_calls') leads = leads.filter(l => l.touchpoint === 'Calls' && !l.stage); 
@@ -14346,6 +14432,102 @@ async function loadTodayActivityFeed() {
   }
 }
 window.loadTodayActivityFeed = loadTodayActivityFeed;
+
+async function loadRawLeads() {
+  try {
+    const searchInput = document.getElementById('filter-raw-search');
+    const search = searchInput ? searchInput.value : '';
+    let url = `/api/leads?stage=Raw%20Lead&search=${encodeURIComponent(search)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    
+    // Update count badge on sidebar
+    const rawCountBadge = document.getElementById('sidebar-raw-count');
+    if (rawCountBadge) {
+      rawCountBadge.innerText = data.length;
+      rawCountBadge.style.display = data.length > 0 ? 'inline-block' : 'none';
+    }
+
+    const tbody = document.getElementById('raw-leads-list');
+    if (!tbody) return;
+
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="empty">No raw leads found. Use "Import Dataset" to populate.</td></tr>`;
+      return;
+    }
+
+    const itemsPerPage = 50;
+    const totalPages = Math.ceil(data.length / itemsPerPage) || 1;
+    const startIdx = ((state.rawLeadsPage || 1) - 1) * itemsPerPage;
+    const pagedData = data.slice(startIdx, startIdx + itemsPerPage);
+    
+    const pagWrapper = document.getElementById('raw-leads-pagination-wrapper');
+    if (pagWrapper) pagWrapper.innerHTML = renderPaginationBar('raw-leads', state.rawLeadsPage || 1, totalPages, 'changeRawLeadsPage');
+
+    tbody.innerHTML = pagedData.map(l => {
+      // Tags
+      const tags = (l.special_tags || '').split(',').filter(t => t.trim());
+      const tagsHtml = tags.map(t => `<span class="badge" style="background:rgba(255,255,255,0.06); font-size:9.5px; border:0.5px solid var(--border); margin-right:2px; display:inline-block; margin-top:2px;">${t.trim()}</span>`).join('');
+
+      return `
+        <tr>
+          <td><input type="checkbox" class="row-checkbox-raw-leads" value="${l.id}" onchange="updateBulkSelectionState('raw-leads')"></td>
+          <td style="padding: 10px 8px; border-bottom: 1px solid var(--border);">
+            <strong style="font-size:13px; color:var(--text-light);">${l.name}</strong><br>
+            <span style="font-size:9.5px; font-weight:700; color:var(--gold-l); background:rgba(201, 153, 26, 0.1); border: 0.5px solid rgba(201,153,26,0.2); padding:1px 4.5px; border-radius:3px; font-family:monospace; display:inline-block; margin-top:4px;">${l.custom_lead_id || ('LD-' + (1000 + l.id))}</span>
+          </td>
+          <td style="padding: 10px 8px; border-bottom: 1px solid var(--border);">
+            <span style="font-size:12px;">📱 ${l.phone || 'N/A'}</span><br>
+            <span style="font-size:11px; color:var(--text-muted)">✉️ ${l.email || 'N/A'}</span>
+          </td>
+          <td style="padding: 10px 8px; border-bottom: 1px solid var(--border);">
+            <span style="font-size:11.5px;">${l.source || 'N/A'}</span><br>
+            <div style="margin-top:4px;">${tagsHtml}</div>
+          </td>
+          <td style="padding: 10px 8px; border-bottom: 1px solid var(--border); font-size:11.5px; color:var(--text-muted);">
+            ${l.created_at ? new Date(l.created_at).toLocaleString() : 'N/A'}
+          </td>
+          <td style="padding: 10px 8px; border-bottom: 1px solid var(--border);">
+            <strong>${l.agent_name || 'Unassigned'}</strong>
+          </td>
+          <td style="padding: 10px 8px; border-bottom: 1px solid var(--border);">
+            <div style="display:flex; flex-direction:column; gap:4px;">
+              <button class="btn btn-sm" style="background:var(--gold); color:#000; font-size:10.5px; padding:3px 8px; font-weight:700;" onclick="qualifyRawLead(${l.id})"><i class="ti ti-checklist"></i> Qualify & Contact</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:10px; padding:2px 6px; color:var(--red);" onclick="deleteLead(${l.id}, 'raw')">✕ Remove</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error(err);
+  }
+}
+window.loadRawLeads = loadRawLeads;
+
+window.changeRawLeadsPage = function(tab, pageNum) {
+  state.rawLeadsPage = pageNum;
+  loadRawLeads();
+};
+
+window.qualifyRawLead = function(id) {
+  window.editLeadData(id);
+};
+
+async function updateRawLeadsCountBadge() {
+  try {
+    const res = await fetch('/api/leads?stage=Raw%20Lead');
+    const data = await res.json();
+    const rawCountBadge = document.getElementById('sidebar-raw-count');
+    if (rawCountBadge) {
+      rawCountBadge.innerText = data.length;
+      rawCountBadge.style.display = data.length > 0 ? 'inline-block' : 'none';
+    }
+  } catch (e) {
+    console.error('Failed to update raw leads count:', e);
+  }
+}
+window.updateRawLeadsCountBadge = updateRawLeadsCountBadge;
 
 async function loadDuplicateAuditLogs() {
   try {

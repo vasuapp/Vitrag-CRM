@@ -217,6 +217,10 @@
             <span class="icon"><i class="ti ti-bell"></i></span><span>Follow-ups</span>
             <span class="nb" id="sidebar-fu-count">0</span>
           </div>
+          <div class="nav-item" data-page="raw-leads">
+            <span class="icon"><i class="ti ti-user-exclamation"></i></span><span>Raw Leads</span>
+            <span class="nb" id="sidebar-raw-count" style="display:none; background: var(--gold-d);">0</span>
+          </div>
           <div class="nav-item" data-page="enquiry">
             <span class="icon"><i class="ti ti-checklist"></i></span><span>Enquiry Log</span>
           </div>
@@ -1584,6 +1588,42 @@
           </div>
         </div>
         
+        <!-- ================= PAGE: RAW LEADS DIRECTORY ================= -->
+        <div class="page" id="page-raw-leads">
+          <div class="card">
+            <div class="chr">
+              <div class="card-title"><i class="ti ti-user-exclamation" style="color:var(--gold);"></i> Raw Leads Directory</div>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <input class="form-input" type="text" placeholder="🔍 Search raw leads..." id="filter-raw-search" style="width:160px; padding: 4px 8px; font-size:11.5px;" oninput="loadRawLeads()" autocomplete="off">
+                <button class="btn btn-ghost btn-sm" onclick="triggerImport('leads')" style="padding: 4px 8px; font-size:11.5px;"><i class="ti ti-upload"></i> Import Dataset</button>
+                <button onclick="triggerSecureExport('leads')" class="btn btn-ghost btn-sm" style="padding: 4px 8px; font-size:11.5px;"><i class="ti ti-download"></i> Export CSV</button>
+                <button class="btn btn-primary btn-sm" style="background: var(--gold); border: none; margin-right: 10px;" onclick="toggleSelectAllButton('raw-leads', this)">☑️ Select All</button>
+              </div>
+            </div>
+            <div class="card-sub">Uncontacted cold lists and bulk-imported records waiting for qualification</div>
+            
+            <div class="tw" id="raw-leads-table-wrapper" style="margin-top: 10px;">
+              <table class="tbl">
+                <thead>
+                  <tr>
+                    <th style="width: 40px;"><input type="checkbox" id="check-all-raw-leads" onchange="toggleAllRowCheckboxes('raw-leads', this.checked)"></th>
+                    <th>Lead Name</th>
+                    <th>Contact Info</th>
+                    <th>Source & Tags</th>
+                    <th>Added Date</th>
+                    <th>Assigned Agent</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="raw-leads-list">
+                  <tr><td colspan="7" class="empty">Scanning raw database...</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="raw-leads-pagination-wrapper"></div>
+          </div>
+        </div>
+
         <!-- ================= PAGE 9: ENQUIRY LOG ================= -->
         <div class="page" id="page-enquiry">
           <!-- Sub-tabs for Enquiries Page (Phase 9) -->
@@ -5174,8 +5214,12 @@
             <input class="form-input" type="file" id="import-csv-file" accept=".csv, .xlsx, .xls" onchange="handleFileSelect(event)">
           </div>
           <div class="form-group" style="flex:1;">
-            <label class="form-label">Import Custom Tag (Campaign / Source)</label>
+            <label class="form-label">Import Source Tag (Campaign / Source)</label>
             <input class="form-input" type="text" id="import-lead-tag" placeholder="e.g. FB Leads June, Magicbricks">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Lead Nature Tags (comma-separated)</label>
+            <input class="form-input" type="text" id="import-lead-nature-tag" placeholder="e.g. Cold, Raw, Resale, Luxury">
           </div>
         </div>
         
@@ -5456,6 +5500,7 @@
             <div class="form-group">
               <label class="form-label">Pipeline Stage *</label>
               <select class="form-select" id="edit-lead-stage" required>
+                <option value="Raw Lead">Raw Lead</option>
                 <option value="New">New</option>
                 <option value="Contacted">Contacted</option>
                 <option value="Qualified">Qualified</option>
@@ -6025,6 +6070,7 @@
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
                   <label class="form-check-label" style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer; color: var(--text-light);"><input type="checkbox" class="team-perm-check" value="pipeline" checked style="cursor:pointer;"> Lead Pipeline</label>
                   <label class="form-check-label" style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer; color: var(--text-light);"><input type="checkbox" class="team-perm-check" value="capture" checked style="cursor:pointer;"> Qualified Capture Form</label>
+                  <label class="form-check-label" style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer; color: var(--text-light);"><input type="checkbox" class="team-perm-check" value="raw-leads" checked style="cursor:pointer;"> Raw Leads Directory</label>
                   <label class="form-check-label" style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer; color: var(--text-light);"><input type="checkbox" class="team-perm-check" value="enquiry" checked style="cursor:pointer;"> Enquiry Log</label>
                   <label class="form-check-label" style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer; color: var(--text-light);"><input type="checkbox" class="team-perm-check" value="followups" checked style="cursor:pointer;"> Overdue Reminders</label>
                   <label class="form-check-label" style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer; color: var(--text-light);"><input type="checkbox" class="team-perm-check" value="proposals" checked style="cursor:pointer;"> Client Proposals</label>
