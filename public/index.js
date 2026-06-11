@@ -4879,30 +4879,98 @@ function showCommissionInvoicePreview(id) {
 // ------------------------------------------
 // 12. DYNAMIC BLUEPRINT SHEETS VIEWS
 // ------------------------------------------
-function switchBlueprintTab(tabId) {
+// 12. DYNAMIC BLUEPRINT SHEETS VIEWS
+// ------------------------------------------
+async function switchBlueprintTab(tabId) {
   state.blueprintTab = tabId;
   
   document.querySelectorAll('#page-blueprint .tabs .tab').forEach(el => el.classList.remove('active'));
   document.getElementById(`stab-${tabId}`).classList.add('active');
 
   const pane = document.getElementById('blueprint-content-pane');
+  if (!pane) return;
 
   if (tabId === 'leads') {
     pane.innerHTML = `
       <div style="font-size:13px; font-weight:700; margin-bottom:8px; color:#fff">Tab 1 — MASTER_LEADS (43 database columns)</div>
-      <div style="margin-bottom:12px;">
-        <span class="sheet-col req">Lead_ID*</span><span class="sheet-col auto">Date_Captured</span><span class="sheet-col req">Client_Name*</span><span class="sheet-col req">Mobile_Primary*</span><span class="sheet-col opt">Mobile_Alt</span><span class="sheet-col opt">Email</span><span class="sheet-col req">Source*</span><span class="sheet-col opt">Source_Detail</span><span class="sheet-col req">Property_Type*</span><span class="sheet-col req">Config_Required*</span><span class="sheet-col req">Budget_Min*</span><span class="sheet-col req">Budget_Max*</span><span class="sheet-col req">Preferred_Location*</span><span class="sheet-col req">Timeline*</span><span class="sheet-col req">Lead_Temp*</span><span class="sheet-col req">Lead_Status*</span><span class="sheet-col opt">Assigned_To</span><span class="sheet-col auto">Last_Contact_Date</span><span class="sheet-col auto">Stale_Flag</span><span class="sheet-col req">Next_Followup_Date*</span><span class="sheet-col opt">Followup_Notes</span><span class="sheet-col opt">Site_Visit_Date</span><span class="sheet-col opt">Feedback_After_Visit</span><span class="sheet-col lock">Commission_%</span><span class="sheet-col lock">Commission_Value</span>
+      <div style="margin-bottom:12px; display:flex; flex-wrap:wrap; gap:6px;" id="blueprint-native-cols">
+        <span class="sheet-col req" title="Required system field">Lead_ID*</span>
+        <span class="sheet-col auto" title="Automatically set system field">Date_Captured</span>
+        <span class="sheet-col req" title="Required system field">Client_Name*</span>
+        <span class="sheet-col req" title="Required system field">Mobile_Primary*</span>
+        <span class="sheet-col opt" title="Optional field">Mobile_Alt</span>
+        <span class="sheet-col opt" title="Optional field">Email</span>
+        <span class="sheet-col req" title="Required system field">Source*</span>
+        <span class="sheet-col opt" title="Optional field">Source_Detail</span>
+        <span class="sheet-col req" title="Required system field">Property_Type*</span>
+        <span class="sheet-col req" title="Required system field">Config_Required*</span>
+        <span class="sheet-col req" title="Required system field">Budget_Min*</span>
+        <span class="sheet-col req" title="Required system field">Budget_Max*</span>
+        <span class="sheet-col req" title="Required system field">Preferred_Location*</span>
+        <span class="sheet-col req" title="Required system field">Timeline*</span>
+        <span class="sheet-col req" title="Required system field">Lead_Temp*</span>
+        <span class="sheet-col req" title="Required system field">Lead_Status*</span>
+        <span class="sheet-col opt" title="Optional field">Assigned_To</span>
+        <span class="sheet-col auto" title="Automatically set system field">Last_Contact_Date</span>
+        <span class="sheet-col auto" title="Automatically set system field">Stale_Flag</span>
+        <span class="sheet-col req" title="Required system field">Next_Followup_Date*</span>
+        <span class="sheet-col opt" title="Optional field">Followup_Notes</span>
+        <span class="sheet-col opt" title="Optional field">Site_Visit_Date</span>
+        <span class="sheet-col opt" title="Optional field">Feedback_After_Visit</span>
+        <span class="sheet-col lock" title="Read-only for normal users">Commission_%</span>
+        <span class="sheet-col lock" title="Read-only for normal users">Commission_Value</span>
       </div>
-      <div class="info-green">Auto-matches client budget ranges and preferred Whitefield locations in real-time.</div>
+      
+      <div style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.08); padding-top:15px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div style="font-size:13px; font-weight:700; color:var(--gold-l);"><i class="ti ti-tool"></i> Custom Customizable Columns (Table Rules)</div>
+          <button class="btn btn-primary btn-sm" onclick="window.showAddBlueprintColumnModal('Leads')"><i class="ti ti-plus"></i> Add Custom Column</button>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;" id="blueprint-custom-cols">
+          <div style="font-size:11px; color:var(--text-muted);">Loading custom fields...</div>
+        </div>
+      </div>
+
+      <div class="info-green" style="margin-top:20px;">Auto-matches client budget ranges and preferred Whitefield locations in real-time.</div>
     `;
+    await renderBlueprintCustomFields('Leads');
   } else if (tabId === 'inventory') {
     pane.innerHTML = `
       <div style="font-size:13px; font-weight:700; margin-bottom:8px; color:#fff">Tab 2 — INVENTORY_SECONDARY (38 database columns)</div>
-      <div style="margin-bottom:12px;">
-        <span class="sheet-col req">Prop_ID*</span><span class="sheet-col auto">Date_Added</span><span class="sheet-col auto">Last_Updated</span><span class="sheet-col auto">Age_Flag</span><span class="sheet-col req">Property_Type*</span><span class="sheet-col req">Config*</span><span class="sheet-col req">Location*</span><span class="sheet-col req">Society_Name*</span><span class="sheet-col req">Area_Sqft*</span><span class="sheet-col req">Ask_Price*</span><span class="sheet-col opt">Negotiable</span><span class="sheet-col opt">Floor_Price</span><span class="sheet-col req">Availability*</span><span class="sheet-col lock">Owner_Name</span><span class="sheet-col lock">Owner_Mobile</span><span class="sheet-col opt">Source_Type</span><span class="sheet-col lock">Source_Commission_%</span><span class="sheet-col opt">Remarks</span>
+      <div style="margin-bottom:12px; display:flex; flex-wrap:wrap; gap:6px;" id="blueprint-native-cols">
+        <span class="sheet-col req" title="Required system field">Prop_ID*</span>
+        <span class="sheet-col auto" title="Automatically set system field">Date_Added</span>
+        <span class="sheet-col auto" title="Automatically set system field">Last_Updated</span>
+        <span class="sheet-col auto" title="Automatically set system field">Age_Flag</span>
+        <span class="sheet-col req" title="Required system field">Property_Type*</span>
+        <span class="sheet-col req" title="Required system field">Config*</span>
+        <span class="sheet-col req" title="Required system field">Location*</span>
+        <span class="sheet-col req" title="Required system field">Society_Name*</span>
+        <span class="sheet-col req" title="Required system field">Area_Sqft*</span>
+        <span class="sheet-col req" title="Required system field">Ask_Price*</span>
+        <span class="sheet-col opt" title="Optional field">Negotiable</span>
+        <span class="sheet-col opt" title="Optional field">Floor_Price</span>
+        <span class="sheet-col req" title="Required system field">Availability*</span>
+        <span class="sheet-col lock" title="Read-only for normal users">Owner_Name</span>
+        <span class="sheet-col lock" title="Read-only for normal users">Owner_Mobile</span>
+        <span class="sheet-col opt" title="Optional field">Source_Type</span>
+        <span class="sheet-col lock" title="Read-only for normal users">Source_Commission_%</span>
+        <span class="sheet-col opt" title="Optional field">Remarks</span>
       </div>
-      <div class="info-amber"><strong>7-Day staleness trigger:</strong> Listings without direct phone confirmation in 7+ days trigger orange Age warnings automatically.</div>
+
+      <div style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.08); padding-top:15px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div style="font-size:13px; font-weight:700; color:var(--gold-l);"><i class="ti ti-tool"></i> Custom Customizable Columns (Table Rules)</div>
+          <button class="btn btn-primary btn-sm" onclick="window.showAddBlueprintColumnModal('Properties')"><i class="ti ti-plus"></i> Add Custom Column</button>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;" id="blueprint-custom-cols">
+          <div style="font-size:11px; color:var(--text-muted);">Loading custom fields...</div>
+        </div>
+      </div>
+
+      <div class="info-amber" style="margin-top:20px;"><strong>7-Day staleness trigger:</strong> Listings without direct phone confirmation in 7+ days trigger orange Age warnings automatically.</div>
     `;
+    await renderBlueprintCustomFields('Properties');
   } else if (tabId === 'projects') {
     pane.innerHTML = `
       <div style="font-size:13px; font-weight:700; margin-bottom:8px; color:#fff">Tab 3 — PROJECTS_PRIMARY (Construction tracking sheets)</div>
@@ -4917,6 +4985,44 @@ function switchBlueprintTab(tabId) {
         <span class="sheet-col req">Deal_ID*</span><span class="sheet-col req">Lead_ID*</span><span class="sheet-col req">Client_Name*</span><span class="sheet-col req">Property*</span><span class="sheet-col req">Deal_Value*</span><span class="sheet-col lock">Our_Comm_%</span><span class="sheet-col auto">Our_Comm_Value</span><span class="sheet-col opt">Co_Broker_ID</span><span class="sheet-col lock">Co_Broker_Share_%</span><span class="sheet-col auto">Co_Broker_Amount</span><span class="sheet-col auto">Net_Commission</span><span class="sheet-col opt">Invoice_No</span><span class="sheet-col opt">Payment_Status</span>
       </div>
     `;
+  }
+}
+
+async function renderBlueprintCustomFields(moduleType) {
+  const container = document.getElementById('blueprint-custom-cols');
+  if (!container) return;
+
+  try {
+    const res = await fetch('/api/custom-forms');
+    const forms = await res.json();
+    const form = forms.find(f => f.module_type === moduleType);
+
+    if (!form || !form.sections || form.sections.length === 0 || form.sections.every(s => !s.fields || s.fields.length === 0)) {
+      container.innerHTML = `<div style="font-size:11px; color:var(--text-muted);">No custom columns configured yet. Click "+ Add Custom Column" to define one.</div>`;
+      return;
+    }
+
+    let html = '';
+    form.sections.forEach((sec, sIdx) => {
+      if (!sec.fields || sec.fields.length === 0) return;
+      
+      sec.fields.forEach((f, fIdx) => {
+        html += `
+          <div style="display:inline-flex; align-items:center; background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:6px; padding:4px 10px; margin:3px 2px; gap:8px;">
+            <span style="font-size:11px; font-weight:600; color:var(--gold-l);">${escapeHTML(f.label)} <span style="font-size:9.5px; color:var(--text-muted); font-family:monospace;">(${f.type})</span></span>
+            <div style="display:flex; gap:4px; align-items:center; border-left: 1px solid rgba(255,255,255,0.1); padding-left:6px;">
+              <i class="ti ti-edit" style="cursor:pointer; color:var(--text-muted); font-size:11px;" onclick="window.showEditBlueprintColumnModal('${moduleType}', ${form.id}, ${sIdx}, ${fIdx})" title="Edit Column"></i>
+              <i class="ti ti-trash" style="cursor:pointer; color:var(--red); font-size:11px;" onclick="window.deleteBlueprintColumn('${moduleType}', ${form.id}, ${sIdx}, ${fIdx})" title="Delete Column"></i>
+            </div>
+          </div>
+        `;
+      });
+    });
+
+    container.innerHTML = html;
+  } catch (err) {
+    console.error(err);
+    container.innerHTML = `<div style="font-size:11px; color:var(--red);">Failed to load custom columns.</div>`;
   }
 }
 
@@ -15035,4 +15141,177 @@ async function populateAllAgentSelects() {
   }
 }
 window.populateAllAgentSelects = populateAllAgentSelects;
+
+// --- DYNAMIC BLUEPRINT COLUMNS MANAGEMENT ---
+window.handleBlueprintFieldTypeChange = function(type) {
+  const optionsGroup = document.getElementById('blueprint-field-options-group');
+  if (optionsGroup) {
+    if (type === 'select') {
+      optionsGroup.classList.remove('hidden');
+    } else {
+      optionsGroup.classList.add('hidden');
+    }
+  }
+};
+
+window.showAddBlueprintColumnModal = async function(moduleType) {
+  try {
+    const res = await fetch('/api/custom-forms');
+    let forms = await res.json();
+    let form = forms.find(f => f.module_type === moduleType);
+
+    if (!form) {
+      const createRes = await fetch('/api/custom-forms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: `${moduleType} Custom Layout`, module_type: moduleType, sections: [{ name: 'Custom Fields', fields: [] }] })
+      });
+      const createData = await createRes.json();
+      form = { id: createData.id, module_type: moduleType, sections: [{ name: 'Custom Fields', fields: [] }] };
+    }
+
+    if (!form.sections || form.sections.length === 0) {
+      form.sections = [{ name: 'Custom Fields', fields: [] }];
+    }
+
+    document.getElementById('blueprint-field-modal-title').innerText = '➕ Add Custom Column';
+    document.getElementById('blueprint-field-module').value = moduleType;
+    document.getElementById('blueprint-field-form-id').value = form.id;
+    document.getElementById('blueprint-field-section-idx').value = 0;
+    document.getElementById('blueprint-field-idx').value = '';
+    
+    document.getElementById('blueprint-field-label').value = '';
+    document.getElementById('blueprint-field-key').value = '';
+    document.getElementById('blueprint-field-key').disabled = false;
+    document.getElementById('blueprint-field-type').value = 'text';
+    document.getElementById('blueprint-field-options').value = '';
+    window.handleBlueprintFieldTypeChange('text');
+
+    openModal('modal-blueprint-field');
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to prepare form template.', 'error');
+  }
+};
+
+window.showEditBlueprintColumnModal = async function(moduleType, formId, secIdx, fieldIdx) {
+  try {
+    const res = await fetch('/api/custom-forms');
+    const forms = await res.json();
+    const form = forms.find(f => f.id === formId);
+    if (!form) return;
+
+    const f = form.sections[secIdx].fields[fieldIdx];
+    if (!f) return;
+
+    document.getElementById('blueprint-field-modal-title').innerText = '📝 Edit Custom Column';
+    document.getElementById('blueprint-field-module').value = moduleType;
+    document.getElementById('blueprint-field-form-id').value = formId;
+    document.getElementById('blueprint-field-section-idx').value = secIdx;
+    document.getElementById('blueprint-field-idx').value = fieldIdx;
+
+    document.getElementById('blueprint-field-label').value = f.label;
+    document.getElementById('blueprint-field-key').value = f.key;
+    document.getElementById('blueprint-field-key').disabled = true;
+    document.getElementById('blueprint-field-type').value = f.type;
+    document.getElementById('blueprint-field-options').value = f.options || '';
+    window.handleBlueprintFieldTypeChange(f.type);
+
+    openModal('modal-blueprint-field');
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+window.submitBlueprintColumnForm = async function(e) {
+  e.preventDefault();
+  const moduleType = document.getElementById('blueprint-field-module').value;
+  const formId = parseInt(document.getElementById('blueprint-field-form-id').value);
+  const secIdx = parseInt(document.getElementById('blueprint-field-section-idx').value);
+  const fieldIdxStr = document.getElementById('blueprint-field-idx').value;
+  const isEdit = fieldIdxStr !== '';
+
+  const label = document.getElementById('blueprint-field-label').value.trim();
+  const key = document.getElementById('blueprint-field-key').value.trim();
+  const type = document.getElementById('blueprint-field-type').value;
+  const options = document.getElementById('blueprint-field-options').value;
+
+  try {
+    const res = await fetch('/api/custom-forms');
+    const forms = await res.json();
+    const form = forms.find(f => f.id === formId);
+    if (!form) return;
+
+    let duplicate = false;
+    form.sections.forEach((sec, sIdx) => {
+      sec.fields.forEach((f, fIdx) => {
+        if (f.key === key) {
+          if (isEdit && sIdx === secIdx && fIdx === parseInt(fieldIdxStr)) {
+            // Self edit
+          } else {
+            duplicate = true;
+          }
+        }
+      });
+    });
+
+    if (duplicate) {
+      showToast('A column with this key already exists on this sheet.', 'error');
+      return;
+    }
+
+    const fieldObj = { label, key, type, options };
+    if (isEdit) {
+      const fIdx = parseInt(fieldIdxStr);
+      form.sections[secIdx].fields[fIdx] = fieldObj;
+    } else {
+      form.sections[secIdx].fields.push(fieldObj);
+    }
+
+    const saveRes = await fetch(`/api/custom-forms/${formId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form)
+    });
+
+    if (saveRes.ok) {
+      showToast('Column rule synchronized successfully.');
+      closeModal('modal-blueprint-field');
+      const activeTabId = moduleType === 'Leads' ? 'leads' : 'inventory';
+      await switchBlueprintTab(activeTabId);
+    } else {
+      showToast('Failed to save column template.', 'error');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to connect to server.', 'error');
+  }
+};
+
+window.deleteBlueprintColumn = async function(moduleType, formId, secIdx, fieldIdx) {
+  if (!confirm('Are you sure you want to delete this custom column? Any data saved under this column key in leads/properties will not be deleted but will no longer be visible on forms.')) return;
+  
+  try {
+    const res = await fetch('/api/custom-forms');
+    const forms = await res.json();
+    const form = forms.find(f => f.id === formId);
+    if (!form) return;
+
+    form.sections[secIdx].fields.splice(fieldIdx, 1);
+
+    const saveRes = await fetch(`/api/custom-forms/${formId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form)
+    });
+
+    if (saveRes.ok) {
+      showToast('Column deleted from sheet blueprint.');
+      const activeTabId = moduleType === 'Leads' ? 'leads' : 'inventory';
+      await switchBlueprintTab(activeTabId);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
 
