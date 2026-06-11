@@ -208,24 +208,18 @@
           <summary class="nav-section" style="cursor:pointer; outline:none; user-select:none; list-style:none;">Leads <i class="ti ti-chevron-down" style="float:right; margin-right:15px; margin-top:2px;"></i></summary>
           <div class="nav-item" data-page="pipeline">
             <span class="icon"><i class="ti ti-timeline"></i></span><span style="font-weight:700;">Lead Pipeline</span>
+            <span class="nb" id="sidebar-fu-count">0</span>
           </div>
           <div class="nav-item" data-page="proposals">
             <span class="icon"><i class="ti ti-file-text"></i></span><span>Proposal Builder</span>
           </div>
 
-          <div class="nav-item" data-page="followups">
-            <span class="icon"><i class="ti ti-bell"></i></span><span>Follow-ups</span>
-            <span class="nb" id="sidebar-fu-count">0</span>
-          </div>
           <div class="nav-item" data-page="raw-leads">
             <span class="icon"><i class="ti ti-user-exclamation"></i></span><span>Raw Leads</span>
             <span class="nb" id="sidebar-raw-count" style="display:none; background: var(--gold-d);">0</span>
           </div>
           <div class="nav-item" data-page="enquiry">
             <span class="icon"><i class="ti ti-checklist"></i></span><span>Enquiry Log</span>
-          </div>
-          <div class="nav-item" data-page="duplicates-audit">
-            <span class="icon"><i class="ti ti-copy-off"></i></span><span>Duplicates Audit</span>
           </div>
         </details>
         
@@ -1212,54 +1206,93 @@
 
         <!-- ================= PAGE 6: LEAD PIPELINE ================= -->
         <div class="page" id="page-pipeline">
-          <!-- Advanced Pipeline Filters -->
-          <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:12px; border-radius:8px; margin-bottom:15px; display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
-            <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:150px;">
-              <label style="font-size:10px; color:var(--gold-l); font-weight:700; text-transform:uppercase;">Date From</label>
-              <input type="date" class="form-input" id="filter-lead-date-start" style="padding:4px 8px; font-size:12px; height:30px;">
-            </div>
-            <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:150px;">
-              <label style="font-size:10px; color:var(--gold-l); font-weight:700; text-transform:uppercase;">Date To</label>
-              <input type="date" class="form-input" id="filter-lead-date-end" style="padding:4px 8px; font-size:12px; height:30px;">
-            </div>
-            <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:150px;">
-              <label style="font-size:10px; color:var(--gold-l); font-weight:700; text-transform:uppercase;">Assigned Agent</label>
-              <select class="form-select" id="filter-lead-agent" style="padding:4px 8px; font-size:12px; height:30px;">
-                <option value="">All Agents</option>
-              </select>
-            </div>
-            <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:150px;">
-              <label style="font-size:10px; color:var(--gold-l); font-weight:700; text-transform:uppercase;">Budget Range (Cr)</label>
-              <div style="display:flex; gap:4px;">
-                <input type="number" step="0.01" class="form-input" id="filter-lead-budget-min" placeholder="Min" style="padding:4px 8px; font-size:12px; height:30px; width:100%;">
-                <input type="number" step="0.01" class="form-input" id="filter-lead-budget-max" placeholder="Max" style="padding:4px 8px; font-size:12px; height:30px; width:100%;">
+          <!-- Sub-tabs for Pipeline Page -->
+          <div class="subtab-bar" style="display:flex; gap:10px; margin-bottom:15px; border-bottom:1px solid var(--border); padding-bottom:5px;">
+            <button class="btn btn-ghost btn-sm active" id="btn-pipeline-tab-board" onclick="switchPipelineTab('board')" style="border-radius:0; border-bottom:2.5px solid var(--gold); padding:8px 15px; font-weight:700; color:var(--gold-l);">📊 Pipeline Kanban</button>
+            <button class="btn btn-ghost btn-sm" id="btn-pipeline-tab-followups" onclick="switchPipelineTab('followups')" style="border-radius:0; border-bottom:2.5px solid transparent; padding:8px 15px; font-weight:700; color:var(--text-secondary);">⏰ Scheduled Follow-ups</button>
+          </div>
+
+          <div id="pipeline-board-card">
+            <!-- Advanced Pipeline Filters -->
+            <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:12px; border-radius:8px; margin-bottom:15px; display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
+              <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:150px;">
+                <label style="font-size:10px; color:var(--gold-l); font-weight:700; text-transform:uppercase;">Date From</label>
+                <input type="date" class="form-input" id="filter-lead-date-start" style="padding:4px 8px; font-size:12px; height:30px;">
+              </div>
+              <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:150px;">
+                <label style="font-size:10px; color:var(--gold-l); font-weight:700; text-transform:uppercase;">Date To</label>
+                <input type="date" class="form-input" id="filter-lead-date-end" style="padding:4px 8px; font-size:12px; height:30px;">
+              </div>
+              <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:150px;">
+                <label style="font-size:10px; color:var(--gold-l); font-weight:700; text-transform:uppercase;">Assigned Agent</label>
+                <select class="form-select" id="filter-lead-agent" style="padding:4px 8px; font-size:12px; height:30px;">
+                  <option value="">All Agents</option>
+                </select>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:4px; flex:1; min-width:150px;">
+                <label style="font-size:10px; color:var(--gold-l); font-weight:700; text-transform:uppercase;">Budget Range (Cr)</label>
+                <div style="display:flex; gap:4px;">
+                  <input type="number" step="0.01" class="form-input" id="filter-lead-budget-min" placeholder="Min" style="padding:4px 8px; font-size:12px; height:30px; width:100%;">
+                  <input type="number" step="0.01" class="form-input" id="filter-lead-budget-max" placeholder="Max" style="padding:4px 8px; font-size:12px; height:30px; width:100%;">
+                </div>
+              </div>
+              <div>
+                <button class="btn btn-primary" onclick="loadPipeline()" style="height:30px; padding:0 15px; font-size:12px;">Apply Filters</button>
               </div>
             </div>
-            <div>
-              <button class="btn btn-primary" onclick="loadPipeline()" style="height:30px; padding:0 15px; font-size:12px;">Apply Filters</button>
+
+            <div class="pipeline">
+              <div class="stage" data-stage="New">
+                <div class="stage-header"><span>New Leads 🆕</span><span class="stage-count" id="count-New">0</span></div>
+                <div class="lcards-container" id="col-New"></div>
+              </div>
+              <div class="stage" data-stage="Contacted">
+                <div class="stage-header"><span>Contacted 📞</span><span class="stage-count" id="count-Contacted">0</span></div>
+                <div class="lcards-container" id="col-Contacted"></div>
+              </div>
+              <div class="stage" data-stage="Qualified">
+                <div class="stage-header"><span>Qualified 💎</span><span class="stage-count" id="count-Qualified">0</span></div>
+                <div class="lcards-container" id="col-Qualified"></div>
+              </div>
+              <div class="stage" data-stage="Proposal">
+                <div class="stage-header"><span>Proposal 📝</span><span class="stage-count" id="count-Proposal">0</span></div>
+                <div class="lcards-container" id="col-Proposal"></div>
+              </div>
+              <div class="stage" data-stage="Won">
+                <div class="stage-header"><span>Closed Won 🎉</span><span class="stage-count" id="count-Won">0</span></div>
+                <div class="lcards-container" id="col-Won"></div>
+              </div>
             </div>
           </div>
 
-          <div class="pipeline">
-            <div class="stage" data-stage="New">
-              <div class="stage-header"><span>New Leads 🆕</span><span class="stage-count" id="count-New">0</span></div>
-              <div class="lcards-container" id="col-New"></div>
+          <div id="pipeline-followups-card" class="hidden">
+            <div class="card" style="border-color:var(--red);">
+              <div class="card-title" style="color:var(--red);"><i class="ti ti-alarm"></i> Overdue Callback Alerts</div>
+              <div class="card-sub">No callbacks done within last 24 hours — initiate urgent dialers</div>
+              <div id="overdue-followups-container">
+                <!-- Overdue list loaded here -->
+              </div>
             </div>
-            <div class="stage" data-stage="Contacted">
-              <div class="stage-header"><span>Contacted 📞</span><span class="stage-count" id="count-Contacted">0</span></div>
-              <div class="lcards-container" id="col-Contacted"></div>
-            </div>
-            <div class="stage" data-stage="Qualified">
-              <div class="stage-header"><span>Qualified 💎</span><span class="stage-count" id="count-Qualified">0</span></div>
-              <div class="lcards-container" id="col-Qualified"></div>
-            </div>
-            <div class="stage" data-stage="Proposal">
-              <div class="stage-header"><span>Proposal 📝</span><span class="stage-count" id="count-Proposal">0</span></div>
-              <div class="lcards-container" id="col-Proposal"></div>
-            </div>
-            <div class="stage" data-stage="Won">
-              <div class="stage-header"><span>Closed Won 🎉</span><span class="stage-count" id="count-Won">0</span></div>
-              <div class="lcards-container" id="col-Won"></div>
+            
+            <div class="card">
+              <div class="card-title"><i class="ti ti-bell"></i> Scheduled Action Alerts Today</div>
+              <div class="card-sub">Curated lists matching scheduled follow-up logs</div>
+              <div class="tw">
+                <table class="tbl">
+                  <thead>
+                    <tr>
+                      <th>Lead Name</th>
+                      <th>Current Staging</th>
+                      <th>Mobile</th>
+                      <th>Nurture Action Required</th>
+                      <th>Reschedule Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="due-followups-list-container">
+                    <!-- Due today followups loaded here -->
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -1351,32 +1384,6 @@
           </div>
         </div>
         
-        <!-- ================= PAGE: DUPLICATES AUDIT ================= -->
-        <div class="page" id="page-duplicates-audit">
-          <div class="card">
-            <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="display:flex; align-items:center; gap:8px;"><i class="ti ti-copy-off" style="color:var(--gold);"></i> Duplicate Mobile Numbers Audit Review</span>
-              <span class="badge badge-amber" id="dup-audit-pending-count" style="font-size:11.5px; padding:3px 8px; font-weight:700;">0 Pending Review</span>
-            </div>
-            <div class="card-sub">Manually analyze, merge notes, or approve import overrides for phone collision records</div>
-            
-            <div class="tw" style="margin-top:20px; max-height: 650px; overflow-y:auto;">
-              <table class="tbl">
-                <thead>
-                  <tr>
-                    <th>Incoming Duplicate Lead</th>
-                    <th>Existing Database Match</th>
-                    <th>Audit Status</th>
-                    <th>Resolve Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="duplicate-audit-list">
-                  <tr><td colspan="4" class="empty">Scanning duplicates ledger...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
 
         <!-- ================= PAGE 7: CAPTURE LEAD ================= -->
         <div class="page" id="page-capture">
@@ -1556,37 +1563,7 @@
           </div>
         </div>
         
-        <!-- ================= PAGE 8: FOLLOW-UPS ================= -->
-        <div class="page" id="page-followups">
-          <div class="card" style="border-color:var(--red);">
-            <div class="card-title" style="color:var(--red);"><i class="ti ti-alarm"></i> Overdue Callback Alerts</div>
-            <div class="card-sub">No callbacks done within last 24 hours — initiate urgent dialers</div>
-            <div id="overdue-followups-container">
-              <!-- Overdue list loaded here -->
-            </div>
-          </div>
-          
-          <div class="card">
-            <div class="card-title"><i class="ti ti-bell"></i> Scheduled Action Alerts Today</div>
-            <div class="card-sub">Curated lists matching scheduled follow-up logs</div>
-            <div class="tw">
-              <table class="tbl">
-                <thead>
-                  <tr>
-                    <th>Lead Name</th>
-                    <th>Current Staging</th>
-                    <th>Mobile</th>
-                    <th>Nurture Action Required</th>
-                    <th>Reschedule Action</th>
-                  </tr>
-                </thead>
-                <tbody id="due-followups-list-container">
-                  <!-- Due today followups loaded here -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+
         
         <!-- ================= PAGE: RAW LEADS DIRECTORY ================= -->
         <div class="page" id="page-raw-leads">
@@ -1630,6 +1607,7 @@
           <div class="subtab-bar" style="display:flex; gap:10px; margin-bottom:15px; border-bottom:1px solid var(--border); padding-bottom:5px;">
             <button class="btn btn-ghost btn-sm active" id="btn-enq-tab-main" onclick="switchEnquiryTab('main')" style="border-radius:0; border-bottom:2.5px solid var(--gold); padding:8px 15px; font-weight:700; color:var(--gold-l);">📋 Main Enquiry Log</button>
             <button class="btn btn-ghost btn-sm" id="btn-enq-tab-dup" onclick="switchEnquiryTab('dup')" style="border-radius:0; border-bottom:2.5px solid transparent; padding:8px 15px; font-weight:700; color:var(--text-secondary);">🔍 Duplicate Analytics Hub</button>
+            <button class="btn btn-ghost btn-sm" id="btn-enq-tab-audit" onclick="switchEnquiryTab('audit')" style="border-radius:0; border-bottom:2.5px solid transparent; padding:8px 15px; font-weight:700; color:var(--text-secondary);">⚠️ Import Duplicates Audit</button>
           </div>
 
           <div id="enquiry-main-card">
@@ -1707,6 +1685,33 @@
                     <tr>
                       <td colspan="5" style="text-align:center; padding: 20px 0; color:var(--text-muted);">Click refresh to query duplicate lead index.</td>
                     </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Duplicate Audit log review layout -->
+          <div id="enquiry-audit-card" class="hidden">
+            <div class="card">
+              <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="display:flex; align-items:center; gap:8px;"><i class="ti ti-copy-off" style="color:var(--gold);"></i> Duplicate Mobile Numbers Audit Review</span>
+                <span class="badge badge-amber" id="dup-audit-pending-count" style="font-size:11.5px; padding:3px 8px; font-weight:700;">0 Pending Review</span>
+              </div>
+              <div class="card-sub">Manually analyze, merge notes, or approve import overrides for phone collision records</div>
+              
+              <div class="tw" style="margin-top:20px; max-height: 650px; overflow-y:auto;">
+                <table class="tbl">
+                  <thead>
+                    <tr>
+                      <th>Incoming Duplicate Lead</th>
+                      <th>Existing Database Match</th>
+                      <th>Audit Status</th>
+                      <th>Resolve Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="duplicate-audit-list">
+                    <tr><td colspan="4" class="empty">Scanning duplicates ledger...</td></tr>
                   </tbody>
                 </table>
               </div>

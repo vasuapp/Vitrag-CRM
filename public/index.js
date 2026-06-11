@@ -990,10 +990,20 @@ function setupSidebarNavigation() {
   });
 }
 
-function navToPage(pageId) {
+function navToPage(pageId, subTabId) {
   // Authentication check
   if (!state.currentUser) {
     secureLockSession();
+    return;
+  }
+
+  // Redirection checks
+  if (pageId === 'followups') {
+    navToPage('pipeline', 'followups');
+    return;
+  }
+  if (pageId === 'duplicates-audit') {
+    navToPage('enquiry', 'audit');
     return;
   }
 
@@ -1081,9 +1091,34 @@ function navToPage(pageId) {
   else if (pageId === 'inventory') loadProperties();
   else if (pageId === 'projects') loadProjects();
   else if (pageId === 'associates') loadAssociates();
-  else if (pageId === 'pipeline') loadPipeline();
-  else if (pageId === 'followups') loadFollowups();
-  else if (pageId === 'enquiry') loadEnquiries();
+  else if (pageId === 'pipeline') {
+    if (subTabId === 'followups') {
+      if (typeof window.switchPipelineTab === 'function') {
+        window.switchPipelineTab('followups');
+      }
+    } else {
+      if (typeof window.switchPipelineTab === 'function') {
+        window.switchPipelineTab('board');
+      }
+      loadPipeline();
+    }
+  }
+  else if (pageId === 'enquiry') {
+    if (subTabId === 'audit') {
+      if (typeof window.switchEnquiryTab === 'function') {
+        window.switchEnquiryTab('audit');
+      }
+    } else if (subTabId === 'dup') {
+      if (typeof window.switchEnquiryTab === 'function') {
+        window.switchEnquiryTab('dup');
+      }
+    } else {
+      if (typeof window.switchEnquiryTab === 'function') {
+        window.switchEnquiryTab('main');
+      }
+      loadEnquiries();
+    }
+  }
   else if (pageId === 'commissions') loadCommissions();
   else if (pageId === 'blueprint') switchBlueprintTab('leads');
   else if (pageId === 'habits') loadHabitsGrid();
@@ -1100,9 +1135,6 @@ function navToPage(pageId) {
   else if (pageId === 'analytics') {
     if (typeof loadTelephonyAnalytics === 'function') loadTelephonyAnalytics();
     if (typeof loadGTMAnalyticsDashboard === 'function') loadGTMAnalyticsDashboard();
-  }
-  else if (pageId === 'duplicates-audit') {
-    loadDuplicateAuditLogs();
   }
   else if (pageId === 'raw-leads') {
     loadRawLeads();
@@ -4089,6 +4121,43 @@ function setupPipelineDropZones() {
     });
   });
 }
+
+window.switchPipelineTab = function(tabId) {
+  const boardTab = document.getElementById('btn-pipeline-tab-board');
+  const followupsTab = document.getElementById('btn-pipeline-tab-followups');
+  
+  const boardCard = document.getElementById('pipeline-board-card');
+  const followupsCard = document.getElementById('pipeline-followups-card');
+
+  if (tabId === 'board') {
+    if (boardTab) {
+      boardTab.classList.add('active');
+      boardTab.style.borderBottomColor = 'var(--gold)';
+      boardTab.style.color = 'var(--gold-l)';
+    }
+    if (followupsTab) {
+      followupsTab.classList.remove('active');
+      followupsTab.style.borderBottomColor = 'transparent';
+      followupsTab.style.color = 'var(--text-secondary)';
+    }
+    if (boardCard) boardCard.classList.remove('hidden');
+    if (followupsCard) followupsCard.classList.add('hidden');
+  } else {
+    if (followupsTab) {
+      followupsTab.classList.add('active');
+      followupsTab.style.borderBottomColor = 'var(--gold)';
+      followupsTab.style.color = 'var(--gold-l)';
+    }
+    if (boardTab) {
+      boardTab.classList.remove('active');
+      boardTab.style.borderBottomColor = 'transparent';
+      boardTab.style.color = 'var(--text-secondary)';
+    }
+    if (followupsCard) followupsCard.classList.remove('hidden');
+    if (boardCard) boardCard.classList.add('hidden');
+    loadFollowups();
+  }
+};
 
 // ------------------------------------------
 // 8. CAPTURE LEAD SUBMIT FORM
@@ -13607,33 +13676,51 @@ window.deleteTemplate = async function(id) {
 window.switchEnquiryTab = function(tabId) {
   const mainTab = document.getElementById('btn-enq-tab-main');
   const dupTab = document.getElementById('btn-enq-tab-dup');
+  const auditTab = document.getElementById('btn-enq-tab-audit');
   
   const mainCard = document.getElementById('enquiry-main-card');
   const dupCard = document.getElementById('enquiry-duplicates-card');
+  const auditCard = document.getElementById('enquiry-audit-card');
+
+  // Deactivate all tab headers
+  [mainTab, dupTab, auditTab].forEach(btn => {
+    if (btn) {
+      btn.classList.remove('active');
+      btn.style.borderBottomColor = 'transparent';
+      btn.style.color = 'var(--text-secondary)';
+    }
+  });
+
+  // Hide all cards
+  [mainCard, dupCard, auditCard].forEach(card => {
+    if (card) {
+      card.classList.add('hidden');
+    }
+  });
 
   if (tabId === 'main') {
-    mainTab.classList.add('active');
-    mainTab.style.borderBottomColor = 'var(--gold)';
-    mainTab.style.color = 'var(--gold-l)';
-    
-    dupTab.classList.remove('active');
-    dupTab.style.borderBottomColor = 'transparent';
-    dupTab.style.color = 'var(--text-secondary)';
-
-    mainCard.classList.remove('hidden');
-    dupCard.classList.add('hidden');
-  } else {
-    dupTab.classList.add('active');
-    dupTab.style.borderBottomColor = 'var(--gold)';
-    dupTab.style.color = 'var(--gold-l)';
-
-    mainTab.classList.remove('active');
-    mainTab.style.borderBottomColor = 'transparent';
-    mainTab.style.color = 'var(--text-secondary)';
-
-    dupCard.classList.remove('hidden');
-    mainCard.classList.add('hidden');
+    if (mainTab) {
+      mainTab.classList.add('active');
+      mainTab.style.borderBottomColor = 'var(--gold)';
+      mainTab.style.color = 'var(--gold-l)';
+    }
+    if (mainCard) mainCard.classList.remove('hidden');
+  } else if (tabId === 'dup') {
+    if (dupTab) {
+      dupTab.classList.add('active');
+      dupTab.style.borderBottomColor = 'var(--gold)';
+      dupTab.style.color = 'var(--gold-l)';
+    }
+    if (dupCard) dupCard.classList.remove('hidden');
     loadLeadDuplicates();
+  } else if (tabId === 'audit') {
+    if (auditTab) {
+      auditTab.classList.add('active');
+      auditTab.style.borderBottomColor = 'var(--gold)';
+      auditTab.style.color = 'var(--gold-l)';
+    }
+    if (auditCard) auditCard.classList.remove('hidden');
+    loadDuplicateAuditLogs();
   }
 };
 
