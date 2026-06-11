@@ -1,8 +1,7 @@
-# Railway.json for crm-application root
 {
   "$schema": "https://schema.railway.app/railway-schema-v2.json",
   "build": {
-    "builder": "NIXPACKS"
+    "builder": "RAILPACK"
   },
   "deploy": {
     "startCommand": "node server/index.js",
