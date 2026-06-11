@@ -12652,7 +12652,10 @@ window.printInvoiceArea = function() {
       body * {
         visibility: hidden !important;
       }
-      #modal-invoice-popup, #modal-invoice-popup * {
+      #modal-invoice-popup,
+      #modal-invoice-popup .modal,
+      #invoice-printout-area,
+      #invoice-printout-area * {
         visibility: visible !important;
       }
       #modal-invoice-popup {
@@ -12661,26 +12664,37 @@ window.printInvoiceArea = function() {
         top: 0 !important;
         width: 100% !important;
         height: auto !important;
+        background: none !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      #modal-invoice-popup .modal {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: none !important;
+        overflow: visible !important;
         background: #ffffff !important;
-        color: #1a1e24 !important;
         box-shadow: none !important;
         border: none !important;
         padding: 0 !important;
         margin: 0 !important;
         transform: none !important;
       }
-      #invoice-printout-area, #invoice-printout-area * {
-        visibility: visible !important;
-      }
       #invoice-printout-area {
-        position: absolute !important;
-        left: 0 !important;
-        top: 0 !important;
+        display: block !important;
         width: 100% !important;
+        max-width: 100% !important;
         margin: 0 !important;
         padding: 0 !important;
         background: #ffffff !important;
         color: #1a1e24 !important;
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        overflow: visible !important;
       }
       .mhd, .mft, .mclose, .btn, button {
         display: none !important;
