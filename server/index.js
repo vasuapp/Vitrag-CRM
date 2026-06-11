@@ -1243,6 +1243,22 @@ app.get('/api/leads', async (req, res) => {
 
     const processedLeads = leads.map(l => {
       let score = 15; // base
+      let breakdown = {
+        base: 15,
+        callsCount: 0,
+        callsPoints: 0,
+        chatsCount: 0,
+        chatsPoints: 0,
+        visitsCount: 0,
+        visitsPoints: 0,
+        propsCount: 0,
+        propsPoints: 0,
+        scorecardPoints: 0,
+        daysActive: 0,
+        daysActivePoints: 0,
+        daysSinceLast: 0,
+        decayFactor: 1.0
+      };
       try {
         const interactionData = interactionLogsMap[l.id] || {};
         const telephonyData = telephonyCallsMap[l.id] || {};
@@ -1253,14 +1269,22 @@ app.get('/api/leads', async (req, res) => {
         const callsCount = parseInt(interactionData.calls_count || 0);
         const telCallsCount = parseInt(telephonyData.tel_count || 0);
         const totalCalls = callsCount + telCallsCount;
+        breakdown.callsCount = totalCalls;
+        breakdown.callsPoints = totalCalls * 15;
 
         const chatsCount = parseInt(interactionData.chats_count || 0);
+        breakdown.chatsCount = chatsCount;
+        breakdown.chatsPoints = chatsCount * 5;
 
         const visitsCount = parseInt(interactionData.visits_count || 0);
         const actVisitsCount = parseInt(activitiesData.visits_count || 0);
         const totalVisits = visitsCount + actVisitsCount;
+        breakdown.visitsCount = totalVisits;
+        breakdown.visitsPoints = totalVisits * 30;
 
         const propsCount = parseInt(proposalsData.props_count || 0);
+        breakdown.propsCount = propsCount;
+        breakdown.propsPoints = propsCount * 20;
 
         score += totalCalls * 15;
         score += chatsCount * 5;
@@ -1268,12 +1292,17 @@ app.get('/api/leads', async (req, res) => {
         score += propsCount * 20;
 
         if (card) {
-          score += (parseInt(card.budget || 0) + parseInt(card.timeline || 0) + parseInt(card.funding || 0) + parseInt(card.responsiveness || 0) + parseInt(card.clarity || 0)) * 1.5;
+          const scPoints = (parseInt(card.budget || 0) + parseInt(card.timeline || 0) + parseInt(card.funding || 0) + parseInt(card.responsiveness || 0) + parseInt(card.clarity || 0)) * 1.5;
+          score += scPoints;
+          breakdown.scorecardPoints = scPoints;
         }
 
         // Days Active: +2 points per day (max 20 points / 10 days)
         const daysActive = l.created_at ? Math.max(0, Math.floor((new Date() - new Date(l.created_at)) / (1000 * 60 * 60 * 24))) : 0;
-        score += Math.min(20, daysActive * 2);
+        const daPoints = Math.min(20, daysActive * 2);
+        score += daPoints;
+        breakdown.daysActive = daysActive;
+        breakdown.daysActivePoints = daPoints;
 
         // Age Decay based on last interaction date
         let lastDate = l.created_at ? new Date(l.created_at) : null;
@@ -1294,12 +1323,16 @@ app.get('/api/leads', async (req, res) => {
 
         if (lastDate) {
           const daysSinceLast = Math.max(0, Math.floor((new Date() - lastDate) / (1000 * 60 * 60 * 24)));
+          breakdown.daysSinceLast = daysSinceLast;
           if (daysSinceLast > 30) {
             score *= 0.4; // 60% decay
+            breakdown.decayFactor = 0.4;
           } else if (daysSinceLast > 14) {
             score *= 0.6; // 40% decay
+            breakdown.decayFactor = 0.6;
           } else if (daysSinceLast > 7) {
             score *= 0.8; // 20% decay
+            breakdown.decayFactor = 0.8;
           }
         }
       } catch (errScore) {
@@ -1308,7 +1341,8 @@ app.get('/api/leads', async (req, res) => {
       const finalScore = Math.min(99, Math.max(1, Math.round(score)));
       const resLead = {
         ...l,
-        lead_score: finalScore
+        lead_score: finalScore,
+        likelihood_breakdown: breakdown
       };
       const shouldMaskContact = !isAdmin && !hasPhoneAccess && l.agent_id !== user.id || !systemSettings.showMaskedFields;
       if (shouldMaskContact) {
@@ -1417,7 +1451,8 @@ app.post('/api/leads', async (req, res) => {
       admin_comments,
       property_requirement,
       associate_id,
-      agent_id
+      agent_id,
+      rental_expiry_date
     } = req.body;
 
     // Duplicate Phone Detection
@@ -1461,8 +1496,8 @@ app.post('/api/leads', async (req, res) => {
     }
 
     // Calculate initial rental expiry if rental
-    let rental_expiry = '';
-    if (project_type === 'Rental' && status === 'Closed') {
+    let rental_expiry = rental_expiry_date || '';
+    if (!rental_expiry && project_type === 'Rental' && status === 'Closed') {
       const d = new Date();
       d.setMonth(d.getMonth() + 11);
       rental_expiry = d.toISOString().split('T')[0];
@@ -1634,7 +1669,7 @@ app.get('/api/leads/:id/matches', async (req, res) => {
     });
 
     // Fetch active available properties
-    const properties = (await db.query("SELECT * FROM properties WHERE status = 'AVAILABLE' AND deleted_at IS NULL")).rows;
+    const properties = (await db.query("SELECT p.*, a.name AS associate_name, a.company AS associate_company FROM properties p LEFT JOIN associates a ON p.associate_id = a.id WHERE p.status = 'AVAILABLE' AND p.deleted_at IS NULL")).rows;
     const matches = await Promise.all(properties.map(async p => {
       let scoreLocality = 0;
       let scoreBudget = 0;
@@ -1773,7 +1808,9 @@ app.post('/api/leads/:id/interest', async (req, res) => {
 
     // Add an activity log automatically
     await (async () => {
-      const r = await db.query("INSERT INTO lead_activities (lead_id, type, description) VALUES ($1, $2, $3) RETURNING id", [req.params.id, 'Property Offered', `Property ID ${property_id} marked as ${status}.`]);
+      const propRow = (await db.query("SELECT society, location FROM properties WHERE id = $1", [property_id])).rows[0];
+      const propText = propRow ? `"${propRow.society} (${propRow.location})"` : `ID ${property_id}`;
+      const r = await db.query("INSERT INTO lead_activities (lead_id, type, description) VALUES ($1, $2, $3) RETURNING id", [req.params.id, 'Property Offered', `Property ${propText} marked as ${status}.`]);
       return {
         lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
         changes: r.rowCount

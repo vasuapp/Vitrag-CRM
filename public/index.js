@@ -4308,6 +4308,10 @@ window.editLeadData = async function(id) {
     document.getElementById('edit-lead-stage').value = (lead.stage === 'Raw Lead') ? 'New' : (lead.stage || 'New');
     document.getElementById('edit-lead-notes').value = lead.notes || '';
     document.getElementById('edit-lead-admin-comments').value = lead.admin_comments || '';
+    const rentalExpiryEl = document.getElementById('edit-lead-rental-expiry');
+    if (rentalExpiryEl) {
+      rentalExpiryEl.value = lead.rental_expiry_date || '';
+    }
     
     const reqSelect = document.getElementById('edit-lead-requirement');
     if (reqSelect) {
@@ -4356,6 +4360,10 @@ window.showAddEnquiryModal = function() {
   document.getElementById('edit-lead-stage').value = 'New';
   document.getElementById('edit-lead-notes').value = '';
   document.getElementById('edit-lead-admin-comments').value = '';
+  const rentalExpiryEl = document.getElementById('edit-lead-rental-expiry');
+  if (rentalExpiryEl) {
+    rentalExpiryEl.value = '';
+  }
   
   const reqSelect = document.getElementById('edit-lead-requirement');
   if (reqSelect) {
@@ -4405,7 +4413,8 @@ window.submitEditLead = async function(e) {
     timeline_preference: document.getElementById('edit-lead-timeline').value,
     property_requirement: document.getElementById('edit-lead-requirement').value,
     associate_id: document.getElementById('edit-lead-associate').value || null,
-    agent_id: document.getElementById('edit-lead-agent').value || null
+    agent_id: document.getElementById('edit-lead-agent').value || null,
+    rental_expiry_date: document.getElementById('edit-lead-rental-expiry')?.value || ''
   };
 
   try {
@@ -7160,9 +7169,43 @@ window.deleteAssociateData = async function() {
   }
 };
 
-window.showAddAssocPropertyModal = function() {
+window.populateAssocPropDropdown = async function(selectedAssocId = null) {
+  const select = document.getElementById('assoc-prop-assoc-id');
+  if (!select) return;
+  select.innerHTML = '<option value="">-- Select Associate --</option>';
+  
+  if (!state.associates || state.associates.length === 0) {
+    try {
+      const res = await fetch('/api/associates');
+      state.associates = await res.json();
+    } catch (err) {
+      console.error(err);
+      state.associates = [];
+    }
+  }
+  
+  (state.associates || []).forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a.id;
+    opt.innerText = `${a.name} (${a.company || 'Co-Broker'})`;
+    select.appendChild(opt);
+  });
+  
+  if (selectedAssocId) {
+    select.value = selectedAssocId;
+  }
+};
+
+window.showAddAssocPropertyModal = async function() {
   const assocId = document.getElementById('detail-assoc-id').value;
-  document.getElementById('assoc-prop-assoc-id').value = assocId;
+  await populateAssocPropDropdown(assocId);
+  document.getElementById('form-add-assoc-property').reset();
+  openModal('modal-add-assoc-property');
+};
+
+window.showAddAssocPropertyModalForLead = async function(leadId) {
+  state.activeLeadForAssocProp = leadId;
+  await populateAssocPropDropdown();
   document.getElementById('form-add-assoc-property').reset();
   openModal('modal-add-assoc-property');
 };
@@ -7170,6 +7213,8 @@ window.showAddAssocPropertyModal = function() {
 window.submitAddAssocProperty = async function(e) {
   e.preventDefault();
   const assocId = document.getElementById('assoc-prop-assoc-id').value;
+  if (!assocId) return showToast('Please select a co-broker/associate.', 'error');
+  
   const data = {
     society: document.getElementById('assoc-prop-society').value,
     location: document.getElementById('assoc-prop-location').value,
@@ -7182,7 +7227,6 @@ window.submitAddAssocProperty = async function(e) {
   };
 
   try {
-    
     const editId = document.getElementById('edit-rental-id').value;
     const url = editId ? `/api/properties/${editId}` : `/api/properties`;
     const method = editId ? 'PUT' : 'POST';
@@ -7196,7 +7240,18 @@ window.submitAddAssocProperty = async function(e) {
     if (res.ok) {
       showToast('🎉 Associate property listed successfully.');
       closeModal('modal-add-assoc-property');
-      loadAssociateInventory(assocId);
+      
+      // Refresh local cache
+      const pRes = await fetch('/api/properties');
+      state.properties = await pRes.json();
+      
+      if (state.activeLeadForAssocProp) {
+        // Automatically pitch/offer it to the active lead
+        await markLeadInterest(state.activeLeadForAssocProp, result.id, 'Offered');
+        state.activeLeadForAssocProp = null;
+      } else {
+        loadAssociateInventory(assocId);
+      }
       loadProperties(); // Refresh main list
     } else {
       showToast('Error: ' + result.error);
@@ -9500,6 +9555,64 @@ async function showLeadDetails(leadId) {
     // Fetch Scorecard
     const resScore = await fetch(`/api/leads/${leadId}/scorecard`);
     const score = await resScore.json();
+
+    // Populate Opportunity Likelihood Breakdown
+    const breakdown = lead.likelihood_breakdown || {
+      base: 15,
+      callsCount: 0,
+      callsPoints: 0,
+      chatsCount: 0,
+      chatsPoints: 0,
+      visitsCount: 0,
+      visitsPoints: 0,
+      propsCount: 0,
+      propsPoints: 0,
+      scorecardPoints: 0,
+      daysActive: 0,
+      daysActivePoints: 0,
+      daysSinceLast: 0,
+      decayFactor: 1.0
+    };
+
+    const breakdownCard = document.getElementById('lead-likelihood-breakdown-card');
+    if (breakdownCard) {
+      breakdownCard.style.display = 'block';
+      document.getElementById('lbl-breakdown-percentage').innerText = `${lead.lead_score || 0}%`;
+      document.getElementById('lbl-breakdown-days-active').innerText = `${breakdown.daysActive} days (+${breakdown.daysActivePoints} pts)`;
+      document.getElementById('lbl-breakdown-calls').innerText = `${breakdown.callsCount} calls (+${breakdown.callsPoints} pts)`;
+      document.getElementById('lbl-breakdown-chats').innerText = `${breakdown.chatsCount} chats (+${breakdown.chatsPoints} pts)`;
+      document.getElementById('lbl-breakdown-visits').innerText = `${breakdown.visitsCount} visits (+${breakdown.visitsPoints} pts)`;
+      document.getElementById('lbl-breakdown-proposals').innerText = `${breakdown.propsCount} sent (+${breakdown.propsPoints} pts)`;
+      
+      const scorecardSum = (score.budget || 3) + (score.timeline || 3) + (score.funding || 3) + (score.responsiveness || 3) + (score.clarity || 3);
+      document.getElementById('lbl-breakdown-scorecard').innerText = `${scorecardSum}/25 (+${breakdown.scorecardPoints} pts)`;
+      
+      const decayEl = document.getElementById('lbl-breakdown-decay');
+      if (decayEl) {
+        if (breakdown.decayFactor < 1.0) {
+          const percentage = Math.round((1 - breakdown.decayFactor) * 100);
+          decayEl.innerText = `⚠️ Time Decay: ${percentage}% reduction applied (last interaction ${breakdown.daysSinceLast} days ago)`;
+          decayEl.style.display = 'block';
+        } else {
+          decayEl.style.display = 'none';
+        }
+      }
+    }
+
+    const opportunityPill = document.getElementById('detail-lead-likelihood')?.parentElement;
+    if (opportunityPill) {
+      const tooltipLines = [
+        `Base Score: 15 pts`,
+        `Days Active: ${breakdown.daysActive} days (+${breakdown.daysActivePoints} pts)`,
+        `Calls: ${breakdown.callsCount} (+${breakdown.callsPoints} pts)`,
+        `Chats: ${breakdown.chatsCount} (+${breakdown.chatsPoints} pts)`,
+        `Visits: ${breakdown.visitsCount} (+${breakdown.visitsPoints} pts)`,
+        `Proposals: ${breakdown.propsCount} (+${breakdown.propsPoints} pts)`,
+        `Scorecard: (+${breakdown.scorecardPoints} pts)`,
+        breakdown.decayFactor < 1.0 ? `Decay: -${Math.round((1 - breakdown.decayFactor) * 100)}% (${breakdown.daysSinceLast}d idle)` : null
+      ].filter(Boolean).join('\n');
+      opportunityPill.setAttribute('title', `VJ Likelihood Index Factors:\n${tooltipLines}`);
+    }
     
     document.getElementById('score-budget').value = score.budget;
     document.getElementById('lbl-score-budget').innerText = `${score.budget} / 5`;
@@ -10094,6 +10207,17 @@ window.loadLeadMatches = async function(leadId) {
   
   matchContainer.innerHTML = `<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:20px;">🤖 Scanning database inventory and compiling AI rationales...</div>`;
   
+  // Ensure properties cache is loaded
+  if (!state.properties || state.properties.length === 0) {
+    try {
+      const pRes = await fetch('/api/properties');
+      state.properties = await pRes.json();
+    } catch (errProps) {
+      console.error('Failed to pre-fetch properties:', errProps);
+      state.properties = [];
+    }
+  }
+
   try {
     const res = await fetch(`/api/leads/${leadId}/matches`);
     const { matches, offered } = await res.json();
@@ -10130,13 +10254,18 @@ window.loadLeadMatches = async function(leadId) {
     if (!offeredContainer) return;
     
     const pitchAssociateBar = `
-      <div style="display:flex; gap:10px; align-items:center; background:rgba(255,255,255,0.02); padding:8px 12px; border-radius:6px; border:1px solid var(--border); margin-bottom:12px;">
-        <span style="font-size:11.5px; color:var(--text-light); font-weight:700;">Pitch Co-Broker Listing:</span>
-        <select class="form-select btn-sm" id="pitch-associate-prop-select" style="flex:1; font-size:11.5px; height:28px; background:rgba(0,0,0,0.3); border:1px solid var(--border);">
-          <option value="">-- Select Associate Property --</option>
-          ${state.properties.filter(p => p.associate_id).map(p => `<option value="${p.id}">${p.society} (${p.bedrooms_bhk || p.configuration || 'Premium'}) - ${p.price_raw || 'On Request'}</option>`).join('')}
-        </select>
-        <button class="btn btn-primary btn-sm" onclick="submitPitchAssociateProperty(${leadId})" style="height:28px; font-size:11.5px; padding:0 10px;">📤 Pitch</button>
+      <div style="display:flex; flex-direction:column; gap:8px; background:rgba(255,255,255,0.02); padding:10px; border-radius:6px; border:1px solid var(--border); margin-bottom:12px;">
+        <div style="display:flex; gap:10px; align-items:center;">
+          <span style="font-size:11.5px; color:var(--text-light); font-weight:700;">Pitch Co-Broker Listing:</span>
+          <select class="form-select btn-sm" id="pitch-associate-prop-select" style="flex:1; font-size:11.5px; height:28px; background:rgba(0,0,0,0.3); border:1px solid var(--border);">
+            <option value="">-- Select Associate Property --</option>
+            ${(state.properties || []).filter(p => p.associate_id).map(p => `<option value="${p.id}">${p.society} (${p.bedrooms_bhk || p.configuration || 'Premium'}) - ${p.price_raw || 'On Request'}</option>`).join('')}
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="submitPitchAssociateProperty(${leadId})" style="height:28px; font-size:11.5px; padding:0 10px;">📤 Pitch</button>
+        </div>
+        <div style="display:flex; justify-content:flex-end;">
+          <button class="btn btn-ghost btn-sm" style="color:var(--gold); font-size:11px; padding:2px 8px; border:1.5px dashed var(--gold); background:rgba(212,175,55,0.05);" onclick="showAddAssocPropertyModalForLead(${leadId})">➕ Add & Pitch New Associate Listing</button>
+        </div>
       </div>
     `;
 
@@ -10144,7 +10273,7 @@ window.loadLeadMatches = async function(leadId) {
       offeredContainer.innerHTML = pitchAssociateBar + '<div style="font-size:12px; color:var(--text-muted); text-align:center; padding:15px;">No properties have been pitched to this lead yet.</div>';
     } else {
       const offeredHtml = offered.map(o => {
-        const p = matches.find(x => x.id === o.property_id) || state.properties.find(x => x.id === o.property_id) || { society: 'Unknown', price_raw: '' };
+        const p = matches.find(x => x.id === o.property_id) || (state.properties || []).find(x => x.id === o.property_id) || { society: 'Unknown', price_raw: '' };
         const assocBadge = p.associate_name ? `
           <div style="font-size:10px; color:var(--amber); margin-top:2.5px; font-weight:700;">
             🤝 Sourced via Co-Broker: ${p.associate_name} (${p.associate_company || 'Independent'})
@@ -10957,6 +11086,7 @@ window.saveLeadFollowupDate = async function() {
     
     showToast('Follow-up date updated.');
     loadDashboardData();
+    if (typeof loadPipeline === 'function') loadPipeline();
   } catch (err) {
     console.error(err);
   }
@@ -11008,15 +11138,23 @@ window.loadLeadDocs = async function(leadId) {
     if (docs.length === 0) {
       container.innerHTML = `<div style="font-size:12px; color:var(--text-muted);">No documents registered for this lead.</div>`;
     } else {
-      container.innerHTML = docs.map((d) => `
-        <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:8px 12px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <div style="font-size:12px; font-weight:700; color:var(--text-light);"><i class="ti ti-file" style="color:var(--gold);"></i> ${escapeHtml(d.doc_name)}</div>
-          <div style="display:flex; gap:8px;">
-            <button class="btn btn-ghost btn-sm" onclick="window.open('${d.doc_url}', '_blank')" style="padding:2px 8px; font-size:10px;">Open URL</button>
-            <button class="btn btn-ghost btn-sm" style="color:var(--red); padding:2px 8px; font-size:10px;" onclick="removeLeadDocument(${leadId}, ${d.id})"><i class="ti ti-trash"></i></button>
+      container.innerHTML = docs.map((d) => {
+        const isDrive = (d.doc_url || '').includes('drive.google.com') || (d.doc_url || '').includes('docs.google.com');
+        const iconHtml = isDrive 
+          ? `<i class="ti ti-brand-google-drive" style="color:#2ecc71; font-size:14px; margin-right:4px;"></i>` 
+          : `<i class="ti ti-file" style="color:var(--gold); font-size:14px; margin-right:4px;"></i>`;
+        return `
+          <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:8px 12px; border-radius:6px; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <div style="font-size:12px; font-weight:700; color:var(--text-light); display:flex; align-items:center;">
+              ${iconHtml} <span>${escapeHtml(d.doc_name)}</span>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-ghost btn-sm" onclick="window.open('${d.doc_url}', '_blank')" style="padding:2px 8px; font-size:10px;">Open URL</button>
+              <button class="btn btn-ghost btn-sm" style="color:var(--red); padding:2px 8px; font-size:10px;" onclick="removeLeadDocument(${leadId}, ${d.id})"><i class="ti ti-trash"></i></button>
+            </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
   } catch(e) {
     console.error(e);

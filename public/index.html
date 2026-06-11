@@ -4914,7 +4914,12 @@
       </div>
       <form id="form-add-assoc-property" onsubmit="submitAddAssocProperty(event)">
         <div class="mbdy">
-          <input type="hidden" id="assoc-prop-assoc-id">
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label" style="color:var(--gold-l); font-weight:700;">Co-Broker / Associate Agent *</label>
+            <select class="form-select" id="assoc-prop-assoc-id" required style="background:rgba(0,0,0,0.3); border:1px solid var(--border);">
+              <option value="">-- Select Associate --</option>
+            </select>
+          </div>
           <div class="form-group" style="margin-bottom:12px;">
             <label class="form-label">Society / Project Name *</label>
             <input class="form-input" type="text" id="assoc-prop-society" required placeholder="e.g. Purva Atmosphere">
@@ -5492,6 +5497,12 @@
           </div>
           <div class="form-row">
             <div class="form-group">
+              <label class="form-label" style="color:var(--amber);">Rental Lease Expiry / Renewal Date (For Rental Leads)</label>
+              <input class="form-input" type="date" id="edit-lead-rental-expiry" style="background:rgba(0,0,0,0.3); border:1px solid var(--border);">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
               <label class="form-label">Status of Follow-up</label>
               <select class="form-select" id="edit-lead-followup-status">
                 <option value="None">-- Select Status --</option>
@@ -5630,6 +5641,27 @@
             <span> Rate client qualification on a 1 to 5 numerical scale to compute overall advisory index.</span>
             <strong>Aggregate Score: <span id="lead-scorecard-total" style="color:var(--gold-l);">0 / 25</span></strong>
           </div>
+          
+          <!-- AI Opportunity Likelihood Breakdown -->
+          <div id="lead-likelihood-breakdown-card" style="background:rgba(212, 175, 55, 0.05); border:1px solid rgba(212, 175, 55, 0.15); border-radius:6px; padding:12px; margin-bottom:15px; display:none;">
+            <div style="font-size:12.5px; font-weight:700; color:var(--gold-l); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+              <span>📊 AI Opportunity Likelihood: <span id="lbl-breakdown-percentage" style="color:var(--green);">0%</span></span>
+              <span style="font-size:10px; font-weight:normal; color:var(--text-muted);">VJ Intelligence Engine</span>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:11px; color:var(--text-light);">
+              <div>• Base Score: <strong style="color:var(--gold-l);">15 pts</strong></div>
+              <div>• Days Active: <strong id="lbl-breakdown-days-active">0 days (+0 pts)</strong></div>
+              <div>• Calls Logged: <strong id="lbl-breakdown-calls">0 (+0 pts)</strong></div>
+              <div>• WhatsApp Chats: <strong id="lbl-breakdown-chats">0 (+0 pts)</strong></div>
+              <div>• Site Visits: <strong id="lbl-breakdown-visits">0 (+0 pts)</strong></div>
+              <div>• Proposals Sent: <strong id="lbl-breakdown-proposals">0 (+0 pts)</strong></div>
+              <div style="grid-column: span 2;">• Qualification Scorecard: <strong id="lbl-breakdown-scorecard">0/25 (+0 pts)</strong></div>
+            </div>
+            <div id="lbl-breakdown-decay" style="margin-top:8px; font-size:10.5px; color:var(--amber); font-weight:700; display:none;">
+              ⚠️ Time Decay: 20% reduction applied (no recent touchpoints)
+            </div>
+          </div>
+
           <form id="form-lead-scorecard" onsubmit="submitLeadScorecard(event)">
             <div style="display:flex; flex-direction:column; gap:12px;">
               <div class="form-group">
@@ -5733,6 +5765,7 @@
             <div style="display:flex; align-items:center; gap:10px; font-size:11px;">
               <span style="color:var(--text-muted);">OR upload directly:</span>
               <input type="file" id="lead-doc-file-upload" onchange="uploadFileToField(event, 'new-lead-doc-url')" style="font-size:11px; max-width:200px;">
+              <span id="new-lead-doc-url-status" style="color:var(--gold-l); font-weight:700;"></span>
             </div>
           </div>
           <div id="lead-docs-container" style="display:flex; flex-direction:column; gap:8px;">
