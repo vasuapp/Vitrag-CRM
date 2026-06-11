@@ -979,11 +979,39 @@ function setupSidebarNavigation() {
     });
   });
 
-  // Prevent details elements inside the sidebar from closing on mobile or when collapsed in rail mode
+  // Hover & Collapse behaviors for details elements inside the sidebar
   document.querySelectorAll('.sidebar details').forEach(details => {
+    // Prevent details elements inside the sidebar from closing when collapsed in rail mode
     details.addEventListener('click', (e) => {
       const isCollapsed = document.querySelector('.sidebar')?.classList.contains('locked-collapsed') || (window.innerWidth > 768 && window.innerWidth <= 992);
       if (isCollapsed && (e.target.tagName === 'SUMMARY' || e.target.closest('summary'))) {
+        e.preventDefault();
+      }
+    });
+
+    // Hover to open (only on desktop and when not in collapsed rail mode)
+    details.addEventListener('mouseenter', () => {
+      const isCollapsed = document.querySelector('.sidebar')?.classList.contains('locked-collapsed') || (window.innerWidth > 768 && window.innerWidth <= 992);
+      const isMobile = window.innerWidth <= 768;
+      if (!isCollapsed && !isMobile) {
+        details.open = true;
+      }
+    });
+
+    // Leave to collapse (only on desktop and when not in collapsed rail mode)
+    details.addEventListener('mouseleave', () => {
+      const isCollapsed = document.querySelector('.sidebar')?.classList.contains('locked-collapsed') || (window.innerWidth > 768 && window.innerWidth <= 992);
+      const isMobile = window.innerWidth <= 768;
+      if (!isCollapsed && !isMobile) {
+        details.open = false;
+      }
+    });
+
+    // Prevent summary click from toggling the category close on hover-click on desktop
+    details.querySelector('summary')?.addEventListener('click', (e) => {
+      const isCollapsed = document.querySelector('.sidebar')?.classList.contains('locked-collapsed') || (window.innerWidth > 768 && window.innerWidth <= 992);
+      const isMobile = window.innerWidth <= 768;
+      if (!isCollapsed && !isMobile) {
         e.preventDefault();
       }
     });
