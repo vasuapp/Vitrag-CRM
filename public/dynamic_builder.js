@@ -625,6 +625,7 @@ window.loadBuilderTables = async function() {
           <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">Columns: ${(t.fields || []).length}</div>
         </div>
         <div style="display:flex; gap:4px;" onclick="event.stopPropagation()">
+          <button class="btn btn-ghost btn-sm" style="padding:2px 6px; font-size:10px; color:var(--gold-l);" onclick="window.showEditTableModal(${t.id})" title="Edit Table"><i class="ti ti-edit"></i></button>
           <button class="btn btn-ghost btn-sm" style="padding:2px 6px; font-size:10px; color:var(--red);" onclick="window.deleteBuilderTable(${t.id})" title="Delete Table"><i class="ti ti-trash"></i></button>
         </div>
       </div>
@@ -731,13 +732,29 @@ window.showCreateTableModal = function() {
   openModal('modal-builder-table');
 };
 
+window.showEditTableModal = function(id) {
+  const t = window.builderState.tables.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('builder-table-id').value = t.id;
+  document.getElementById('builder-table-name').value = t.name;
+  document.getElementById('builder-table-description').value = t.description || '';
+  openModal('modal-builder-table');
+};
+
 window.handleCustomTableSubmit = async function(e) {
   e.preventDefault();
   const id = document.getElementById('builder-table-id').value;
+  let fields = [];
+  if (id) {
+    const existingTable = window.builderState.tables.find(x => x.id == id);
+    if (existingTable) {
+      fields = existingTable.fields || [];
+    }
+  }
   const payload = {
     name: document.getElementById('builder-table-name').value.trim(),
     description: document.getElementById('builder-table-description').value.trim(),
-    fields: id ? window.builderState.selectedTable.fields : []
+    fields: fields
   };
 
   try {
