@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
+const compression = require('compression');
 const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
@@ -63,19 +64,38 @@ const upload = multer({
   storage
 });
 
-// Session Config
-app.use(session({
-  store: new SQLiteStore({
+// Session Config — use PostgreSQL session store in production (Railway)
+// Falls back to SQLite for local dev when DATABASE_URL is not a remote host
+let sessionStore;
+const isRemoteDb = process.env.DATABASE_URL && !process.env.DATABASE_URL.includes('localhost') && !process.env.DATABASE_URL.includes('127.0.0.1');
+if (isRemoteDb) {
+  const pgSession = require('connect-pg-simple')(session);
+  sessionStore = new pgSession({
+    pool: db.pool,
+    tableName: 'crm_sessions',
+    createTableIfMissing: true
+  });
+} else {
+  sessionStore = new SQLiteStore({
     db: 'realpro_sessions.db',
     dir: path.join(__dirname, '../server')
-  }),
+  });
+}
+
+app.use(session({
+  store: sessionStore,
   secret: process.env.SESSION_SECRET || 'realpro_crm_gold_secret_2026',
   resave: false,
   saveUninitialized: false,
   cookie: {
-    maxAge: 24 * 60 * 60 * 1000
-  } // 24 hours
+    maxAge: 24 * 60 * 60 * 1000,
+    secure: isRemoteDb, // HTTPS-only cookies in production
+    sameSite: isRemoteDb ? 'none' : 'lax'
+  }
 }));
+
+// Gzip compression — reduces JSON response payload size by ~70%
+app.use(compression());
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -718,61 +738,121 @@ app.get('/api/dashboard/stats', async (req, res) => {
     const todayStr = new Date().toISOString().split('T')[0];
     const user = getRequestUser(req);
     const isAdmin = !user || user.role === 'Admin';
-    let totalLeads, hotLeads, dueFollowups, activeListings;
-    if (isAdmin) {
-      totalLeads = (await db.query('SELECT COUNT(*) as count FROM leads WHERE deleted_at IS NULL')).rows[0].count;
-      hotLeads = (await db.query("SELECT COUNT(*) as count FROM leads WHERE deleted_at IS NULL AND status = 'Hot'")).rows[0].count;
-      dueFollowups = (await db.query("SELECT COUNT(*) as count FROM leads WHERE deleted_at IS NULL AND next_followup != '' AND next_followup <= $1", [todayStr])).rows[0].count;
-      activeListings = (await db.query("SELECT COUNT(*) as count FROM properties WHERE deleted_at IS NULL AND COALESCE(UPPER(status), 'AVAILABLE') = 'AVAILABLE'")).rows[0].count;
-    } else {
-      totalLeads = (await db.query("SELECT COUNT(*) as count FROM leads WHERE deleted_at IS NULL AND agent_id = $1", [user.id])).rows[0].count;
-      hotLeads = (await db.query("SELECT COUNT(*) as count FROM leads WHERE deleted_at IS NULL AND status = 'Hot' AND agent_id = $1", [user.id])).rows[0].count;
-      dueFollowups = (await db.query("SELECT COUNT(*) as count FROM leads WHERE deleted_at IS NULL AND next_followup != '' AND next_followup <= $1 AND agent_id = $2", [todayStr, user.id])).rows[0].count;
-      activeListings = (await db.query("SELECT COUNT(*) as count FROM properties WHERE deleted_at IS NULL AND COALESCE(UPPER(status), 'AVAILABLE') = 'AVAILABLE' AND (agent_id IS NULL OR agent_id = $1)", [user.id])).rows[0].count;
-    }
 
-    // Financial calculations (Only admins see actual deal finances, standard agents get 0 or restricted if needed, but let's hide for non-admins)
-    let earnedComm = 0;
-    let pendingComm = 0;
     if (isAdmin) {
-      earnedComm = (await db.query("SELECT SUM(deal_value * (commission_percentage/100.0) - co_broker_payout - expenses) as sum FROM commissions WHERE payment_status = 'Paid'")).rows[0].sum || 0;
-      pendingComm = (await db.query("SELECT SUM(deal_value * (commission_percentage/100.0) - co_broker_payout - expenses) as sum FROM commissions WHERE payment_status = 'Pending'")).rows[0].sum || 0;
-    }
+      // ── ADMIN: fire ALL queries in parallel ─────────────────────────────
+      const [
+        leadsRes,
+        propsRes,
+        commRes,
+        touchRes
+      ] = await Promise.all([
+        // Single query returns total, hot, and due-followup counts
+        db.pool.query(`
+          SELECT
+            COUNT(*) FILTER (WHERE deleted_at IS NULL)                                       AS total_leads,
+            COUNT(*) FILTER (WHERE deleted_at IS NULL AND status = 'Hot')                    AS hot_leads,
+            COUNT(*) FILTER (WHERE deleted_at IS NULL AND next_followup != '' AND next_followup <= $1) AS due_followups
+          FROM leads
+        `, [todayStr]),
+        // Active listings count
+        db.pool.query(`
+          SELECT COUNT(*) AS active_listings
+          FROM properties
+          WHERE deleted_at IS NULL AND COALESCE(UPPER(status), 'AVAILABLE') = 'AVAILABLE'
+        `),
+        // Commissions: earned + pending in one pass
+        db.pool.query(`
+          SELECT
+            COALESCE(SUM(deal_value * (commission_percentage/100.0) - co_broker_payout - expenses) FILTER (WHERE payment_status = 'Paid'),   0) AS earned,
+            COALESCE(SUM(deal_value * (commission_percentage/100.0) - co_broker_payout - expenses) FILTER (WHERE payment_status = 'Pending'), 0) AS pending
+          FROM commissions
+        `),
+        // Touchpoints: all in a single aggregation query
+        db.pool.query(`
+          SELECT
+            COUNT(*) FILTER (WHERE interaction_type = 'Phone Call') AS calls,
+            COUNT(*) FILTER (WHERE interaction_type = 'WhatsApp')   AS chats,
+            COUNT(*) FILTER (WHERE interaction_type = 'Site Visit') AS visits,
+            COUNT(*) FILTER (WHERE interaction_type = 'Email')      AS emails
+          FROM interaction_logs
+        `)
+      ]);
 
-    // Aggregate Live Client Touchpoint counts from database
-    let touchCalls, touchChats, touchVisits, touchEmails;
-    if (isAdmin) {
-      touchCalls = (await db.query("SELECT COUNT(*) as count FROM interaction_logs WHERE interaction_type = 'Phone Call'")).rows[0].count + (await db.query("SELECT COUNT(*) as count FROM telephony_calls")).rows[0].count;
-      touchChats = (await db.query("SELECT COUNT(*) as count FROM interaction_logs WHERE interaction_type = 'WhatsApp'")).rows[0].count;
-      touchVisits = (await db.query("SELECT COUNT(*) as count FROM interaction_logs WHERE interaction_type = 'Site Visit'")).rows[0].count;
-      touchEmails = (await db.query("SELECT COUNT(*) as count FROM interaction_logs WHERE interaction_type = 'Email'")).rows[0].count;
+      // Telephony calls count (separate table)
+      const telRes = await db.pool.query('SELECT COUNT(*) AS tel_count FROM telephony_calls');
+
+      const lr = leadsRes.rows[0];
+      const pr = propsRes.rows[0];
+      const cr = commRes.rows[0];
+      const tr = touchRes.rows[0];
+
+      return res.json({
+        totalLeads:    parseInt(lr.total_leads),
+        hotLeads:      parseInt(lr.hot_leads),
+        dueFollowups:  parseInt(lr.due_followups),
+        activeListings: parseInt(pr.active_listings),
+        commissions: {
+          earned:  parseFloat(cr.earned),
+          pending: parseFloat(cr.pending),
+          total:   parseFloat(cr.earned) + parseFloat(cr.pending)
+        },
+        touchpoints: {
+          calls:  parseInt(tr.calls) + parseInt(telRes.rows[0].tel_count),
+          chats:  parseInt(tr.chats),
+          visits: parseInt(tr.visits),
+          emails: parseInt(tr.emails)
+        }
+      });
     } else {
-      touchCalls = ((await db.query("SELECT COUNT(*) as count FROM interaction_logs i JOIN leads l ON i.lead_id = l.id WHERE i.interaction_type = 'Phone Call' AND l.agent_id = $1", [user.id])).rows[0]?.count || 0) + ((await db.query("SELECT COUNT(*) as count FROM telephony_calls WHERE agent_id = $1", [user.id])).rows[0]?.count || 0);
-      touchChats = (await db.query("SELECT COUNT(*) as count FROM interaction_logs i JOIN leads l ON i.lead_id = l.id WHERE i.interaction_type = 'WhatsApp' AND l.agent_id = $1", [user.id])).rows[0]?.count || 0;
-      touchVisits = (await db.query("SELECT COUNT(*) as count FROM interaction_logs i JOIN leads l ON i.lead_id = l.id WHERE i.interaction_type = 'Site Visit' AND l.agent_id = $1", [user.id])).rows[0]?.count || 0;
-      touchEmails = (await db.query("SELECT COUNT(*) as count FROM interaction_logs i JOIN leads l ON i.lead_id = l.id WHERE i.interaction_type = 'Email' AND l.agent_id = $1", [user.id])).rows[0]?.count || 0;
+      // ── AGENT: fire all agent-scoped queries in parallel ─────────────────
+      const agentId = user.id;
+      const [leadsRes, propsRes, touchRes, telRes] = await Promise.all([
+        db.pool.query(`
+          SELECT
+            COUNT(*) FILTER (WHERE deleted_at IS NULL AND agent_id = $1)                                               AS total_leads,
+            COUNT(*) FILTER (WHERE deleted_at IS NULL AND status = 'Hot' AND agent_id = $1)                            AS hot_leads,
+            COUNT(*) FILTER (WHERE deleted_at IS NULL AND next_followup != '' AND next_followup <= $2 AND agent_id = $1) AS due_followups
+          FROM leads
+        `, [agentId, todayStr]),
+        db.pool.query(`
+          SELECT COUNT(*) AS active_listings FROM properties
+          WHERE deleted_at IS NULL AND COALESCE(UPPER(status), 'AVAILABLE') = 'AVAILABLE'
+            AND (agent_id IS NULL OR agent_id = $1)
+        `, [agentId]),
+        db.pool.query(`
+          SELECT
+            COUNT(*) FILTER (WHERE i.interaction_type = 'Phone Call') AS calls,
+            COUNT(*) FILTER (WHERE i.interaction_type = 'WhatsApp')   AS chats,
+            COUNT(*) FILTER (WHERE i.interaction_type = 'Site Visit') AS visits,
+            COUNT(*) FILTER (WHERE i.interaction_type = 'Email')      AS emails
+          FROM interaction_logs i
+          JOIN leads l ON i.lead_id = l.id
+          WHERE l.agent_id = $1
+        `, [agentId]),
+        db.pool.query('SELECT COUNT(*) AS tel_count FROM telephony_calls WHERE agent_id = $1', [agentId])
+      ]);
+
+      const lr = leadsRes.rows[0];
+      const pr = propsRes.rows[0];
+      const tr = touchRes.rows[0];
+
+      return res.json({
+        totalLeads:    parseInt(lr.total_leads),
+        hotLeads:      parseInt(lr.hot_leads),
+        dueFollowups:  parseInt(lr.due_followups),
+        activeListings: parseInt(pr.active_listings),
+        commissions:   { earned: 0, pending: 0, total: 0 },
+        touchpoints: {
+          calls:  parseInt(tr.calls) + parseInt(telRes.rows[0].tel_count),
+          chats:  parseInt(tr.chats),
+          visits: parseInt(tr.visits),
+          emails: parseInt(tr.emails)
+        }
+      });
     }
-    res.json({
-      totalLeads,
-      hotLeads,
-      dueFollowups,
-      activeListings,
-      commissions: {
-        earned: earnedComm,
-        pending: pendingComm,
-        total: earnedComm + pendingComm
-      },
-      touchpoints: {
-        calls: touchCalls,
-        chats: touchChats,
-        visits: touchVisits,
-        emails: touchEmails
-      }
-    });
   } catch (err) {
-    res.status(500).json({
-      error: err.message
-    });
+    res.status(500).json({ error: err.message });
   }
 });
 

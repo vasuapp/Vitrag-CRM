@@ -438,6 +438,14 @@ CREATE TABLE IF NOT EXISTS communication_templates (
       await pool.query('CREATE INDEX IF NOT EXISTS idx_proposals_lead_id ON proposals(lead_id);');
       await pool.query('CREATE INDEX IF NOT EXISTS idx_lead_timeline_lead_id ON lead_timeline(lead_id);');
 
+      // Additional high-impact indexes for common query patterns
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status) WHERE deleted_at IS NULL;');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_leads_next_followup ON leads(next_followup) WHERE deleted_at IS NULL AND next_followup IS NOT NULL;');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads(created_at DESC);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_leads_agent_deleted ON leads(agent_id, deleted_at);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_properties_agent_deleted ON properties(agent_id, deleted_at);');
+      await pool.query('CREATE INDEX IF NOT EXISTS idx_interaction_logs_type ON interaction_logs(interaction_type);');
+
       console.log("Migration: Added new columns and indexes to properties and leads tables successfully.");
     } catch (migErr) {
       console.log("Migration skipped or failed:", migErr.message);
