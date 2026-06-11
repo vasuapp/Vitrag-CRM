@@ -1,4 +1,13 @@
 require('dotenv').config();
+
+// Global Exception & Rejection Handlers to prevent abrupt crashes
+process.on('uncaughtException', (err) => {
+  console.error('CRITICAL: Uncaught Exception:', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('CRITICAL: Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 const express = require('express');
 const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
@@ -79,6 +88,12 @@ if (isRemoteDb) {
   sessionStore = new SQLiteStore({
     db: 'realpro_sessions.db',
     dir: path.join(__dirname, '../server')
+  });
+}
+
+if (sessionStore && typeof sessionStore.on === 'function') {
+  sessionStore.on('error', (err) => {
+    console.error('Session store error:', err);
   });
 }
 

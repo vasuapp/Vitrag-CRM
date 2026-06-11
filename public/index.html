@@ -1939,22 +1939,8 @@
               <button class="btn btn-ghost btn-sm" id="btn-temp-tab-email" onclick="switchTemplateTab('Email')" style="border-radius:0; border-bottom:2.5px solid transparent; padding:8px 15px; font-weight:700; color:var(--text-secondary);">📧 Email Campaigns</button>
             </div>
             
-            <div class="tw" style="margin-top: 15px;">
-              <table class="tbl">
-                <thead>
-                  <tr>
-                    <th>Template Name</th>
-                    <th>Platform</th>
-                    <th>Use Case</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="communication-templates-list-container">
-                  <tr>
-                    <td colspan="4" style="text-align:center; padding: 20px 0; color:var(--text-muted);">Loading saved templates...</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div id="communication-templates-list-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; margin-top: 15px;">
+              <div style="grid-column: 1 / -1; text-align:center; padding: 20px 0; color:var(--text-muted);">Loading saved templates...</div>
             </div>
 
             <!-- Create / Edit Template Form (Phase 9) -->

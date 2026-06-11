@@ -13291,24 +13291,76 @@ window.loadSOPs = async function() {
       return;
     }
 
-    container.innerHTML = sops.map(s => {
-      const stepsHtml = s.steps.map((st, idx) => `
-        <div class="step-row">
-          <div class="step-num" style="background:var(--gold)">${idx + 1}</div>
-          <div>${st}</div>
-        </div>
-      `).join('');
+    // Sort by natural number in title
+    sops.sort((a, b) => {
+      const aNum = parseInt(a.title.match(/\d+/)?.[0] || 999);
+      const bNum = parseInt(b.title.match(/\d+/)?.[0] || 999);
+      return aNum - bNum;
+    });
+
+    const categories = [
+      { name: '📋 Category I: Lead Qualification & Client Profiling', min: 1, max: 3, items: [] },
+      { name: '🏠 Category II: Sourcing Inventory & Site Visit Coordination', min: 4, max: 6, items: [] },
+      { name: '⚖️ Category III: Negotiations, MoU Contracts & Legal Transfer', min: 7, max: 12, items: [] },
+      { name: '🚀 Category IV: Post-Sale Onboarding, Splits & Daily Compliance', min: 13, max: 15, items: [] },
+      { name: '🛠️ Category V: Custom / Internal Operating Procedures', min: 16, max: Infinity, items: [] }
+    ];
+
+    sops.forEach(s => {
+      const numMatch = s.title.match(/\d+/);
+      const num = numMatch ? parseInt(numMatch[0]) : null;
+      if (num === null) {
+        categories[4].items.push(s);
+      } else {
+        let placed = false;
+        for (const cat of categories) {
+          if (num >= cat.min && num <= cat.max) {
+            cat.items.push(s);
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) {
+          categories[4].items.push(s);
+        }
+      }
+    });
+
+    container.innerHTML = categories.map(cat => {
+      if (cat.items.length === 0) return '';
+
+      const itemsHtml = cat.items.map(s => {
+        const stepsHtml = s.steps.map((st, idx) => `
+          <div class="step-row" style="display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+            <div class="step-num" style="background: linear-gradient(135deg, var(--gold), var(--gold-dark)); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #000; flex-shrink: 0;">${idx + 1}</div>
+            <div style="font-size:12px; color:var(--text-secondary); line-height: 1.6;">${st}</div>
+          </div>
+        `).join('');
+
+        return `
+          <div style="margin-bottom: 6px; border: 1px solid rgba(197, 168, 103, 0.15); border-radius: var(--radius-md); overflow: hidden;">
+            <div class="accord-hd" onclick="toggleAccordion('sop_${s.id}')" style="margin-bottom:0; border:none; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12.5px; font-weight:700; color:#fff;">${s.title}</span>
+              <div style="display:flex; gap:10px; align-items:center;">
+                <i class="ti ti-chevron-down" style="font-size: 11px;"></i>
+                <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); deleteSOP(${s.id})" style="color:var(--red); padding: 2px 4px; font-size:10px; border:none; background:transparent;">✕ Delete</button>
+              </div>
+            </div>
+            <div class="accord-body hidden" id="sop_${s.id}" style="padding:12px; background:rgba(0,0,0,0.25); border-top: 1px solid rgba(197, 168, 103, 0.08);">
+              ${stepsHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
 
       return `
-        <div class="accord-hd" onclick="toggleAccordion('sop_${s.id}')" style="margin-top:6px; display:flex; justify-content:space-between; align-items:center;">
-          <span>${s.title}</span>
-          <div style="display:flex; gap:10px; align-items:center;">
-            <i class="ti ti-chevron-down" style="font-size: 11px;"></i>
-            <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); deleteSOP(${s.id})" style="color:var(--red); padding: 2px 4px; font-size:10px;">✕ Delete</button>
+        <div class="card" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border); padding: 16px; border-radius: var(--radius-lg); margin-bottom: 12px;">
+          <div style="font-size: 13.5px; font-weight: 800; color: var(--gold-l); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px;">
+            ${cat.name}
           </div>
-        </div>
-        <div class="accord-body hidden" id="sop_${s.id}" style="padding:10px; background:rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.03); border-top:none;">
-          ${stepsHtml}
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            ${itemsHtml}
+          </div>
         </div>
       `;
     }).join('');
@@ -13392,6 +13444,17 @@ window.switchTemplateTab = function(tabName) {
   loadTemplates();
 };
 
+window.copyTemplateText = function(btn, text) {
+  navigator.clipboard.writeText(text);
+  const oldHtml = btn.innerHTML;
+  btn.innerHTML = `<i class="ti ti-check" style="color:#2ecc71;"></i> Copied!`;
+  btn.style.color = '#2ecc71';
+  setTimeout(() => {
+    btn.innerHTML = oldHtml;
+    btn.style.color = '';
+  }, 2000);
+};
+
 window.loadTemplates = async function() {
   const container = document.getElementById('communication-templates-list-container');
   if (!container) return;
@@ -13426,25 +13489,36 @@ window.loadTemplates = async function() {
     temps = temps.filter(t => t.platform === currentTemplateTab);
 
     if (temps.length === 0) {
-      container.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px 0; color:var(--text-muted);">No communication templates logged for ${currentTemplateTab} yet.</td></tr>`;
+      container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding: 20px 0; color:var(--text-muted);">No communication templates logged for ${currentTemplateTab} yet.</div>`;
       return;
     }
 
     container.innerHTML = temps.map(t => {
-      const badgeClass = t.platform === 'WhatsApp' ? 'badge-green' : (t.platform === 'Script' ? 'badge-amber' : 'badge-blue');
-      const deleteBtn = canManage ? `<button class="btn btn-ghost btn-sm" style="font-size:10px; padding:2px 6px; color:var(--red);" onclick="deleteTemplate(${t.id})"><i class="ti ti-trash"></i> Delete</button>` : '';
-      const editBtn = canManage ? `<button class="btn btn-ghost btn-sm" style="font-size:10px; padding:2px 6px; color:var(--gold-l);" onclick="editTemplate(${t.id}, \`${escapeQuote(t.name)}\`, '${t.platform}', \`${escapeQuote(t.use_case)}\`, \`${escapeQuote(t.content)}\`)"><i class="ti ti-edit"></i> Edit</button>` : '';
+      const badgeClass = t.platform === 'WhatsApp' ? 'chip-closed' : (t.platform === 'Script' ? 'chip-warm' : 'chip-cold');
+      const iconClass = t.platform === 'WhatsApp' ? 'ti-brand-whatsapp' : (t.platform === 'Script' ? 'ti-phone' : 'ti-mail');
+      const deleteBtn = canManage ? `<button class="btn btn-ghost btn-sm" style="font-size:10px; padding:4px 8px; color:var(--red);" onclick="deleteTemplate(${t.id})"><i class="ti ti-trash"></i> Delete</button>` : '';
+      const editBtn = canManage ? `<button class="btn btn-ghost btn-sm" style="font-size:10px; padding:4px 8px; color:var(--gold-l);" onclick="editTemplate(${t.id}, \`${escapeQuote(t.name)}\`, '${t.platform}', \`${escapeQuote(t.use_case)}\`, \`${escapeQuote(t.content)}\`)"><i class="ti ti-edit"></i> Edit</button>` : '';
+      
       return `
-        <tr>
-          <td><strong>${t.name}</strong></td>
-          <td><span class="badge ${badgeClass}" style="font-size:9.5px;">${t.platform}</span></td>
-          <td>${t.use_case || 'Nurturing followups'}</td>
-          <td style="display:flex; gap: 4px;">
-            <button class="btn btn-ghost btn-sm" style="font-size:10px; padding:2px 6px;" onclick="navigator.clipboard.writeText(\`${escapeQuote(t.content)}\`); showToast('Copied template content to clipboard!')"><i class="ti ti-copy"></i> Copy</button>
-            ${editBtn}
-            ${deleteBtn}
-          </td>
-        </tr>
+        <div class="card" style="background: rgba(255,255,255,0.01); border: 1px solid rgba(197, 168, 103, 0.15); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); margin-bottom: 0;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+              <span style="font-size: 13.5px; font-weight: 700; color: #fff;">${t.name}</span>
+              <span class="chip ${badgeClass}" style="font-size: 9.5px; display: inline-flex; align-items: center; gap: 4px; border-radius: 4px; padding: 2px 6px;"><i class="ti ${iconClass}"></i> ${t.platform}</span>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">
+              <strong style="color: var(--gold-l);">Use Case:</strong> ${t.use_case || 'Nurturing followups'}
+            </div>
+            <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.04); padding: 12px; border-radius: 6px; font-size: 12px; line-height: 1.6; color: var(--text-secondary); max-height: 120px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; word-break: break-word; scrollbar-width: thin;">${t.content}</div>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 10px; margin-top: 4px;">
+            <button class="btn btn-ghost btn-sm" style="font-size:10.5px; padding:4px 8px;" onclick="copyTemplateText(this, \`${escapeQuote(t.content)}\`)"><i class="ti ti-copy"></i> Copy Content</button>
+            <div style="display:flex; gap: 4px;">
+              ${editBtn}
+              ${deleteBtn}
+            </div>
+          </div>
+        </div>
       `;
     }).join('');
   } catch(e) {

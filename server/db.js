@@ -16,21 +16,17 @@ const pool = new Pool({
   ssl: isLocal ? false : { rejectUnauthorized: false } // Required for Railway, but disable for local
 });
 
-const db = {
-  query: async (text, params) => {
-    let actualParams = params || [];
-    if (Array.isArray(params) && params.length === 1 && Array.isArray(params[0])) {
-      actualParams = params[0];
-    }
-    let counter = 1;
-    const pgText = text.replace(/\?/g, () => '$' + (counter++));
-    return pool.query(pgText, actualParams);
-  },
-  pool: pool
-};
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle PostgreSQL client:', err);
+});
 
-(async () => {
-  try {
+const maxRetries = 10;
+const retryDelayMs = 3000;
+
+const initPromise = (async () => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Database initialization attempt ${attempt}/${maxRetries}...`);
     await pool.query(`CREATE TABLE IF NOT EXISTS leads (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -467,31 +463,183 @@ CREATE TABLE IF NOT EXISTS communication_templates (
     }
 
     // Also seed templates if empty
+    try {
+      const hasOldTemp = (await pool.query("SELECT COUNT(*) FROM communication_templates WHERE name = 'Script: 1. New Enquiry Opening'")).rows[0].count;
+      if (parseInt(hasOldTemp) > 0) {
+        await pool.query("DELETE FROM communication_templates");
+        console.log("Upgraded old communication templates table.");
+      }
+    } catch(tempCheckErr) {
+      console.log("Check for old templates skipped:", tempCheckErr.message);
+    }
+
       const tempCount = (await pool.query("SELECT COUNT(*) FROM communication_templates")).rows[0].count;
       if (parseInt(tempCount) === 0) {
         const insertTemp = async (name, platform, use_case, content) => await pool.query('INSERT INTO communication_templates (name, platform, use_case, content) VALUES ($1, $2, $3, $4)', [name, platform, use_case, content]);
 
         // Calling Scripts (4 templates)
-        await insertTemp('Script: 1. New Enquiry Opening', 'Script', 'Cold Call', 'Good [morning/afternoon] {name}, this is [Agent Name] from Vitrag Real Estate Advisory.\n\nI am calling regarding your enquiry for premium properties in [Location]. I specialise in handpicked resale and primary options in this micro-market.\n\nCould you share your preferred configuration — 2BHK, 3BHK, or a villa? And what is your ideal budget range? This will help me shortlist the 3 best-fit options for you right away.');
-        await insertTemp('Script: 2. Follow-up Call', 'Script', 'Lead Nurture', 'Hi {name}, this is [Agent Name] from Vitrag CRM. We spoke [yesterday / last week] about properties in [Location].\n\nI wanted to check — have you had a chance to review the options I shared? I have [1-2 new listings] that just came in which match your requirements perfectly.\n\nWould you like me to schedule a private site visit this weekend? I can arrange a chauffeur-driven tour covering 2-3 shortlisted projects.');
-        await insertTemp('Script: 3. Site Visit Confirmation', 'Script', 'Appointment', 'Hello {name}, this is [Agent Name] confirming your site visit scheduled for [Date] at [Time].\n\nHere is what to expect:\n• We will visit [Property 1] and [Property 2]\n• Total tour duration: approximately 2-3 hours\n• I will have floor plans, pricing sheets, and payment plan options ready\n\nPlease carry a valid photo ID for gated community entry. See you there!');
-        await insertTemp('Script: 4. Objection Handling — Price', 'Script', 'Negotiation', 'I completely understand your concern about the pricing, {name}. Let me share some perspective:\n\n• This property is priced at [Price] — which is actually [X]% below the current circle rate for this micro-market\n• Similar units in [Comparable Society] sold for [Higher Price] just last quarter\n• The builder is offering a limited-time [subvention / flexi-payment] plan\n\nWould you like me to run the exact EMI numbers for you? Often clients find the monthly outflow is very manageable once we factor in the payment structure.');
+        await insertTemp('Script: 1. Cold Resale Pitch to Owner', 'Script', 'Resale Mandate Acquisition', 'Good [morning/afternoon] {name}, this is [Agent Name] from Vitrag Premium Real Estate Advisory.\n\nI am calling because I noticed your listing for resale at {Location}. I represent several vetted buyers and corporate clients currently looking for premium configurations in this exact micro-market. Our database shows a high demand for units with your layout.\n\nAre you open to listing your property exclusively with us? We handle end-to-end buyer screening, documentation, and biometric registration. When would be a convenient time for me to visit the property for a brief 10-minute valuation and photo shoot?');
+        await insertTemp('Script: 2. Inbound Lead Qualification', 'Script', 'Initial Call profiling', 'Hello {name}, thank you for registering your interest in our premium projects in [Location]. This is [Agent Name] from Vitrag Advisory.\n\nTo help me curate the most suitable luxury configurations, could you share a few details:\n1. Are you looking for a self-use home or a high-yield investment?\n2. What is your preferred layout: 2 BHK, 3 BHK, or a penthouse/villa?\n3. Do you have a flexible budget range, say between ₹1.5 Cr to ₹3 Cr, or are you looking at a specific pocket?\n\nThis will allow me to shortlist the top 3 options and share detailed brochures right away.');
+        await insertTemp('Script: 3. Post-Visit Objection Handler', 'Script', 'Objection Resolution & Next Step', 'Hi {name}, this is [Agent Name] from Vitrag CRM. I wanted to follow up on our private site tour of Prestige Lakeside yesterday.\n\nI completely understand that the pricing of ₹2.2 Cr felt slightly above the initial target. However, let\'s look at the parameters:\n• The carpet efficiency is 82%, which is 10% higher than surrounding projects.\n• The builder is offering a limited-time subvention plan where you pay only 10% now and nothing until possession.\n• Similar units in this zone saw a 14% capital appreciation last year alone.\n\nWould you like me to schedule a brief meeting with the developer POC this weekend to discuss a structured payment plan?');
+        await insertTemp('Script: 4. Face-to-Face Closing Deal', 'Script', 'Price Negotiation & MoU', 'Hello {name}, I am pleased to inform you that the seller of {Property} has agreed to our negotiated base value of ₹1.85 Cr, subject to completing the agreement details by this Friday.\n\nTo lock this in and prevent other enquiries, we need to execute a standard MoU. This involves:\n1. A refundable token check of 5% of the deal value.\n2. Exchanging KYC documents (PAN, Aadhaar) for registry clearance.\n\nI can set up a joint meeting at our luxury boardroom tomorrow at 4 PM to finalize the signatures. Does that work for you?');
 
         // WhatsApp Templates (3 templates)
-        await insertTemp('WA: 1. New Enquiry Greeting', 'WhatsApp', 'Initial Intro', 'Hello {name},\n\nThis is Vasu Jain from *Subh Homes / Vitrag CRM*. We received your query regarding premium real estate listings.\n\nAre you looking for primary booking or secondary resale? Let me know your preferred layout (e.g. 2BHK/3BHK) so I can curate options!');
-        await insertTemp('WA: 2. Schedule Site Visit', 'WhatsApp', 'Lead Nurture', 'Hi {name},\n\nWe have slots open this Saturday for private, chauffeur-driven site tours to *Prestige Lakeside* & *Sobha City*.\n\nWould 11 AM or 3 PM work better for you and your family? Let me know to block it!');
-        await insertTemp('WA: 3. Post-Visit Thank You', 'WhatsApp', 'Follow-up', 'Hi {name}, thank you for visiting *{Property}* with us today! 🏠\n\nHere is a quick recap:\n📍 Location: {Location}\n📐 Config: {Config} | Area: {Area} sqft\n💰 Price: ₹{Price}\n\nI will send you the detailed brochure and floor plan shortly. Meanwhile, feel free to reach out with any questions!\n\n_Vasu Jain | Vitrag Real Estate_ 📱');
+        await insertTemp('WA: 1. Welcome & Digital Brochure', 'WhatsApp', 'Initial Lead Touchpoint', 'Hello {name},\n\nThis is Vasu Jain from *Subh Homes / Vitrag CRM*. Thank you for contacting us regarding luxury properties in [Location].\n\nI have attached our *Premium Real Estate Catalog* and RERA registration documents below. \n\nAre you looking for primary booking or secondary resale? Please share your preferred layout (e.g. 2BHK/3BHK) so I can curate options!\n\n_Vasu Jain | Vitrag Advisory_ 📱');
+        await insertTemp('WA: 2. Site Visit Logistics Agenda', 'WhatsApp', 'Tour Coordination', 'Hi {name},\n\nHere is the confirmed agenda for your private site tour tomorrow:\n\n🚗 *Vehicle Details:* Chauffeur-driven sedan ([Driver Name] · [Phone]) will arrive at your location at 10:00 AM.\n📍 *Schedule:* \n• 10:45 AM: *Prestige Shantiniketan* (3BHK Resale)\n• 12:00 PM: *Sobha Royal Pavilion* (3BHK Brand New)\n• 1:30 PM: Boardroom discussion & coffee at Vitrag Office.\n\n*Important:* Please carry a photo ID for community security clearance. See you tomorrow!');
+        await insertTemp('WA: 3. Post-Tour Feedback Request', 'WhatsApp', 'Follow-up & Review', 'Hi {name}, thank you for touring *{Property}* with us today! 🏠\n\nHere is a quick recap of the property parameters:\n📍 Location: {Location}\n📐 Layout: {Config} | Super Built Area: {Area} sqft\n💰 Pricing: ₹{Price}\n🔑 Possession: {Possession}\n\nOn a scale of 1-10, how closely does this match your family\'s expectations? Let me know to shortlist or search alternative options.\n\n_Vasu Jain | Subh Homes_ 📱');
 
         // Email Templates (3 templates)
-        await insertTemp('Email: 1. Property Recommendation', 'Email', 'Lead Nurture', 'Subject: Curated Property Picks for You — {Location}\n\nDear {name},\n\nThank you for your interest in premium properties. Based on your requirements, I have shortlisted the following exclusive options:\n\n1. {Property 1} — {Config}, {Area} sqft — ₹{Price}\n2. {Property 2} — {Config}, {Area} sqft — ₹{Price}\n3. {Property 3} — {Config}, {Area} sqft — ₹{Price}\n\nEach property has been personally inspected and verified. I would love to arrange private viewings at your convenience.\n\nBest regards,\nVasu Jain\nVitrag Real Estate Advisory\n📱 +91 99454 03202');
-        await insertTemp('Email: 2. Monthly Market Update', 'Email', 'Newsletter', 'Subject: {Month} Real Estate Market Update — {City}\n\nDear {name},\n\nHere are the key highlights from this month\'s real estate market:\n\n📊 Market Trends:\n• Average prices in {Location} moved {up/down} by {X}%\n• New project launches: {Count} across {Areas}\n• Rental yields holding steady at {X}%\n\n🏗️ Notable Launches:\n• {Builder} — {Project} in {Location}\n• {Builder} — {Project} in {Location}\n\n💡 Expert Take: [1-2 sentence market outlook]\n\nWant personalised investment advice? Reply to this email or call me directly.\n\nWarm regards,\nVasu Jain | Vitrag Real Estate');
-        await insertTemp('Email: 3. Deal Closing Congratulations', 'Email', 'Post-Sale', 'Subject: Congratulations on Your New Home! 🎉\n\nDear {name},\n\nIt gives me immense pleasure to congratulate you on the successful purchase of your new property at *{Property}*!\n\nHere is a summary of your transaction:\n📍 Property: {Property}, {Location}\n📐 Configuration: {Config}\n💰 Deal Value: ₹{Price}\n📅 Agreement Date: {Date}\n\nNext Steps:\n1. Registration appointment — I will coordinate the date\n2. Home loan disbursement follow-up\n3. Interior design partner introductions (complimentary)\n\nThank you for trusting Vitrag Real Estate. It has been a privilege to be part of this milestone!\n\nWarmly,\nVasu Jain');
+        await insertTemp('Email: 1. Curated Luxury Hotlist', 'Email', 'Shortlist Dispatch', 'Subject: Curated Luxury Shortlist — {Location} | Vitrag Advisory\n\nDear {name},\n\nThank you for sharing your requirements. Based on your preferences, I have handpicked and personally verified the following three premium options:\n\n1. Prestige Shantiniketan — {Config}, {Area} sqft — ₹{Price}\n   • USP: High-floor, park-facing, semi-furnished resale with immediate registry.\n2. Sobha Royal Pavilion — {Config}, {Area} sqft — ₹{Price}\n   • USP: Brand new luxury tower with Mivan construction and 80% green area.\n3. Prestige Lakeside Habitat — {Config}, {Area} sqft — ₹{Price}\n   • USP: Premium gated villa community with low maintenance and private deck.\n\nI have attached the floor plans and layout maps for each unit. I would love to arrange a private viewing at your convenience.\n\nWarm regards,\nVasu Jain\nVitrag Real Estate Advisory\n📱 +91 99454 03202');
+        await insertTemp('Email: 2. High-Yield Investment Analysis', 'Email', 'ROI Justification', 'Subject: High-Yield Real Estate Investment Case — {Location} | Subh Homes\n\nDear {name},\n\nFollowing our discussion regarding real estate asset allocation, here is the financial breakdown for the commercial/residential units at {Project}:\n\n📊 *Financial Metrics Summary:*\n• Acquisition Value: ₹{Price}\n• Monthly Rental Yield: ₹{Rent}/month (expected yield: ~6.2% per annum)\n• Historical Micro-Market Capital Appreciation: 12.5% YoY\n• Net Cash Flow: Positive from Day 1 post-maintenance deduction.\n\n🏗️ *Growth Drivers:*\n• Located within 500 meters of the upcoming Metro station.\n• Proximity to major IT parks ensures zero vacancy rates.\n• Reputed developer with high maintenance standards protecting capital value.\n\nLet me know if you would like me to schedule a call with our mortgage partner to model the loan-to-value (LTV) options.\n\nBest regards,\nVasu Jain | Subh Homes');
+        await insertTemp('Email: 3. MoU Checkpoints & Closing Details', 'Email', 'Transaction Onboarding', 'Subject: MoU Execution Checklist — {Property} | Vitrag CRM\n\nDear {name},\n\nCongratulations on finalizing your purchase of {Property}! To ensure a smooth, error-free transaction, here are the next operational steps:\n\n1. *MoU Vetting:* We will share the draft Memorandum of Understanding by tomorrow 11 AM.\n2. *Token Payment:* Please prepare a token transfer of 10% of the deal value.\n3. *KYC Submission:* Please upload the following to our secure Document Vault:\n   • PAN Card & Aadhaar Card (Buyer and Seller)\n   • Pre-approval loan sanction letter (if applicable)\n   • Passport-size photos\n4. *Title Verification:* Our legal counsel is currently verifying original deeds, tax receipts, and encumbrance certificates.\n\nIf you have any questions, please reach out directly.\n\nWarmly,\nVasu Jain\nVitrag Real Estate Advisory');
 
         console.log("Seeded 10 communication templates (4 Script, 3 WhatsApp, 3 Email) to Postgres.");
       }
-  } catch(err) {
-    console.error("PG Init Error:", err);
+
+      // Seed default SOPs if empty
+      const sopCountResult = await pool.query("SELECT COUNT(*) FROM sops");
+      const sopCount = sopCountResult.rows[0].count;
+      if (parseInt(sopCount) === 0) {
+        const insertSop = async (title, steps) => {
+          await pool.query("INSERT INTO sops (title, steps) VALUES ($1, $2)", [title, JSON.stringify(steps)]);
+        };
+
+        await insertSop('SOP 1: New Lead Intake & CRM Registry', [
+          'Verify phone/email in CRM search to check for existing prospect files and avoid duplicate registrations.',
+          'Qualify the lead budget, configuration requirement (BHK/Zoning), location preference, and purchase timeline.',
+          'Input lead details in CRM under "Register Enquiry". Tag status as Hot, Warm, or Cold based on response latency.',
+          'Assign appropriate Agent ID for auto-assignment or manual delegation, and log base lead score (15 points).'
+        ]);
+
+        await insertSop('SOP 2: Cold Call Outreach & Pitching', [
+          'Filter out numbers on the national DND registry before making calling list dials.',
+          'Introduce Vitrag Real Estate Advisory using the pre-saved "New Enquiry Opening" script.',
+          'Confirm prospect location preferences and purchase authority (self vs corporate/investor).',
+          'Offer to send curated listings catalog via WhatsApp and log notes into the interaction history.'
+        ]);
+
+        await insertSop('SOP 3: Client Requirement Profiling', [
+          'Identify key purchase triggers: family relocation, investment yield, rental lease expiry, or secondary booking.',
+          'Discuss financing details: pre-approved home loan, self-funded, or subvention plan suitability.',
+          'Document specific amenities desired (e.g. club house, high floor, Vaastu compliance, park facing).',
+          'Update lead scorecard details (Budget, Timeline, Funding, Responsiveness, Clarity) in the CRM.'
+        ]);
+
+        await insertSop('SOP 4: Inventory Matching & Shortlisting', [
+          'Cross-match lead location/budget preference with secondary Resale, Rental, Commercial, or Land inventory.',
+          'Check primary Builder Projects tab for active developer configurations offering cash discounts.',
+          'Select the top 3 verified matches, avoiding direct seller POC phone numbers to prevent co-broke disintermediation.',
+          'Verify that RERA details and mandatory society maintenance fees are correctly detailed in the list.'
+        ]);
+
+        await insertSop('SOP 5: Coordinating Private Site Tours', [
+          'Obtain client calendar availability and verify entries for gated communities.',
+          'Contact builder POC or secondary property owner to schedule visual site tours (allow 45-minute slots).',
+          'Book company chauffeur vehicle and dispatch details via WhatsApp Site Visit Confirmation template.',
+          'Print premium property brochures with golden branding and redact direct owner contact details.'
+        ]);
+
+        await insertSop('SOP 6: Executing a Professional Site Visit', [
+          'Ensure agent dress code is business professional and arrive 15 minutes before the scheduled tour time.',
+          'Escort client through sample flats, orienting them with layout, SBA vs carpet area, and road width views.',
+          'Highlight builder credentials, past deliveries, construction materials (Mivan) and metro connectivity.',
+          'Capture client immediate feedback on society parameters and log them in the CRM interaction log.'
+        ]);
+
+        await insertSop('SOP 7: Handling Objections & Negotiating', [
+          'Address pricing objections by presenting comparative market analysis (CMA) reports from similar societies.',
+          'If budget is rigid, highlight alternative properties or request flexible developer payment structures.',
+          'Facilitate direct face-to-face negotiations between buyer and seller in the office for secondary resale deals.',
+          'Obtain written consent/objection notes and update the closure timeline to "Negotiation".'
+        ]);
+
+        await insertSop('SOP 8: Executing Under-Agreement MoU Procedures', [
+          'Request buyer token check (minimum 10% of deal value) to demonstrate transaction commitment.',
+          'Draft standard Memorandum of Understanding (MoU) or Agreement to Sell outlining closing timelines.',
+          'Collect KYC documentation from both parties (PAN Card, Aadhaar Card, Passport, Company GSTIN).',
+          'Upload documents to the CRM Document Vault referencing the specific lead ID and property ID.'
+        ]);
+
+        await insertSop('SOP 9: Title Verification & Legal Clearance', [
+          'Verify original property title deeds, tax paid receipts, encumbrance certificates, and RERA approvals.',
+          'Submit copies of deeds to legal counsel for vetting and obtaining title clearance reports.',
+          'Assist buyer bank representatives in physical property valuation checks for mortgage approval.',
+          'Verify that society NOC (No Objection Certificate) is processed by the management committee.'
+        ]);
+
+        await insertSop('SOP 10: Registration & Biometric Title Transfer', [
+          'Coordinate stamp duty payment calculations based on guidance values and pay online.',
+          'Schedule appointment slot at Sub-Registrar Office (SRO) for registration.',
+          'Ensure presence of buyer, seller, agent, and two witnesses with valid identification.',
+          'Facilitate execution of final Sale Deed, biometrics verification, and registry scan.'
+        ]);
+
+        await insertSop('SOP 11: Deal Closure & Commission Ledger', [
+          'Mark property status in database as SOLD or RENTED OUT.',
+          'Mark lead status as "Converted" and update pipeline stage to "Won".',
+          'Post the transaction to Commissions finance ledger, calculating company cut and co-broker splits.',
+          'Generate professional GST invoice and dispatch copy to the client email.'
+        ]);
+
+        await insertSop('SOP 12: Co-Brokerage Partnership & Payouts', [
+          'Identify the linked associate co-broker and review the pre-agreed co-brokerage share percentage.',
+          'Verify that buyer final payments have cleared before processing co-broker payouts.',
+          'Execute bank transfer for co-brokerage fee split and update the ledger payment status to Paid.',
+          'Request co-broker feedback and invite them to joint exclusive listing pools.'
+        ]);
+
+        await insertSop('SOP 13: Customer Onboarding & Welcome Kit', [
+          'Deliver hand-over welcome folder containing original sale deeds, NOC copies, key chains, and gift box.',
+          'Introduce client to community managers and facilitate electricity meter name transfer (BESCOM).',
+          'Provide a complimentary introduction to verified home interior design partners.',
+          'Trigger post-sale review email asking for Google reviews and testimonial logs.'
+        ]);
+
+        await insertSop('SOP 14: Handling Dispute & Fallouts', [
+          'If a transaction falls out, document the exact reason (e.g. loan rejection, title defect, buyer default).',
+          'Audit MoU clauses to determine forfeiture of token deposit or refund liability.',
+          'Archive dispute details and adjust commission projections in the database ledger.',
+          'Change property status back to AVAILABLE and notify pipeline agents.'
+        ]);
+
+        await insertSop('SOP 15: Daily Realtor Discipline & Habits', [
+          'Clock-in on the CRM attendance logs dashboard by 9:30 AM daily.',
+          'Verify daily checklists and schedule follow-ups for overdue alarm contacts.',
+          'Review newly imported raw leads from portals and qualify them within 2 hours.',
+          'Log all interactions, site visits, and habits data in the grid before clocking out.'
+        ]);
+
+        console.log("Seeded 15 standard SOP real estate procedures successfully.");
+      }
+      console.log("PostgreSQL database successfully initialized and migrated.");
+      return;
+    } catch (err) {
+      console.error(`Database initialization attempt ${attempt} failed:`, err.message);
+      if (attempt === maxRetries) {
+        console.error("FATAL ERROR: Failed to initialize PostgreSQL after max retries. Exiting...");
+        process.exit(1);
+      }
+      console.log(`Retrying database initialization in ${retryDelayMs / 1000} seconds...`);
+      await new Promise(resolve => setTimeout(resolve, retryDelayMs));
+    }
   }
 })();
+
+const db = {
+  query: async (text, params) => {
+    await initPromise;
+    let actualParams = params || [];
+    if (!Array.isArray(actualParams)) {
+      actualParams = [actualParams];
+    } else if (actualParams.length === 1 && Array.isArray(actualParams[0])) {
+      actualParams = actualParams[0];
+    }
+    let counter = 1;
+    const pgText = text.replace(/\?/g, () => '$' + (counter++));
+    return pool.query(pgText, actualParams);
+  },
+  pool: pool,
+  initPromise: initPromise
+};
 
 module.exports = db;
