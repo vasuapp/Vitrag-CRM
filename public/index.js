@@ -12814,7 +12814,7 @@ window.switchFinanceTab = function(tabId) {
     const btn = document.getElementById(`btn-fin-${s}`);
     if (btn) {
       btn.style.borderBottom = 'none';
-      btn.style.color = 'var(--text-light)';
+      btn.style.color = 'var(--text-secondary)';
       btn.style.fontWeight = '500';
     }
   });
@@ -12824,7 +12824,7 @@ window.switchFinanceTab = function(tabId) {
   const activeBtn = document.getElementById(`btn-fin-${tabId}`);
   if (activeBtn) {
     activeBtn.style.borderBottom = '2px solid var(--gold)';
-    activeBtn.style.color = 'var(--gold-l)';
+    activeBtn.style.color = 'var(--gold)';
     activeBtn.style.fontWeight = '700';
   }
 
@@ -12835,9 +12835,13 @@ window.switchFinanceTab = function(tabId) {
 };
 
 window.calculateTargetPlanner = function() {
-  const annualTarget = parseFloat(document.getElementById('target-annual-revenue').value || 5000000);
-  const avgComm = parseFloat(document.getElementById('target-avg-commission').value || 150000);
-  const convRate = parseFloat(document.getElementById('target-conv-rate').value || 2.0);
+  let annualTarget = parseFloat(document.getElementById('target-annual-revenue').value);
+  let avgComm = parseFloat(document.getElementById('target-avg-commission').value);
+  let convRate = parseFloat(document.getElementById('target-conv-rate').value);
+
+  if (isNaN(annualTarget) || annualTarget <= 0) annualTarget = 5000000;
+  if (isNaN(avgComm) || avgComm <= 0) avgComm = 150000;
+  if (isNaN(convRate) || convRate <= 0) convRate = 2.0;
 
   // Deals needed
   const dealsNeeded = Math.ceil(annualTarget / avgComm);
@@ -12845,7 +12849,7 @@ window.calculateTargetPlanner = function() {
 
   // Leads needed
   const leadsNeeded = Math.ceil(dealsNeeded / (convRate / 100));
-  document.getElementById('target-leads-needed-val').innerText = leadsNeeded.toLocaleString('en-IN');
+  document.getElementById('target-leads-needed-val').innerText = isFinite(leadsNeeded) ? leadsNeeded.toLocaleString('en-IN') : '0';
 
   // Calculate total earned commissions (Paid only)
   let totalRevenue = 0;
@@ -12857,7 +12861,7 @@ window.calculateTargetPlanner = function() {
     });
   }
 
-  const pct = Math.min(100, (totalRevenue / annualTarget * 100)).toFixed(1);
+  const pct = annualTarget > 0 ? Math.min(100, (totalRevenue / annualTarget * 100)).toFixed(1) : '0.0';
   document.getElementById('target-progress-percent').innerText = pct + '%';
   document.getElementById('target-progress-bar').style.width = pct + '%';
   document.getElementById('target-earned-val').innerText = `₹${totalRevenue.toLocaleString('en-IN')}`;
@@ -12865,12 +12869,19 @@ window.calculateTargetPlanner = function() {
 };
 
 window.calculateBudgetTracker = function() {
-  const limitAds = parseFloat(document.getElementById('budget-limit-ads').value || 100000);
-  const limitPortals = parseFloat(document.getElementById('budget-limit-portals').value || 50000);
-  const limitLicenses = parseFloat(document.getElementById('budget-limit-licenses').value || 50000);
-  const limitTravel = parseFloat(document.getElementById('budget-limit-travel').value || 30000);
-  const limitSplits = parseFloat(document.getElementById('budget-limit-splits').value || 500000);
-  const limitOthers = parseFloat(document.getElementById('budget-limit-others').value || 50000);
+  let limitAds = parseFloat(document.getElementById('budget-limit-ads').value);
+  let limitPortals = parseFloat(document.getElementById('budget-limit-portals').value);
+  let limitLicenses = parseFloat(document.getElementById('budget-limit-licenses').value);
+  let limitTravel = parseFloat(document.getElementById('budget-limit-travel').value);
+  let limitSplits = parseFloat(document.getElementById('budget-limit-splits').value);
+  let limitOthers = parseFloat(document.getElementById('budget-limit-others').value);
+
+  if (isNaN(limitAds) || limitAds < 0) limitAds = 100000;
+  if (isNaN(limitPortals) || limitPortals < 0) limitPortals = 50000;
+  if (isNaN(limitLicenses) || limitLicenses < 0) limitLicenses = 50000;
+  if (isNaN(limitTravel) || limitTravel < 0) limitTravel = 30000;
+  if (isNaN(limitSplits) || limitSplits < 0) limitSplits = 500000;
+  if (isNaN(limitOthers) || limitOthers < 0) limitOthers = 50000;
 
   // Read logged local expenses
   let localExpenses = [];
@@ -12949,13 +12960,18 @@ window.calculateBudgetTracker = function() {
 };
 
 window.calculateROI = function() {
-  const price = parseFloat(document.getElementById('roi-purchase-price').value || 15000000);
-  const rent = parseFloat(document.getElementById('roi-monthly-rent').value || 55000);
-  const appreciation = parseFloat(document.getElementById('roi-appreciation-rate').value || 8.0);
-  const maint = parseFloat(document.getElementById('roi-annual-maintenance').value || 60000);
+  let price = parseFloat(document.getElementById('roi-purchase-price').value);
+  let rent = parseFloat(document.getElementById('roi-monthly-rent').value);
+  let appreciation = parseFloat(document.getElementById('roi-appreciation-rate').value);
+  let maint = parseFloat(document.getElementById('roi-annual-maintenance').value);
 
-  const grossYield = (rent * 12) / price * 100;
-  const netYield = ((rent * 12) - maint) / price * 100;
+  if (isNaN(price) || price <= 0) price = 15000000;
+  if (isNaN(rent) || rent < 0) rent = 55000;
+  if (isNaN(appreciation)) appreciation = 8.0;
+  if (isNaN(maint) || maint < 0) maint = 60000;
+
+  const grossYield = price > 0 ? (rent * 12) / price * 100 : 0;
+  const netYield = price > 0 ? ((rent * 12) - maint) / price * 100 : 0;
 
   document.getElementById('roi-gross-yield').innerText = grossYield.toFixed(2) + '%';
   document.getElementById('roi-net-yield').innerText = netYield.toFixed(2) + '%';
@@ -12993,15 +13009,24 @@ window.calculateROI = function() {
 };
 
 window.calculateEMI = function() {
-  const principal = parseFloat(document.getElementById('emi-principal').value || 8000000);
-  const ratePa = parseFloat(document.getElementById('emi-interest').value || 8.5);
-  const tenureY = parseFloat(document.getElementById('emi-tenure').value || 20);
+  let principal = parseFloat(document.getElementById('emi-principal').value);
+  let ratePa = parseFloat(document.getElementById('emi-interest').value);
+  let tenureY = parseFloat(document.getElementById('emi-tenure').value);
 
-  const r = (ratePa / 12) / 100;
+  if (isNaN(principal) || principal <= 0) principal = 8000000;
+  if (isNaN(ratePa) || ratePa < 0) ratePa = 8.5;
+  if (isNaN(tenureY) || tenureY <= 0) tenureY = 20;
+
   const n = tenureY * 12;
+  let emi = 0;
 
-  // EMI Formula
-  const emi = (principal * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+  if (ratePa === 0) {
+    emi = principal / n;
+  } else {
+    const r = (ratePa / 12) / 100;
+    emi = (principal * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+  }
+
   const totalAmount = emi * n;
   const totalInterest = totalAmount - principal;
 
@@ -13010,7 +13035,7 @@ window.calculateEMI = function() {
   document.getElementById('emi-total-amount').innerText = '₹' + (totalAmount / 10000000).toFixed(2) + 'Cr';
 
   // Interest vs Principal splits
-  const principalPct = Math.round((principal / totalAmount) * 100);
+  const principalPct = totalAmount > 0 ? Math.round((principal / totalAmount) * 100) : 100;
   const interestPct = 100 - principalPct;
 
   document.getElementById('emi-principal-split-pct').innerText = principalPct + '%';
@@ -13023,9 +13048,10 @@ window.calculateEMI = function() {
 
   let scheduleHtml = '';
   let balance = principal;
+  const r = (ratePa / 12) / 100;
 
   for (let month = 1; month <= 12; month++) {
-    const interestPaid = balance * r;
+    const interestPaid = ratePa === 0 ? 0 : balance * r;
     const principalPaid = emi - interestPaid;
     balance = Math.max(0, balance - principalPaid);
 
