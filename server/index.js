@@ -1452,7 +1452,8 @@ app.post('/api/leads', async (req, res) => {
       property_requirement,
       associate_id,
       agent_id,
-      rental_expiry_date
+      rental_expiry_date,
+      custom_data
     } = req.body;
 
     // Duplicate Phone Detection
@@ -1504,9 +1505,9 @@ app.post('/api/leads', async (req, res) => {
     }
     const info = await (async () => {
       const r = await db.query(`
-      INSERT INTO leads (name, phone, email, source, status, stage, project_type, budget_min, budget_max, notes, next_followup, followup_status, touchpoint, location_preference, config_bhk, timeline_preference, special_tags, documents, agent_id, agent_name, rental_expiry_date, admin_comments, property_requirement, associate_id)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
-     RETURNING id`, [name, phone || '', email || '', source || 'Website', status || 'Warm', stage || 'New', project_type || 'Residential', budget_min || 0, budget_max || 0, notes || '', next_followup || '', followup_status || 'None', touchpoint || 'Calls', location_preference || '', config_bhk || '', timeline_preference || '', special_tags || '', documents || '[]', assignment.id, assignment.name, rental_expiry, admin_comments || '', property_requirement || '', associate_id ? parseInt(associate_id) : null]);
+      INSERT INTO leads (name, phone, email, source, status, stage, project_type, budget_min, budget_max, notes, next_followup, followup_status, touchpoint, location_preference, config_bhk, timeline_preference, special_tags, documents, agent_id, agent_name, rental_expiry_date, admin_comments, property_requirement, associate_id, custom_data)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
+     RETURNING id`, [name, phone || '', email || '', source || 'Website', status || 'Warm', stage || 'New', project_type || 'Residential', budget_min || 0, budget_max || 0, notes || '', next_followup || '', followup_status || 'None', touchpoint || 'Calls', location_preference || '', config_bhk || '', timeline_preference || '', special_tags || '', documents || '[]', assignment.id, assignment.name, rental_expiry, admin_comments || '', property_requirement || '', associate_id ? parseInt(associate_id) : null, JSON.stringify(custom_data || {})]);
       return {
         lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
         changes: r.rowCount
@@ -1558,7 +1559,8 @@ app.put('/api/leads/:id', async (req, res) => {
       admin_comments,
       property_requirement,
       associate_id,
-      agent_id
+      agent_id,
+      custom_data
     } = req.body;
 
     const currentLead = (await db.query("SELECT agent_id, agent_name FROM leads WHERE id = $1", [req.params.id])).rows[0];
@@ -1582,9 +1584,9 @@ app.put('/api/leads/:id', async (req, res) => {
 
     await db.query(`
       UPDATE leads
-      SET name = $1, phone = $2, email = $3, source = $4, status = $5, stage = $6, project_type = $7, budget_min = $8, budget_max = $9, notes = $10, next_followup = $11, followup_status = $12, touchpoint = $13, location_preference = $14, config_bhk = $15, timeline_preference = $16, special_tags = $17, documents = $18, rental_expiry_date = $19, lead_score = $20, admin_comments = $21, property_requirement = $22, associate_id = $23, agent_id = $24, agent_name = $25
-      WHERE id = $26
-    `, [name, phone, email, source, status, stage, project_type, budget_min, budget_max, notes, next_followup, followup_status || 'None', touchpoint || 'Calls', location_preference, config_bhk, timeline_preference, special_tags, JSON.stringify(documents || []), rental_expiry_date || '', lead_score || 0, admin_comments || '', property_requirement || '', associate_id ? parseInt(associate_id) : null, finalAgentId, finalAgentName, req.params.id]);
+      SET name = $1, phone = $2, email = $3, source = $4, status = $5, stage = $6, project_type = $7, budget_min = $8, budget_max = $9, notes = $10, next_followup = $11, followup_status = $12, touchpoint = $13, location_preference = $14, config_bhk = $15, timeline_preference = $16, special_tags = $17, documents = $18, rental_expiry_date = $19, lead_score = $20, admin_comments = $21, property_requirement = $22, associate_id = $23, agent_id = $24, agent_name = $25, custom_data = $26
+      WHERE id = $27
+    `, [name, phone, email, source, status, stage, project_type, budget_min, budget_max, notes, next_followup, followup_status || 'None', touchpoint || 'Calls', location_preference, config_bhk, timeline_preference, special_tags, JSON.stringify(documents || []), rental_expiry_date || '', lead_score || 0, admin_comments || '', property_requirement || '', associate_id ? parseInt(associate_id) : null, finalAgentId, finalAgentName, JSON.stringify(custom_data || {}), req.params.id]);
 
     res.json({
       id: req.params.id,
@@ -2319,7 +2321,8 @@ app.post('/api/properties', async (req, res) => {
       commission_agreed,
       google_map_url,
       road_width,
-      fsi
+      fsi,
+      custom_data
     } = req.body;
     const user = getRequestUser(req);
     const agentId = user ? user.id : null;
@@ -2390,9 +2393,9 @@ app.post('/api/properties', async (req, res) => {
         registration_status, source, sub_source, comments,
         maintenance, deposit, available_from, date_of_inventory, available_for,
         plot_size, sba, special_tags, zone, onboarded_year,
-        plot_dimension, plot_facing, house_facing, holder_type, admin_comments, associate_id, project_id, agent_id, commission_agreed, google_map_url, road_width, fsi, last_updated
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54, CURRENT_TIMESTAMP)
-     RETURNING id`, [pId, mandate_type || 'Open', property_type || 'Resale', society, location || '', status || 'AVAILABLE', site_area || '', parseFloat(area_sqft || 0), configuration || '', floor_info || '', floor_range || '', interiors || 'Unfurnished', facing || '', amenities || '', car_park || '', parseFloat(price || 0), pRaw, possession || '', project_size || '', project_status || '', additional_info || '', video_link || '', photo_link || '', brochure_link || '', owner_name || '', owner_phone || '', owner_email || '', unit_no || '', registration_status || '', source || '', sub_source || '', comments || '', parseFloat(maintenance || 0), parseFloat(deposit || 0), available_from || '', date_of_inventory || '', available_for || 'Sale', plot_size || '', sba || '', special_tags || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), plot_dimension || '', plot_facing || '', house_facing || '', holder_type || '', admin_comments || '', associate_id ? parseInt(associate_id) : null, project_id ? parseInt(project_id) : null, agentId, commission_agreed || '', google_map_url || '', road_width || '', fsi || '']);
+        plot_dimension, plot_facing, house_facing, holder_type, admin_comments, associate_id, project_id, agent_id, commission_agreed, google_map_url, road_width, fsi, custom_data, last_updated
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54, $55, CURRENT_TIMESTAMP)
+     RETURNING id`, [pId, mandate_type || 'Open', property_type || 'Resale', society, location || '', status || 'AVAILABLE', site_area || '', parseFloat(area_sqft || 0), configuration || '', floor_info || '', floor_range || '', interiors || 'Unfurnished', facing || '', amenities || '', car_park || '', parseFloat(price || 0), pRaw, possession || '', project_size || '', project_status || '', additional_info || '', video_link || '', photo_link || '', brochure_link || '', owner_name || '', owner_phone || '', owner_email || '', unit_no || '', registration_status || '', source || '', sub_source || '', comments || '', parseFloat(maintenance || 0), parseFloat(deposit || 0), available_from || '', date_of_inventory || '', available_for || 'Sale', plot_size || '', sba || '', special_tags || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), plot_dimension || '', plot_facing || '', house_facing || '', holder_type || '', admin_comments || '', associate_id ? parseInt(associate_id) : null, project_id ? parseInt(project_id) : null, agentId, commission_agreed || '', google_map_url || '', road_width || '', fsi || '', JSON.stringify(custom_data || {})]);
       return {
         lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
         changes: r.rowCount
@@ -2492,7 +2495,8 @@ app.put('/api/properties/:id', async (req, res) => {
       commission_agreed,
       google_map_url,
       road_width,
-      fsi
+      fsi,
+      custom_data
     } = req.body;
 
     // Optional duplicate detection check ignoring self
@@ -2535,9 +2539,9 @@ app.put('/api/properties/:id', async (req, res) => {
         maintenance = $32, deposit = $33, available_from = $34, date_of_inventory = $35, available_for = $36,
         plot_size = $37, sba = $38, special_tags = $39, zone = $40, onboarded_year = $41,
         plot_dimension = $42, plot_facing = $43, house_facing = $44, holder_type = $45, admin_comments = $46, 
-        associate_id = $47, project_id = $48, commission_agreed = $49, google_map_url = $50, road_width = $51, fsi = $52, last_updated = CURRENT_TIMESTAMP
-      WHERE id = $53
-    `, [mandate_type || 'Open', property_type || 'Resale', society, location || '', status || 'AVAILABLE', site_area || '', parseFloat(area_sqft || 0), configuration || '', floor_info || '', floor_range || '', interiors || 'Unfurnished', facing || '', amenities || '', car_park || '', parseFloat(price || 0), pRaw, possession || '', project_size || '', project_status || '', additional_info || '', video_link || '', photo_link || '', brochure_link || '', owner_name || '', owner_phone || '', owner_email || '', unit_no || '', registration_status || '', source || '', sub_source || '', comments || '', parseFloat(maintenance || 0), parseFloat(deposit || 0), available_from || '', date_of_inventory || '', available_for || 'Sale', plot_size || '', sba || '', special_tags || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), plot_dimension || '', plot_facing || '', house_facing || '', holder_type || '', admin_comments || '', associate_id ? parseInt(associate_id) : null, project_id ? parseInt(project_id) : null, commission_agreed || '', google_map_url || '', road_width || '', fsi || '', req.params.id]);
+        associate_id = $47, project_id = $48, commission_agreed = $49, google_map_url = $50, road_width = $51, fsi = $52, custom_data = $53, last_updated = CURRENT_TIMESTAMP
+      WHERE id = $54
+    `, [mandate_type || 'Open', property_type || 'Resale', society, location || '', status || 'AVAILABLE', site_area || '', parseFloat(area_sqft || 0), configuration || '', floor_info || '', floor_range || '', interiors || 'Unfurnished', facing || '', amenities || '', car_park || '', parseFloat(price || 0), pRaw, possession || '', project_size || '', project_status || '', additional_info || '', video_link || '', photo_link || '', brochure_link || '', owner_name || '', owner_phone || '', owner_email || '', unit_no || '', registration_status || '', source || '', sub_source || '', comments || '', parseFloat(maintenance || 0), parseFloat(deposit || 0), available_from || '', date_of_inventory || '', available_for || 'Sale', plot_size || '', sba || '', special_tags || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), plot_dimension || '', plot_facing || '', house_facing || '', holder_type || '', admin_comments || '', associate_id ? parseInt(associate_id) : null, project_id ? parseInt(project_id) : null, commission_agreed || '', google_map_url || '', road_width || '', fsi || '', JSON.stringify(custom_data || {}), req.params.id]);
       return {
         lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
         changes: r.rowCount
@@ -6314,6 +6318,274 @@ app.get('/api/leads/:id/transaction', async (req, res) => {
     const comm = (await db.query('SELECT * FROM commissions WHERE lead_id = $1 ORDER BY id DESC LIMIT 1', [parseInt(id)])).rows[0];
     const user = getRequestUser(req);
     res.json(maskCommission(comm, user) || null);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ==========================================
+// 12. DYNAMIC BUILDER & CUSTOM FORMS APIs
+// ==========================================
+
+// Custom Forms CRUD
+app.get('/api/custom-forms', async (req, res) => {
+  try {
+    const rows = (await db.query('SELECT * FROM custom_forms ORDER BY id DESC')).rows;
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/custom-forms', async (req, res) => {
+  try {
+    const { name, module_type, sections } = req.body;
+    if (!name || !module_type) {
+      return res.status(400).json({ error: 'Name and Module Type are required.' });
+    }
+    const r = await db.query(
+      'INSERT INTO custom_forms (name, module_type, sections) VALUES ($1, $2, $3) RETURNING id',
+      [name, module_type, JSON.stringify(sections || [])]
+    );
+    res.json({ success: true, id: r.rows[0].id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/custom-forms/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, module_type, sections } = req.body;
+    await db.query(
+      'UPDATE custom_forms SET name = $1, module_type = $2, sections = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $4',
+      [name, module_type, JSON.stringify(sections || []), parseInt(id)]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/custom-forms/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.query('DELETE FROM custom_forms WHERE id = $1', [parseInt(id)]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/custom-forms/:id/duplicate', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const orig = (await db.query('SELECT * FROM custom_forms WHERE id = $1', [parseInt(id)])).rows[0];
+    if (!orig) return res.status(404).json({ error: 'Form not found' });
+
+    const r = await db.query(
+      'INSERT INTO custom_forms (name, module_type, sections) VALUES ($1, $2, $3) RETURNING id',
+      [orig.name + ' (Copy)', orig.module_type, JSON.stringify(orig.sections)]
+    );
+    res.json({ success: true, id: r.rows[0].id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// Custom Tables CRUD
+app.get('/api/custom-tables', async (req, res) => {
+  try {
+    const rows = (await db.query('SELECT * FROM custom_tables ORDER BY id DESC')).rows;
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/custom-tables', async (req, res) => {
+  try {
+    const { name, description, fields } = req.body;
+    if (!name) return res.status(400).json({ error: 'Table Name is required.' });
+    const r = await db.query(
+      'INSERT INTO custom_tables (name, description, fields) VALUES ($1, $2, $3) RETURNING id',
+      [name, description || '', JSON.stringify(fields || [])]
+    );
+    res.json({ success: true, id: r.rows[0].id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/custom-tables/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, fields } = req.body;
+    await db.query(
+      'UPDATE custom_tables SET name = $1, description = $2, fields = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $4',
+      [name, description || '', JSON.stringify(fields || []), parseInt(id)]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/custom-tables/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.query('DELETE FROM custom_tables WHERE id = $1', [parseInt(id)]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// Custom Table Data Rows CRUD
+app.get('/api/custom-tables/:id/rows', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const rows = (await db.query('SELECT * FROM custom_table_rows WHERE table_id = $1 ORDER BY id DESC', [parseInt(id)])).rows;
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/custom-tables/:id/rows', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { data } = req.body;
+    const r = await db.query(
+      'INSERT INTO custom_table_rows (table_id, data) VALUES ($1, $2) RETURNING id',
+      [parseInt(id), JSON.stringify(data || {})]
+    );
+    res.json({ success: true, id: r.rows[0].id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/custom-tables/:id/rows/:rowId', async (req, res) => {
+  try {
+    const { rowId } = req.params;
+    const { data } = req.body;
+    await db.query(
+      'UPDATE custom_table_rows SET data = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [JSON.stringify(data || {}), parseInt(rowId)]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/custom-tables/:id/rows/:rowId', async (req, res) => {
+  try {
+    const { rowId } = req.params;
+    await db.query('DELETE FROM custom_table_rows WHERE id = $1', [parseInt(rowId)]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// Custom Workflows CRUD
+app.get('/api/custom-workflows', async (req, res) => {
+  try {
+    const rows = (await db.query('SELECT * FROM custom_workflows ORDER BY id DESC')).rows;
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/custom-workflows', async (req, res) => {
+  try {
+    const { name, module_type, trigger_event, trigger_conditions, action_type, action_config, is_active } = req.body;
+    if (!name || !module_type || !trigger_event || !action_type) {
+      return res.status(400).json({ error: 'Missing required workflow fields.' });
+    }
+    const r = await db.query(
+      `INSERT INTO custom_workflows (name, module_type, trigger_event, trigger_conditions, action_type, action_config, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+      [name, module_type, trigger_event, JSON.stringify(trigger_conditions || {}), action_type, JSON.stringify(action_config || {}), is_active !== false]
+    );
+    res.json({ success: true, id: r.rows[0].id });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/custom-workflows/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, module_type, trigger_event, trigger_conditions, action_type, action_config, is_active } = req.body;
+    await db.query(
+      `UPDATE custom_workflows SET name = $1, module_type = $2, trigger_event = $3, trigger_conditions = $4,
+       action_type = $5, action_config = $6, is_active = $7, updated_at = CURRENT_TIMESTAMP WHERE id = $8`,
+      [name, module_type, trigger_event, JSON.stringify(trigger_conditions || {}), action_type, JSON.stringify(action_config || {}), is_active, parseInt(id)]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/custom-workflows/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.query('DELETE FROM custom_workflows WHERE id = $1', [parseInt(id)]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// Reports Generation Engine
+app.post('/api/custom-reports/generate', async (req, res) => {
+  try {
+    const { source_table, columns, filters } = req.body;
+    if (!source_table || !columns || columns.length === 0) {
+      return res.status(400).json({ error: 'Source table and columns are required.' });
+    }
+
+    let queryText = '';
+    let params = [];
+    
+    if (source_table === 'Leads') {
+      queryText = 'SELECT * FROM leads WHERE deleted_at IS NULL';
+    } else if (source_table === 'Properties') {
+      queryText = 'SELECT * FROM properties WHERE deleted_at IS NULL';
+    } else if (source_table.startsWith('custom_table_')) {
+      const customTableId = parseInt(source_table.replace('custom_table_', ''));
+      queryText = 'SELECT * FROM custom_table_rows WHERE table_id = $1';
+      params.push(customTableId);
+    } else {
+      return res.status(400).json({ error: 'Invalid source table.' });
+    }
+
+    // Apply simple equals filters
+    if (Array.isArray(filters)) {
+      filters.forEach(f => {
+        if (f.field && f.value !== undefined && f.value !== '') {
+          if (f.is_custom) {
+            params.push(f.value);
+            queryText += ` AND custom_data->>'${f.field}' = $${params.length}`;
+          } else {
+            params.push(f.value);
+            queryText += ` AND ${f.field}::text = $${params.length}`;
+          }
+        }
+      });
+    }
+
+    const rows = (await db.query(queryText, params)).rows;
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

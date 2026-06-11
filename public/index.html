@@ -308,6 +308,9 @@
           <div class="nav-item" data-page="settings">
             <span class="icon"><i class="ti ti-settings"></i></span><span>Settings</span>
           </div>
+          <div class="nav-item admin-only-field" data-page="dynamic-builder">
+            <span class="icon"><i class="ti ti-tool"></i></span><span>Dynamic Builder</span>
+          </div>
           <div class="nav-item" onclick="secureLockSession()" style="color: var(--red) !important; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 8px;">
             <span class="icon" style="color: var(--red) !important;"><i class="ti ti-lock"></i></span><span style="color: var(--red) !important; font-weight: 700;">Lock / Logout</span>
           </div>
@@ -3347,6 +3350,373 @@
             </div>
           </div>
         </div>
+
+        <!-- ================= PAGE 20: DYNAMIC BUILDER ================= -->
+        <div class="page" id="page-dynamic-builder">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div>
+              <h2 style="margin:0; font-size:20px; font-weight:800; color:var(--gold-l);"><i class="ti ti-tool"></i> Enterprise Dynamic Builder</h2>
+              <p style="margin:4px 0 0; font-size:12px; color:var(--text-secondary);">Configure custom forms, workflows, custom tables, and custom reports dynamically</p>
+            </div>
+          </div>
+
+          <!-- Builder Sub-Tabs Navigation -->
+          <div style="display:flex; gap:8px; margin-bottom:20px; border-bottom:1.5px solid rgba(255,255,255,0.06); padding-bottom:10px;">
+            <button id="btn-builder-tab-forms" class="btn btn-ghost active" onclick="switchBuilderTab('forms')" style="font-weight:700; border-bottom:2px solid var(--gold); border-radius:0;">📋 Form Builder</button>
+            <button id="btn-builder-tab-workflows" class="btn btn-ghost" onclick="switchBuilderTab('workflows')" style="font-weight:700; border-bottom:2px solid transparent; border-radius:0;">⚙️ Workflow Studio</button>
+            <button id="btn-builder-tab-tables" class="btn btn-ghost" onclick="switchBuilderTab('tables')" style="font-weight:700; border-bottom:2px solid transparent; border-radius:0;">🗄️ Custom Tables</button>
+            <button id="btn-builder-tab-reports" class="btn btn-ghost" onclick="switchBuilderTab('reports')" style="font-weight:700; border-bottom:2px solid transparent; border-radius:0;">📈 Reports Center</button>
+          </div>
+
+          <!-- PANEL 1: FORM BUILDER -->
+          <div id="builder-panel-forms" class="builder-panel-pane">
+            <div style="display:grid; grid-template-columns: 280px 1fr; gap:20px;">
+              <!-- Forms List -->
+              <div class="card">
+                <div class="card-title">Templates List</div>
+                <div id="builder-forms-list-container" style="display:flex; flex-direction:column; gap:10px; margin-top:15px;"></div>
+                <button class="btn btn-primary btn-sm" onclick="showCreateFormModal()" style="margin-top:15px; width:100%;"><i class="ti ti-plus"></i> Create Form</button>
+              </div>
+              <!-- Form Edit Canvas -->
+              <div class="card" id="builder-form-canvas" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:15px;">
+                  <h3 id="builder-form-name" style="margin:0; color:var(--gold-l); font-size:16px;">Form Name</h3>
+                  <div style="display:flex; gap:8px;">
+                    <button class="btn btn-ghost btn-sm" onclick="addBuilderFormSection()"><i class="ti ti-plus"></i> Add Section</button>
+                    <button class="btn btn-primary btn-sm" onclick="saveBuilderForm()"><i class="ti ti-device-floppy"></i> Save Template</button>
+                  </div>
+                </div>
+                <div id="builder-form-sections-container" style="display:flex; flex-direction:column; gap:15px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL 2: WORKFLOW STUDIO -->
+          <div id="builder-panel-workflows" class="builder-panel-pane hidden">
+            <div class="card">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <div class="card-title">Workflows Directory</div>
+                <button class="btn btn-primary btn-sm" onclick="showCreateWorkflowModal()"><i class="ti ti-plus"></i> Create Workflow</button>
+              </div>
+              <div style="overflow-x:auto;">
+                <table class="table" style="width:100%;">
+                  <thead>
+                    <tr>
+                      <th>Workflow Name</th>
+                      <th>Module</th>
+                      <th>Trigger Event</th>
+                      <th>Action Type</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="builder-workflows-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL 3: CUSTOM TABLES -->
+          <div id="builder-panel-tables" class="builder-panel-pane hidden">
+            <div style="display:grid; grid-template-columns: 280px 1fr; gap:20px;">
+              <!-- Tables List -->
+              <div class="card">
+                <div class="card-title">Tables Directory</div>
+                <div id="builder-tables-list-container" style="display:flex; flex-direction:column; gap:10px; margin-top:15px;"></div>
+                <button class="btn btn-primary btn-sm" onclick="showCreateTableModal()" style="margin-top:15px; width:100%;"><i class="ti ti-plus"></i> Create Table</button>
+              </div>
+              <!-- Table Details & Data Grid -->
+              <div class="card" id="builder-table-detail-container" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:12px; margin-bottom:15px;">
+                  <div>
+                    <h3 id="builder-selected-table-name" style="margin:0; color:var(--gold-l); font-size:16px;">Table Name</h3>
+                    <p id="builder-selected-table-desc" style="margin:4px 0 0; font-size:11px; color:var(--text-secondary);">Table description</p>
+                  </div>
+                  <div style="display:flex; gap:8px;">
+                    <button class="btn btn-ghost btn-sm" onclick="showTableSchemaModal()"><i class="ti ti-settings"></i> Edit Columns</button>
+                    <button class="btn btn-primary btn-sm" onclick="showAddTableRowModal()"><i class="ti ti-plus"></i> Add Row</button>
+                  </div>
+                </div>
+                
+                <div style="overflow-x:auto;">
+                  <table class="table" style="width:100%;" id="builder-table-data-grid">
+                    <thead id="builder-table-data-thead"></thead>
+                    <tbody id="builder-table-data-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL 4: REPORTS CENTER -->
+          <div id="builder-panel-reports" class="builder-panel-pane hidden">
+            <div class="card">
+              <div class="card-title">Dynamic Report Builder</div>
+              <div class="card-sub">Query your dynamic data, custom fields, and tables directly</div>
+              
+              <div class="form-row" style="margin-top:15px;">
+                <div class="form-group">
+                  <label class="form-label">Source Data Table</label>
+                  <select class="form-select" id="report-builder-source" onchange="handleReportSourceChange(this.value)">
+                    <option value="">-- Select Source Table --</option>
+                    <option value="Leads">Leads</option>
+                    <option value="Properties">Properties</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Filters Configuration</label>
+                  <div id="report-builder-filters-container" style="display:flex; flex-direction:column; gap:8px;">
+                    <div style="font-size:11px; color:var(--text-secondary);">Select a source table to define filter metrics</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top:15px;">
+                <label class="form-label">Select Columns to Display</label>
+                <div id="report-builder-columns-container" style="display:flex; flex-wrap:wrap; gap:12px; padding:10px; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:4px; min-height:40px;">
+                  <div style="font-size:11px; color:var(--text-secondary);">Select a source table first</div>
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:15px;">
+                <button class="btn btn-ghost" onclick="runBuilderReport()"><i class="ti ti-search"></i> Run Report</button>
+                <button class="btn btn-primary" onclick="exportBuilderReportCSV()" id="btn-builder-report-export" style="display:none;"><i class="ti ti-download"></i> Download CSV</button>
+              </div>
+            </div>
+
+            <!-- Report Results Preview -->
+            <div class="card" style="margin-top:20px; display:none;" id="builder-report-preview-card">
+              <div class="card-title">Query Output Preview</div>
+              <div style="overflow-x:auto; margin-top:15px;">
+                <table class="table" style="width:100%;">
+                  <thead id="builder-report-preview-thead"></thead>
+                  <tbody id="builder-report-preview-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= DYNAMIC BUILDER MODALS ================= -->
+        <!-- Form Create/Edit Modal -->
+        <div class="mbg hidden" id="modal-builder-create-form">
+          <div class="modal" style="max-width: 400px;">
+            <div class="mhd">
+              <div class="mtitle" id="lbl-form-modal-title">📋 Create Custom Form</div>
+              <button class="mclose" onclick="closeModal('modal-builder-create-form')">&times;</button>
+            </div>
+            <form onsubmit="handleFormTemplateSubmit(event)">
+              <div class="mbdy">
+                <input type="hidden" id="builder-edit-form-id">
+                <div class="form-group">
+                  <label class="form-label">Form Name</label>
+                  <input type="text" class="form-input" id="builder-form-input-name" required placeholder="e.g. Premium Leads Form">
+                </div>
+                <div class="form-group" style="margin-top:12px;">
+                  <label class="form-label">Module Association</label>
+                  <select class="form-select" id="builder-form-input-module" required>
+                    <option value="Leads">Leads</option>
+                    <option value="Properties">Properties</option>
+                  </select>
+                </div>
+              </div>
+              <div class="mft">
+                <button class="btn btn-ghost" type="button" onclick="closeModal('modal-builder-create-form')">Cancel</button>
+                <button class="btn btn-primary" type="submit">Save Form</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Form Add Field Modal -->
+        <div class="mbg hidden" id="modal-builder-add-field">
+          <div class="modal" style="max-width: 400px;">
+            <div class="mhd">
+              <div class="mtitle">➕ Add Custom Field</div>
+              <button class="mclose" onclick="closeModal('modal-builder-add-field')">&times;</button>
+            </div>
+            <form onsubmit="handleFieldTemplateSubmit(event)">
+              <div class="mbdy">
+                <input type="hidden" id="builder-field-section-index">
+                <input type="hidden" id="builder-field-index">
+                <div class="form-group">
+                  <label class="form-label">Field Label Name</label>
+                  <input type="text" class="form-input" id="builder-field-label" required placeholder="e.g. GST Number">
+                </div>
+                <div class="form-group" style="margin-top:12px;">
+                  <label class="form-label">Field Unique ID / DB Key</label>
+                  <input type="text" class="form-input" id="builder-field-key" required placeholder="e.g. gst_number (lowercase, no spaces)" pattern="[a-z0-9_]+">
+                </div>
+                <div class="form-group" style="margin-top:12px;">
+                  <label class="form-label">Field Type</label>
+                  <select class="form-select" id="builder-field-type" required onchange="handleFieldTypeChange(this.value)">
+                    <option value="text">Text Input</option>
+                    <option value="number">Number</option>
+                    <option value="select">Dropdown Options</option>
+                    <option value="boolean">Boolean Toggle (Yes/No)</option>
+                    <option value="textarea">Multiline Description</option>
+                  </select>
+                </div>
+                <div class="form-group hidden" style="margin-top:12px;" id="builder-field-options-group">
+                  <label class="form-label">Select Options (Comma separated list)</label>
+                  <input type="text" class="form-input" id="builder-field-options" placeholder="e.g. Option A, Option B, Option C">
+                </div>
+              </div>
+              <div class="mft">
+                <button class="btn btn-ghost" type="button" onclick="closeModal('modal-builder-add-field')">Cancel</button>
+                <button class="btn btn-primary" type="submit">Save Field</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Workflow Edit Modal -->
+        <div class="mbg hidden" id="modal-builder-workflow">
+          <div class="modal" style="max-width: 500px;">
+            <div class="mhd">
+              <div class="mtitle" id="lbl-workflow-modal-title">⚙️ Configure Rule Workflow</div>
+              <button class="mclose" onclick="closeModal('modal-builder-workflow')">&times;</button>
+            </div>
+            <form onsubmit="handleWorkflowSubmit(event)">
+              <div class="mbdy">
+                <input type="hidden" id="builder-workflow-id">
+                <div class="form-group">
+                  <label class="form-label">Workflow Name</label>
+                  <input type="text" class="form-input" id="builder-wf-name" required placeholder="e.g. Lead Conversion Alerts">
+                </div>
+                <div class="form-row" style="margin-top:12px;">
+                  <div class="form-group">
+                    <label class="form-label">Module Trigger Context</label>
+                    <select class="form-select" id="builder-wf-module" required onchange="handleWorkflowModuleChange(this.value)">
+                      <option value="Leads">Leads</option>
+                      <option value="Properties">Properties</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Trigger Event Type</label>
+                    <select class="form-select" id="builder-wf-event" required>
+                      <option value="CREATED">On Entry Created</option>
+                      <option value="STAGE_CHANGED">On Stage State Changed</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div class="form-group" style="margin-top:12px;" id="builder-wf-conditions-group">
+                  <label class="form-label">Matching Event Conditions</label>
+                  <div style="display:flex; gap:8px;">
+                    <select class="form-select" id="builder-wf-condition-field" style="flex:1;">
+                      <option value="stage">Pipeline Stage</option>
+                      <option value="status">Lead Status</option>
+                    </select>
+                    <input type="text" class="form-input" id="builder-wf-condition-value" style="flex:1;" placeholder="e.g. Won or Warm">
+                  </div>
+                </div>
+
+                <div class="form-row" style="margin-top:12px;">
+                  <div class="form-group">
+                    <label class="form-label">Target Automation Action</label>
+                    <select class="form-select" id="builder-wf-action-type" required onchange="handleWorkflowActionTypeChange(this.value)">
+                      <option value="LOG_ACTIVITY">Log Timeline Activity</option>
+                      <option value="SEND_WHATSAPP">Dispatch WhatsApp Sandbox</option>
+                      <option value="UPDATE_FIELD">Update Record Field</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div class="form-group" style="margin-top:12px;" id="builder-wf-action-config-group">
+                  <label class="form-label">Action Configuration Details</label>
+                  <textarea class="form-input" id="builder-wf-action-config" rows="3" placeholder="Enter activity log text, message content, or field:value details..."></textarea>
+                </div>
+              </div>
+              <div class="mft">
+                <button class="btn btn-ghost" type="button" onclick="closeModal('modal-builder-workflow')">Cancel</button>
+                <button class="btn btn-primary" type="submit">Activate Rule</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Custom Table Create/Edit Modal -->
+        <div class="mbg hidden" id="modal-builder-table">
+          <div class="modal" style="max-width: 400px;">
+            <div class="mhd">
+              <div class="mtitle" id="lbl-table-modal-title">🗄️ Create Custom Database Table</div>
+              <button class="mclose" onclick="closeModal('modal-builder-table')">&times;</button>
+            </div>
+            <form onsubmit="handleCustomTableSubmit(event)">
+              <div class="mbdy">
+                <input type="hidden" id="builder-table-id">
+                <div class="form-group">
+                  <label class="form-label">Table Name</label>
+                  <input type="text" class="form-input" id="builder-table-name" required placeholder="e.g. Investor Directory">
+                </div>
+                <div class="form-group" style="margin-top:12px;">
+                  <label class="form-label">Description</label>
+                  <input type="text" class="form-input" id="builder-table-description" placeholder="Brief note about this dataset...">
+                </div>
+              </div>
+              <div class="mft">
+                <button class="btn btn-ghost" type="button" onclick="closeModal('modal-builder-table')">Cancel</button>
+                <button class="btn btn-primary" type="submit">Deploy Table</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Custom Table Columns Editor Modal -->
+        <div class="mbg hidden" id="modal-builder-table-columns">
+          <div class="modal" style="max-width: 500px;">
+            <div class="mhd">
+              <div class="mtitle">📐 Custom Columns Schema Configurator</div>
+              <button class="mclose" onclick="closeModal('modal-builder-table-columns')">&times;</button>
+            </div>
+            <div class="mbdy">
+              <input type="hidden" id="builder-columns-table-id">
+              <div style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border); padding: 8px; border-radius: 4px; background: rgba(0,0,0,0.15); display: flex; flex-direction: column; gap: 8px;" id="builder-table-schema-columns-list"></div>
+              
+              <h4 style="margin:15px 0 10px 0; color:var(--gold-l); font-size:12.5px; text-transform:uppercase;">Add New Data Column</h4>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Column Label</label>
+                  <input type="text" class="form-input" id="builder-col-label" placeholder="e.g. Fund Size">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Column Type</label>
+                  <select class="form-select" id="builder-col-type">
+                    <option value="text">Text</option>
+                    <option value="number">Number</option>
+                    <option value="boolean">Yes/No</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="addNewTableColumnField()" style="margin-top:10px; width:100%;"><i class="ti ti-plus"></i> Append Column</button>
+            </div>
+            <div class="mft">
+              <button class="btn btn-ghost" onclick="closeModal('modal-builder-table-columns')">Close</button>
+              <button class="btn btn-primary" onclick="saveTableColumnsSchema()">Save Schema</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Custom Table Row Data Entry Modal -->
+        <div class="mbg hidden" id="modal-builder-row-data">
+          <div class="modal" style="max-width: 500px;">
+            <div class="mhd">
+              <div class="mtitle" id="lbl-row-modal-title">📝 Row Data Entry</div>
+              <button class="mclose" onclick="closeModal('modal-builder-row-data')">&times;</button>
+            </div>
+            <form onsubmit="handleRowDataEntrySubmit(event)">
+              <div class="mbdy" id="builder-row-data-inputs-container" style="max-height:60vh; overflow-y:auto; display:flex; flex-direction:column; gap:12px;"></div>
+              <div class="mft">
+                <button class="btn btn-ghost" type="button" onclick="closeModal('modal-builder-row-data')">Cancel</button>
+                <button class="btn btn-primary" type="submit">Commit Row</button>
+              </div>
+            </form>
+          </div>
+        </div>
+            </div>
+          </div>
+        </div>
         
       </div> <!-- /page-content-container -->
       
@@ -5546,6 +5916,8 @@
             <label class="form-label">🔐 Private Admin Comments</label>
             <textarea class="form-input" id="edit-lead-admin-comments" rows="4" placeholder="Strictly private admin comments..."></textarea>
           </div>
+          <!-- Custom Lead Fields Container (Dynamic Builder) -->
+          <div id="custom-lead-fields-container" style="margin-top: 15px; border-top: 1px dashed var(--border); padding-top: 15px;"></div>
         </div>
         <div class="mft">
           <button class="btn btn-ghost" type="button" onclick="closeModal('modal-edit-lead')">Close</button>
@@ -5607,6 +5979,8 @@
               <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Transaction Link: <span id="detail-transaction-status" style="color:var(--green); font-weight:700;">No Deal Linked</span></div>
             </div>
           </div>
+          <!-- Custom Lead Details Container (Dynamic Builder) -->
+          <div id="custom-lead-details-container" style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 10px; border-radius: 8px; display: none;"></div>
         </div>
         <button class="mclose" onclick="closeModal('modal-lead-detail')" style="margin-left:10px;">&times;</button>
       </div>
@@ -6322,5 +6696,6 @@
   <div id="toast">Operative action completed successfully!</div>
   
   <script src="index.js"></script>
+  <script src="dynamic_builder.js"></script>
 </body>
 </html>

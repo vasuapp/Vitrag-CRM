@@ -442,6 +442,49 @@ CREATE TABLE IF NOT EXISTS communication_templates (
       await pool.query('CREATE INDEX IF NOT EXISTS idx_properties_agent_deleted ON properties(agent_id, deleted_at);');
       await pool.query('CREATE INDEX IF NOT EXISTS idx_interaction_logs_type ON interaction_logs(interaction_type);');
 
+      // Dynamic Forms & Tables Schema Migrations
+      await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS custom_data JSONB DEFAULT \'{}\';');
+      await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS custom_data JSONB DEFAULT \'{}\';');
+
+      await pool.query(`CREATE TABLE IF NOT EXISTS custom_forms (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        module_type TEXT NOT NULL,
+        sections JSONB DEFAULT '[]',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );`);
+
+      await pool.query(`CREATE TABLE IF NOT EXISTS custom_tables (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        fields JSONB DEFAULT '[]',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );`);
+
+      await pool.query(`CREATE TABLE IF NOT EXISTS custom_table_rows (
+        id SERIAL PRIMARY KEY,
+        table_id INTEGER REFERENCES custom_tables(id) ON DELETE CASCADE,
+        data JSONB DEFAULT '{}',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );`);
+
+      await pool.query(`CREATE TABLE IF NOT EXISTS custom_workflows (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        module_type TEXT NOT NULL,
+        trigger_event TEXT NOT NULL,
+        trigger_conditions JSONB DEFAULT '{}',
+        action_type TEXT NOT NULL,
+        action_config JSONB DEFAULT '{}',
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+      );`);
+
       console.log("Migration: Added new columns and indexes to properties and leads tables successfully.");
     } catch (migErr) {
       console.log("Migration skipped or failed:", migErr.message);

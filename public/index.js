@@ -1109,7 +1109,8 @@ function navToPage(pageId, subTabId) {
     reports: 'Performance Reports',
     documents: 'Document Vault',
     'duplicates-audit': 'Duplicates Review Audit',
-    'raw-leads': 'Raw Leads Directory'
+    'raw-leads': 'Raw Leads Directory',
+    'dynamic-builder': 'Enterprise Dynamic Builder'
   };
   document.getElementById('page-header-title').innerText = titles[pageId] || 'REALPro CRM';
 
@@ -1166,6 +1167,9 @@ function navToPage(pageId, subTabId) {
   }
   else if (pageId === 'raw-leads') {
     loadRawLeads();
+  }
+  else if (pageId === 'dynamic-builder') {
+    if (typeof window.loadDynamicBuilder === 'function') window.loadDynamicBuilder();
   }
 }
 
@@ -4333,6 +4337,9 @@ window.editLeadData = async function(id) {
       modalTitle.innerHTML = '💎 Edit Lead Details';
     }
 
+    if (typeof window.renderCustomFields === 'function') {
+      await window.renderCustomFields('Leads', lead.custom_data || {});
+    }
     closeModal('modal-lead-detail');
     openModal('modal-edit-lead');
   } catch (err) {
@@ -4379,6 +4386,9 @@ window.showAddEnquiryModal = function() {
   if (modalTitle) {
     modalTitle.innerHTML = '📋 Register New Customer Enquiry';
   }
+  if (typeof window.renderCustomFields === 'function') {
+    window.renderCustomFields('Leads', {});
+  }
 
   openModal('modal-edit-lead');
 };
@@ -4414,7 +4424,8 @@ window.submitEditLead = async function(e) {
     property_requirement: document.getElementById('edit-lead-requirement').value,
     associate_id: document.getElementById('edit-lead-associate').value || null,
     agent_id: document.getElementById('edit-lead-agent').value || null,
-    rental_expiry_date: document.getElementById('edit-lead-rental-expiry')?.value || ''
+    rental_expiry_date: document.getElementById('edit-lead-rental-expiry')?.value || '',
+    custom_data: typeof window.serializeCustomFields === 'function' ? window.serializeCustomFields() : {}
   };
 
   try {
@@ -9669,6 +9680,9 @@ async function showLeadDetails(leadId) {
             statusEl.style.color = 'var(--text-muted)';
           }
         }
+      }
+      if (typeof window.renderCustomDetails === 'function') {
+        await window.renderCustomDetails('Leads', lead.custom_data || {});
       }
     } catch (errTrans) {
       console.error('Failed to load linked transaction status:', errTrans);
