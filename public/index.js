@@ -663,7 +663,7 @@ async function loadLockScreenProfiles() {
     listContainer.innerHTML = profiles.map(p => `
       <div class="lock-profile-item" onclick="selectLockProfile(${p.id}, '${p.name.replace(/'/g, "\\'")}')" style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s ease; text-align: left; margin-bottom: 8px;">
         <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #1e1b15 0%, #302610 100%); border: 1px solid rgba(197, 168, 103, 0.4); display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: 13px; font-weight: 700;">
+          <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #1e1b15 0%, #302610 100%); border: 1px solid rgba(212, 175, 55, 0.4); display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: 13px; font-weight: 700;">
             ${p.name.split(' ').map(n=>n[0]).join('').substring(0, 2).toUpperCase()}
           </div>
           <div>
@@ -678,8 +678,8 @@ async function loadLockScreenProfiles() {
     const items = listContainer.querySelectorAll('.lock-profile-item');
     items.forEach(item => {
       item.addEventListener('mouseenter', () => {
-        item.style.background = 'rgba(197, 168, 103, 0.1)';
-        item.style.borderColor = 'rgba(197, 168, 103, 0.35)';
+        item.style.background = 'rgba(212, 175, 55, 0.1)';
+        item.style.borderColor = 'rgba(212, 175, 55, 0.35)';
         item.style.transform = 'translateY(-1px)';
       });
       item.addEventListener('mouseleave', () => {
@@ -1688,7 +1688,7 @@ window.inspectDateEvents = async function(dateStr, shouldOpen = false) {
                 <span style="font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ev.name} <span class="badge ${stageBadge}" style="font-size: 8px; padding: 1px 4px;">${ev.stage || 'Lead'}</span></span>
                 <span style="font-size: 10px; color: rgba(255,255,255,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${ev.notes ? ev.notes : 'Nurture callback check'}</span>
               </div>
-              <span style="font-size: 10px; font-weight: 700; color: var(--gold-l); background: rgba(197, 168, 103, 0.1); border: 1px solid rgba(197, 168, 103, 0.2); padding: 2px 6px; border-radius: 4px; flex-shrink: 0; white-space: nowrap;">⏰ ${timeStr}</span>
+              <span style="font-size: 10px; font-weight: 700; color: var(--gold-l); background: rgba(212, 175, 55, 0.1); border: 1px solid rgba(212, 175, 55, 0.2); padding: 2px 6px; border-radius: 4px; flex-shrink: 0; white-space: nowrap;">⏰ ${timeStr}</span>
             </div>
           `;
         }).join('');
@@ -2269,7 +2269,7 @@ function renderResaleProperties(listings) {
               <span class="inv-name" style="font-size: 16px; font-weight: 700; color:var(--gold-l);">${p.society}</span> 
               <span class="chip chip-cold btn-sm" style="font-size:9.5px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">ID: ${p.prop_id || '#' + p.id}</span>
               ${p.is_stale ? `<span class="chip chip-hot btn-sm" style="font-size:9px; font-weight:700;">⚠️ STALE LISTING</span>` : ''}
-              ${p.mandate_type === 'Exclusive' ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(197, 168, 103,0.2); border:0.5px solid var(--gold); color:var(--gold-l);">👑 EXCLUSIVE</span>` : ''}
+              ${p.mandate_type === 'Exclusive' ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(212, 175, 55,0.2); border:0.5px solid var(--gold); color:var(--gold-l);">👑 EXCLUSIVE</span>` : ''}
               ${(()=>{ const s=(p.status||'AVAILABLE').toUpperCase(); if(s==='AVAILABLE') return `<span class="chip chip-available btn-sm" style="font-size:9px;font-weight:700;background:rgba(46,204,113,0.2);border:0.5px solid var(--green);color:var(--green);">🟢 AVAILABLE</span>`; if(s==='SOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.2);border:0.5px solid var(--red);color:var(--red);">🔴 SOLD</span>`; if(s==='ON HOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(230,126,34,0.2);border:0.5px solid #e67e22;color:#e67e22;">🟠 ON HOLD</span>`; if(s==='WITHDRAWN') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(127,140,141,0.2);border:0.5px solid #7f8c8d;color:#7f8c8d;">⚫ WITHDRAWN</span>`; if(s==='EXPIRED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.1);border:0.5px solid #c0392b;color:#c0392b;opacity:0.7;">🔕 EXPIRED</span>`; if(s==='RESERVED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(52,152,219,0.2);border:0.5px solid var(--blue);color:var(--blue-light);">🔵 RESERVED</span>`; return ''; })()}
               ${p.associate_id ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(52, 152, 219, 0.2); border:0.5px solid var(--blue); color:var(--blue-light);">🏢 Associate: ${p.associate_name || 'Network Broker'}</span>` : ''}
               ${p.special_tags ? p.special_tags.split(',').map(tag => `<span class="chip chip-warm btn-sm" style="font-size:9px; font-weight:600;">🏷️ ${tag.trim()}</span>`).join(' ') : ''}
@@ -2345,7 +2345,7 @@ function renderResaleProperties(listings) {
           ${(p.special_tags || '').split(',').filter(t => t.trim() !== '').map(tag => `
             <span class="tag" style="background:rgba(255,255,255,0.05); color:var(--gold-l); border: 0.5px solid var(--border);">${tag.trim()}</span>
           `).join('')}
-          <span class="tag" style="background:rgba(197, 168, 103,0.15); color:var(--gold-l); border: 1.5px dashed var(--gold); cursor:pointer; font-weight:700;" onclick="promptAddTag(${p.id}, 'properties')">+ Tag</span>
+          <span class="tag" style="background:rgba(212, 175, 55,0.15); color:var(--gold-l); border: 1.5px dashed var(--gold); cursor:pointer; font-weight:700;" onclick="promptAddTag(${p.id}, 'properties')">+ Tag</span>
         </div>
 
         <div class="act-row" style="margin-top: 12px; display:flex; gap:8px;">
@@ -2366,7 +2366,7 @@ function renderResaleProperties(listings) {
 
         <!-- Private Contact Card (masked for employees!) -->
         ${state.systemSettings.showMaskedFields ? `
-        <div id="private-contact-${p.id}" style="display: none; margin-top: 12px; padding: 12px; background: rgba(197, 168, 103, 0.08); border-radius: var(--radius-sm); border: 1px dashed var(--gold)">
+        <div id="private-contact-${p.id}" style="display: none; margin-top: 12px; padding: 12px; background: rgba(212, 175, 55, 0.08); border-radius: var(--radius-sm); border: 1px dashed var(--gold)">
           <div style="font-size: 13px; font-weight:700; color:var(--gold-l); margin-bottom: 6px;">🔐 Security Audited Contact Sheet:</div>
           <div class="grid3" style="font-size:12px; margin-bottom: 8px;">
             <div>Direct Owner Name: <strong>${p.owner_name}</strong></div>
@@ -2474,7 +2474,7 @@ function renderResaleProperties(listings) {
                 </td>
               </tr>
               ${state.systemSettings.showMaskedFields ? `
-              <tr id="private-contact-row-${p.id}" style="display:none; background: rgba(197, 168, 103, 0.04);">
+              <tr id="private-contact-row-${p.id}" style="display:none; background: rgba(212, 175, 55, 0.04);">
                 <td colspan="12" style="padding:10px;">
                   <div style="display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; align-items:center;">
                     <div>
@@ -2534,7 +2534,7 @@ function renderRentalProperties(listings) {
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
               <span class="inv-name" style="font-size: 16px; font-weight: 700; color:var(--gold-l);">${p.society}</span>
               <span class="chip chip-cold btn-sm" style="font-size:9.5px; cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">ID: ${p.prop_id || '#' + p.id}</span>
-              ${p.mandate_type === 'Exclusive' ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(197, 168, 103,0.2); border:0.5px solid var(--gold); color:var(--gold-l);">👑 EXCLUSIVE</span>` : ''}
+              ${p.mandate_type === 'Exclusive' ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(212, 175, 55,0.2); border:0.5px solid var(--gold); color:var(--gold-l);">👑 EXCLUSIVE</span>` : ''}
               ${(()=>{ const s=(p.status||'AVAILABLE').toUpperCase(); if(s==='AVAILABLE') return `<span class="chip chip-available btn-sm" style="font-size:9px;font-weight:700;background:rgba(46,204,113,0.2);border:0.5px solid var(--green);color:var(--green);">🟢 AVAILABLE</span>`; if(s==='SOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.2);border:0.5px solid var(--red);color:var(--red);">🔴 RENTED OUT</span>`; if(s==='ON HOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(230,126,34,0.2);border:0.5px solid #e67e22;color:#e67e22;">🟠 ON HOLD</span>`; if(s==='WITHDRAWN') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(127,140,141,0.2);border:0.5px solid #7f8c8d;color:#7f8c8d;">⚫ WITHDRAWN</span>`; if(s==='EXPIRED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.1);border:0.5px solid #c0392b;color:#c0392b;opacity:0.7;">🔕 EXPIRED</span>`; if(s==='RESERVED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(52,152,219,0.2);border:0.5px solid var(--blue);color:var(--blue-light);">🔵 RESERVED</span>`; return ''; })()}
               ${p.associate_id ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(52, 152, 219, 0.2); border:0.5px solid var(--blue); color:var(--blue-light);">🏢 Associate: ${p.associate_name || 'Network Broker'}</span>` : ''}
               ${p.special_tags ? p.special_tags.split(',').map(tag => `<span class="chip chip-warm btn-sm" style="font-size:9px; font-weight:600;">🏷️ ${tag.trim()}</span>`).join(' ') : ''}
@@ -2606,7 +2606,7 @@ function renderRentalProperties(listings) {
           ${(p.special_tags || '').split(',').filter(t => t.trim() !== '').map(tag => `
             <span class="tag" style="background:rgba(255,255,255,0.05); color:var(--gold-l); border: 0.5px solid var(--border);">${tag.trim()}</span>
           `).join('')}
-          <span class="tag" style="background:rgba(197, 168, 103,0.15); color:var(--gold-l); border: 1.5px dashed var(--gold); cursor:pointer; font-weight:700;" onclick="promptAddTag(${p.id}, 'properties')">+ Tag</span>
+          <span class="tag" style="background:rgba(212, 175, 55,0.15); color:var(--gold-l); border: 1.5px dashed var(--gold); cursor:pointer; font-weight:700;" onclick="promptAddTag(${p.id}, 'properties')">+ Tag</span>
         </div>
 
         <div class="act-row" style="margin-top: 12px; display:flex; gap:8px;">
@@ -2627,7 +2627,7 @@ function renderRentalProperties(listings) {
 
         <!-- Private Contact Card -->
         ${state.systemSettings.showMaskedFields ? `
-        <div id="private-contact-${p.id}" style="display: none; margin-top: 12px; padding: 12px; background: rgba(197, 168, 103, 0.08); border-radius: var(--radius-sm); border: 1px dashed var(--gold)">
+        <div id="private-contact-${p.id}" style="display: none; margin-top: 12px; padding: 12px; background: rgba(212, 175, 55, 0.08); border-radius: var(--radius-sm); border: 1px dashed var(--gold)">
           <div style="font-size: 13px; font-weight:700; color:var(--gold-l); margin-bottom: 6px;">🔐 Security Audited Contact Sheet:</div>
           <div class="grid3" style="font-size:12px; margin-bottom: 8px;">
             <div>Direct Owner Name: <strong>${p.owner_name}</strong></div>
@@ -2709,7 +2709,7 @@ function renderRentalProperties(listings) {
                 </td>
               </tr>
               ${state.systemSettings.showMaskedFields ? `
-              <tr id="private-contact-row-${p.id}" style="display:none; background: rgba(197, 168, 103, 0.04);">
+              <tr id="private-contact-row-${p.id}" style="display:none; background: rgba(212, 175, 55, 0.04);">
                 <td colspan="12" style="padding:10px;">
                   <div style="display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; align-items:center;">
                     <div>
@@ -2762,7 +2762,7 @@ function renderCommercialProperties(listings) {
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
               <span class="inv-name" style="font-size: 16px; font-weight: 700; color:var(--gold-l);">${p.society}</span>
               <span class="chip chip-cold btn-sm" style="font-size:9.5px; background:var(--purple-light); color:var(--purple); cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">ID: ${p.prop_id || '#' + p.id}</span>
-              ${p.mandate_type === 'Exclusive' ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(197, 168, 103,0.2); border:0.5px solid var(--gold); color:var(--gold-l);">👑 EXCLUSIVE</span>` : ''}
+              ${p.mandate_type === 'Exclusive' ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(212, 175, 55,0.2); border:0.5px solid var(--gold); color:var(--gold-l);">👑 EXCLUSIVE</span>` : ''}
               ${(()=>{ const s=(p.status||'AVAILABLE').toUpperCase(); if(s==='AVAILABLE') return `<span class="chip chip-available btn-sm" style="font-size:9px;font-weight:700;background:rgba(46,204,113,0.2);border:0.5px solid var(--green);color:var(--green);">🟢 AVAILABLE</span>`; if(s==='SOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.2);border:0.5px solid var(--red);color:var(--red);">🔴 SOLD</span>`; if(s==='ON HOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(230,126,34,0.2);border:0.5px solid #e67e22;color:#e67e22;">🟠 ON HOLD</span>`; if(s==='WITHDRAWN') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(127,140,141,0.2);border:0.5px solid #7f8c8d;color:#7f8c8d;">⚫ WITHDRAWN</span>`; if(s==='EXPIRED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.1);border:0.5px solid #c0392b;color:#c0392b;opacity:0.7;">🔕 EXPIRED</span>`; if(s==='RESERVED') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(52,152,219,0.2);border:0.5px solid var(--blue);color:var(--blue-light);">🔵 RESERVED</span>`; return ''; })()}
               ${p.associate_id ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(52, 152, 219, 0.2); border:0.5px solid var(--blue); color:var(--blue-light);">🏢 Associate: ${p.associate_name || 'Network Broker'}</span>` : ''}
               ${p.special_tags ? p.special_tags.split(',').map(tag => `<span class="chip chip-warm btn-sm" style="font-size:9px; font-weight:600;">🏷️ ${tag.trim()}</span>`).join(' ') : ''}
@@ -2834,7 +2834,7 @@ function renderCommercialProperties(listings) {
           ${(p.special_tags || '').split(',').filter(t => t.trim() !== '').map(tag => `
             <span class="tag" style="background:rgba(255,255,255,0.05); color:var(--gold-l); border: 0.5px solid var(--border);">${tag.trim()}</span>
           `).join('')}
-          <span class="tag" style="background:rgba(197, 168, 103,0.15); color:var(--gold-l); border: 1.5px dashed var(--gold); cursor:pointer; font-weight:700;" onclick="promptAddTag(${p.id}, 'properties')">+ Tag</span>
+          <span class="tag" style="background:rgba(212, 175, 55,0.15); color:var(--gold-l); border: 1.5px dashed var(--gold); cursor:pointer; font-weight:700;" onclick="promptAddTag(${p.id}, 'properties')">+ Tag</span>
         </div>
 
         <div class="act-row" style="margin-top: 12px; display:flex; gap:8px;">
@@ -2855,7 +2855,7 @@ function renderCommercialProperties(listings) {
 
         <!-- Private Contact Card -->
         ${state.systemSettings.showMaskedFields ? `
-        <div id="private-contact-${p.id}" style="display: none; margin-top: 12px; padding: 12px; background: rgba(197, 168, 103, 0.08); border-radius: var(--radius-sm); border: 1px dashed var(--gold)">
+        <div id="private-contact-${p.id}" style="display: none; margin-top: 12px; padding: 12px; background: rgba(212, 175, 55, 0.08); border-radius: var(--radius-sm); border: 1px dashed var(--gold)">
           <div style="font-size: 13px; font-weight:700; color:var(--gold-l); margin-bottom: 6px;">🔐 Security Audited Contact Sheet:</div>
           <div class="grid3" style="font-size:12px; margin-bottom: 8px;">
             <div>Direct Owner Name: <strong>${p.owner_name}</strong></div>
@@ -2937,7 +2937,7 @@ function renderCommercialProperties(listings) {
                 </td>
               </tr>
               ${state.systemSettings.showMaskedFields ? `
-              <tr id="private-contact-row-${p.id}" style="display:none; background: rgba(197, 168, 103, 0.04);">
+              <tr id="private-contact-row-${p.id}" style="display:none; background: rgba(212, 175, 55, 0.04);">
                 <td colspan="12" style="padding:10px;">
                   <div style="display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; align-items:center;">
                     <div>
@@ -2991,7 +2991,7 @@ function renderLandProperties(listings) {
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
               <span class="inv-name" style="font-size: 16px; font-weight: 700; color:var(--gold-l);">${p.society}</span>
               <span class="chip chip-cold btn-sm" style="font-size:9.5px; background:rgba(46,204,113,0.15); color:var(--green); cursor:pointer;" onclick="editID('properties', ${p.id}, '${p.prop_id || ''}')">ID: ${p.prop_id || '#' + p.id}</span>
-              ${p.mandate_type === 'Exclusive' ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(197, 168, 103,0.2); border:0.5px solid var(--gold); color:var(--gold-l);">👑 EXCLUSIVE</span>` : ''}
+              ${p.mandate_type === 'Exclusive' ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(212, 175, 55,0.2); border:0.5px solid var(--gold); color:var(--gold-l);">👑 EXCLUSIVE</span>` : ''}
               ${(()=>{ const s=(p.status||'AVAILABLE').toUpperCase(); if(s==='AVAILABLE') return `<span class="chip chip-available btn-sm" style="font-size:9px;font-weight:700;background:rgba(46,204,113,0.2);border:0.5px solid var(--green);color:var(--green);">🟢 AVAILABLE</span>`; if(s==='SOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(192,57,43,0.2);border:0.5px solid var(--red);color:var(--red);">🔴 SOLD</span>`; if(s==='ON HOLD') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(230,126,34,0.2);border:0.5px solid #e67e22;color:#e67e22;">🟠 ON HOLD</span>`; if(s==='WITHDRAWN') return `<span class="chip btn-sm" style="font-size:9px;font-weight:700;background:rgba(127,140,141,0.2);border:0.5px solid #7f8c8d;color:#7f8c8d;">⚫ WITHDRAWN</span>`; return ''; })()}
               ${p.associate_id ? `<span class="chip ch-gold btn-sm" style="font-size:9px; font-weight:700; background:rgba(52, 152, 219, 0.2); border:0.5px solid var(--blue); color:var(--blue-light);">🏢 Associate: ${p.associate_name || 'Network Broker'}</span>` : ''}
               ${p.special_tags ? p.special_tags.split(',').map(tag => `<span class="chip chip-warm btn-sm" style="font-size:9px; font-weight:600;">🏷️ ${tag.trim()}</span>`).join(' ') : ''}
@@ -3083,7 +3083,7 @@ function renderLandProperties(listings) {
         </div>
 
         ${state.systemSettings.showMaskedFields ? `
-        <div id="private-contact-${p.id}" class="private-info" style="display:none; background:rgba(197, 168, 103, 0.04); margin-top:10px; padding:10px; border-radius:var(--radius-sm); border:1px solid var(--border);">
+        <div id="private-contact-${p.id}" class="private-info" style="display:none; background:rgba(212, 175, 55, 0.04); margin-top:10px; padding:10px; border-radius:var(--radius-sm); border:1px solid var(--border);">
           <div style="display:flex; justify-content:space-between; gap:15px; flex-wrap:wrap; align-items:center;">
             <div>
               🔐 <strong>Owner Details:</strong> ${p.owner_name || 'N/A'} &nbsp;|&nbsp; 
@@ -3159,7 +3159,7 @@ function renderLandProperties(listings) {
               </td>
             </tr>
             ${state.systemSettings.showMaskedFields ? `
-            <tr id="private-contact-row-${p.id}" style="display:none; background: rgba(197, 168, 103, 0.04);">
+            <tr id="private-contact-row-${p.id}" style="display:none; background: rgba(212, 175, 55, 0.04);">
               <td colspan="12" style="padding:10px;">
                 <div style="display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; align-items:center;">
                   <div>
@@ -3253,7 +3253,7 @@ function closureDeal(propId, propName, propType) {
         
         <div class="mbdy" style="padding:20px; overflow-y:auto; max-height:75vh; display:flex; flex-direction:column; gap:20px;">
           <!-- Property details bar -->
-          <div style="padding:12px; background:rgba(197, 168, 103,0.08); border:1px dashed var(--gold); border-radius:6px; font-size:12.5px;">
+          <div style="padding:12px; background:rgba(212, 175, 55,0.08); border:1px dashed var(--gold); border-radius:6px; font-size:12.5px;">
             🏠 Property Listing: <strong style="color:var(--gold-l);">${propName}</strong> | Type: <strong>${propType || 'Resale'}</strong>
           </div>
 
@@ -3638,8 +3638,8 @@ async function loadProjects() {
       container.innerHTML = filteredData.map(p => {
         const isFocused = p.special_tags && p.special_tags.split(',').map(t=>t.trim().toLowerCase()).includes('focused');
         const cardStyle = isFocused 
-          ? `background: linear-gradient(135deg, rgba(40, 37, 33, 0.55), rgba(197, 168, 103, 0.08)); border: 1.5px solid var(--gold); box-shadow: 0 0 10px rgba(197, 168, 103, 0.25); cursor:pointer; position:relative;`
-          : `background: linear-gradient(135deg, rgba(40, 37, 33, 0.45), rgba(197, 168, 103, 0.04)); cursor:pointer; position:relative;`;
+          ? `background: linear-gradient(135deg, rgba(23, 26, 34, 0.55), rgba(212, 175, 55, 0.08)); border: 1.5px solid var(--gold); box-shadow: 0 0 10px rgba(212, 175, 55, 0.25); cursor:pointer; position:relative;`
+          : `background: linear-gradient(135deg, rgba(23, 26, 34, 0.45), rgba(212, 175, 55, 0.04)); cursor:pointer; position:relative;`;
           
         return `
         <div class="card" style="${cardStyle}" onclick="showProjectDetails(${p.id})">
@@ -3686,7 +3686,7 @@ async function loadProjects() {
             ${(p.special_tags || '').split(',').filter(t => t.trim() !== '').map(tag => `
               <span class="tag" style="background:rgba(255,255,255,0.05); color:var(--gold-l); border: 0.5px solid var(--border); cursor:pointer;" onclick="event.stopPropagation(); window.removeProjectTag(${p.id}, '${tag.trim()}')" title="Click to remove tag">${tag.trim()} &times;</span>
             `).join('')}
-            <span class="tag" style="background:rgba(197, 168, 103,0.15); color:var(--gold-l); border: 1.5px dashed var(--gold); cursor:pointer; font-weight:700;" onclick="event.stopPropagation(); promptAddTag(${p.id}, 'projects')">+ Tag</span>
+            <span class="tag" style="background:rgba(212, 175, 55,0.15); color:var(--gold-l); border: 1.5px dashed var(--gold); cursor:pointer; font-weight:700;" onclick="event.stopPropagation(); promptAddTag(${p.id}, 'projects')">+ Tag</span>
             <button class="btn btn-ghost btn-sm" style="padding: 2px 6px; font-size:10px; font-weight:700; color:var(--gold-l);" onclick="event.stopPropagation(); editProject(${p.id})"><i class="ti ti-edit"></i> Edit</button>
             <button class="btn btn-ghost btn-sm" style="padding: 2px 6px; font-size:10px; font-weight:700; color:var(--gold-l);" onclick="event.stopPropagation(); cloneProject(${p.id})">📋 Clone</button>
           </div>
@@ -3721,7 +3721,7 @@ async function loadProjects() {
               ${filteredData.map(p => {
                 const isFocused = p.special_tags && p.special_tags.split(',').map(t=>t.trim().toLowerCase()).includes('focused');
                 return `
-                <tr style="${isFocused ? 'background: rgba(197, 168, 103, 0.08);' : ''}">
+                <tr style="${isFocused ? 'background: rgba(212, 175, 55, 0.08);' : ''}">
                   <td><input type="checkbox" class="row-checkbox-projects" value="${p.id}" onchange="updateBulkSelectionState('projects')"></td>
                   <td>
                     <span onclick="window.toggleFocusProject(${p.id}, ${isFocused})" style="font-size: 16px; color: ${isFocused ? 'var(--gold)' : 'rgba(255,255,255,0.2)'}; cursor: pointer;">
@@ -4119,16 +4119,16 @@ function setupPipelineDropZones() {
   stages.forEach(stg => {
     stg.addEventListener('dragover', (e) => {
       e.preventDefault();
-      stg.style.background = 'rgba(197, 168, 103, 0.08)';
+      stg.style.background = 'rgba(212, 175, 55, 0.08)';
     });
 
     stg.addEventListener('dragleave', () => {
-      stg.style.background = 'rgba(40, 37, 33, 0.5)';
+      stg.style.background = 'rgba(23, 26, 34, 0.5)';
     });
 
     stg.addEventListener('drop', async (e) => {
       e.preventDefault();
-      stg.style.background = 'rgba(40, 37, 33, 0.5)';
+      stg.style.background = 'rgba(23, 26, 34, 0.5)';
       
       const id = e.dataTransfer.getData('text/plain');
       const targetStage = stg.getAttribute('data-stage');
@@ -8231,9 +8231,9 @@ window.updateBulkSelectionState = function(pane) {
           <option value="Non Exclusive">Non-Exclusive</option>
         </select>
         
-        <button class="btn btn-ghost btn-sm" onclick="triggerBulkTag('${activeTable}', '${pane}')" style="color:var(--gold-l); border:1px solid rgba(197, 168, 103,0.4);"><i class="ti ti-tag"></i> Add tag</button>
+        <button class="btn btn-ghost btn-sm" onclick="triggerBulkTag('${activeTable}', '${pane}')" style="color:var(--gold-l); border:1px solid rgba(212, 175, 55,0.4);"><i class="ti ti-tag"></i> Add tag</button>
         
-        <button class="btn btn-ghost btn-sm" onclick="openPortalSyncModal('${pane}')" style="color:var(--gold-l); border:1px solid rgba(197, 168, 103,0.4);"><i class="ti ti-world"></i> Sync Portals</button>
+        <button class="btn btn-ghost btn-sm" onclick="openPortalSyncModal('${pane}')" style="color:var(--gold-l); border:1px solid rgba(212, 175, 55,0.4);"><i class="ti ti-world"></i> Sync Portals</button>
       `;
     } else if (pane === 'projects') {
       html = `
@@ -8278,7 +8278,7 @@ window.updateBulkSelectionState = function(pane) {
           <option value="">-- Assign Agent --</option>
         </select>
         
-        <button class="btn btn-ghost btn-sm" onclick="triggerBulkTag('leads', '${pane}')" style="color:var(--gold-l); border:1px solid rgba(197, 168, 103, 0.4);"><i class="ti ti-tag"></i> Add tag</button>
+        <button class="btn btn-ghost btn-sm" onclick="triggerBulkTag('leads', '${pane}')" style="color:var(--gold-l); border:1px solid rgba(212, 175, 55, 0.4);"><i class="ti ti-tag"></i> Add tag</button>
       `;
       setTimeout(async () => {
         const sel = document.getElementById('bulk-raw-leads-agent');
@@ -9712,7 +9712,7 @@ async function loadTeamRoster() {
         <tr id="team-agent-row-${m.id}">
           <td>
             <div style="display:flex; align-items:center; gap:8px;">
-              <div style="width:28px; height:28px; border-radius:50%; background:rgba(197, 168, 103,0.1); border:1px solid rgba(197, 168, 103,0.2); display:flex; align-items:center; justify-content:center; color:var(--gold); font-size:11px; font-weight:700;">
+              <div style="width:28px; height:28px; border-radius:50%; background:rgba(212, 175, 55,0.1); border:1px solid rgba(212, 175, 55,0.2); display:flex; align-items:center; justify-content:center; color:var(--gold); font-size:11px; font-weight:700;">
                 ${m.name.split(' ').map(n=>n[0]).join('').substring(0, 2).toUpperCase()}
               </div>
               <div>
@@ -9910,7 +9910,7 @@ async function loadRemindersPanel() {
     container.innerHTML = overdueLeads.map(l => {
       const isOverdue = l.next_followup < todayStr;
       return `
-        <div style="background:rgba(255,255,255,0.02); border:1px solid ${isOverdue ? 'rgba(192, 57, 43, 0.4)' : 'rgba(197, 168, 103, 0.4)'}; padding:10px; border-radius:6px; font-size:12px; display:flex; flex-direction:column; gap:4px; border-left: 3.5px solid ${isOverdue ? '#C0392B' : '#F59E0B'}">
+        <div style="background:rgba(255,255,255,0.02); border:1px solid ${isOverdue ? 'rgba(192, 57, 43, 0.4)' : 'rgba(212, 175, 55, 0.4)'}; padding:10px; border-radius:6px; font-size:12px; display:flex; flex-direction:column; gap:4px; border-left: 3.5px solid ${isOverdue ? '#C0392B' : '#F59E0B'}">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <strong style="color:#fff; cursor:pointer;" onclick="showLeadDetails(${l.id})">${l.name}</strong>
             <span style="font-size:10px; color:${isOverdue ? '#e74c3c' : 'var(--gold-l)'}; font-weight:700;">${isOverdue ? 'OVERDUE' : 'DUE TODAY'}</span>
@@ -13435,7 +13435,7 @@ window.loadSOPs = async function() {
         `).join('');
 
         return `
-          <div style="margin-bottom: 6px; border: 1px solid rgba(197, 168, 103, 0.15); border-radius: var(--radius-md); overflow: hidden;">
+          <div style="margin-bottom: 6px; border: 1px solid rgba(212, 175, 55, 0.15); border-radius: var(--radius-md); overflow: hidden;">
             <div class="accord-hd" onclick="toggleAccordion('sop_${s.id}')" style="margin-bottom:0; border:none; display:flex; justify-content:space-between; align-items:center;">
               <span style="font-size:12.5px; font-weight:700; color:#fff;">${s.title}</span>
               <div style="display:flex; gap:10px; align-items:center;">
@@ -13443,7 +13443,7 @@ window.loadSOPs = async function() {
                 <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); deleteSOP(${s.id})" style="color:var(--red); padding: 2px 4px; font-size:10px; border:none; background:transparent;">✕ Delete</button>
               </div>
             </div>
-            <div class="accord-body hidden" id="sop_${s.id}" style="padding:12px; background:rgba(0,0,0,0.25); border-top: 1px solid rgba(197, 168, 103, 0.08);">
+            <div class="accord-body hidden" id="sop_${s.id}" style="padding:12px; background:rgba(0,0,0,0.25); border-top: 1px solid rgba(212, 175, 55, 0.08);">
               ${stepsHtml}
             </div>
           </div>
@@ -13597,7 +13597,7 @@ window.loadTemplates = async function() {
       const editBtn = canManage ? `<button class="btn btn-ghost btn-sm" style="font-size:10px; padding:4px 8px; color:var(--gold-l);" onclick="editTemplate(${t.id}, \`${escapeQuote(t.name)}\`, '${t.platform}', \`${escapeQuote(t.use_case)}\`, \`${escapeQuote(t.content)}\`)"><i class="ti ti-edit"></i> Edit</button>` : '';
       
       return `
-        <div class="card" style="background: rgba(255,255,255,0.01); border: 1px solid rgba(197, 168, 103, 0.15); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); margin-bottom: 0;">
+        <div class="card" style="background: rgba(255,255,255,0.01); border: 1px solid rgba(212, 175, 55, 0.15); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); margin-bottom: 0;">
           <div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
               <span style="font-size: 13.5px; font-weight: 700; color: #fff;">${t.name}</span>
@@ -14053,7 +14053,7 @@ window.loadAdminReportsPage = async function() {
           </tr></thead>
           <tbody>
             ${data.agentPerformance.sort((a,b) => b.deals_won - a.deals_won).map((a, i) => `
-              <tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${i===0 ? 'background:rgba(197, 168, 103,0.08);' : ''}">
+              <tr style="border-bottom:1px solid rgba(255,255,255,0.03); ${i===0 ? 'background:rgba(212, 175, 55,0.08);' : ''}">
                 <td style="padding:10px 8px; font-weight:700; color:${i===0?'var(--gold)':'var(--text-primary)'};">  ${i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</td>
                 <td style="padding:10px 8px; font-weight:600; color:var(--text-primary);">${a.name}</td>
                 <td style="padding:10px 8px; color:var(--text-secondary);">${a.leads}</td>
@@ -14170,12 +14170,12 @@ window.updatePropertyInline = async function(id, field, el) {
     }
     .editable-cell:hover {
       border: 1px dashed var(--gold-l) !important;
-      background: rgba(197, 168, 103, 0.08) !important;
+      background: rgba(212, 175, 55, 0.08) !important;
     }
     .editable-cell:focus {
       border: 1px solid var(--gold) !important;
-      background: rgba(197, 168, 103, 0.15) !important;
-      box-shadow: 0 0 8px rgba(197, 168, 103, 0.3) !important;
+      background: rgba(212, 175, 55, 0.15) !important;
+      box-shadow: 0 0 8px rgba(212, 175, 55, 0.3) !important;
     }
   `;
   document.head.appendChild(style);
