@@ -12346,6 +12346,16 @@ window.loadInvoices = async function() {
   const tbody = document.getElementById('invoices-ledger-tbody');
   if (!tbody) return;
 
+  // Pre-populate RERA and GSTIN inputs dynamically from systemSettings
+  const reraInput = document.getElementById('inv-rera');
+  if (reraInput) {
+    reraInput.value = state.systemSettings?.coRera || 'AG/KN/170731/000296';
+  }
+  const brokerGstInput = document.getElementById('inv-broker-gst');
+  if (brokerGstInput) {
+    brokerGstInput.value = state.systemSettings?.coGstin || '29AMSPK0486E1ZO';
+  }
+
   try {
     const res = await fetch('/api/invoices');
     const invoices = await res.json();

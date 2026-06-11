@@ -5990,7 +5990,7 @@ app.post('/api/invoices', async (req, res) => {
         return { lastInsertRowid: r.rows[0] ? r.rows[0].id : null, changes: r.rowCount };
    }};
 
-    const result = stmt.run(invoice_no || null, invoice_date || null, client_name || null, client_gstin || null, client_address || null, project_deal || null, description || null, amount || 0, cgst || 0, sgst || 0, total || 0, payment_status || 'Pending', broker_name || 'Ms Vasu Jain', broker_address || null, broker_email || null, broker_phone || null, broker_rera || null, broker_gstin || null, bank_name || null, bank_account || null, bank_ifsc || null, bank_account_type || null, bank_branch || null, terms || null, items || null);
+    const result = await stmt.run(invoice_no || null, invoice_date || null, client_name || null, client_gstin || null, client_address || null, project_deal || null, description || null, amount || 0, cgst || 0, sgst || 0, total || 0, payment_status || 'Pending', broker_name || 'Ms Vasu Jain', broker_address || null, broker_email || null, broker_phone || null, broker_rera || null, broker_gstin || null, bank_name || null, bank_account || null, bank_ifsc || null, bank_account_type || null, bank_branch || null, terms || null, items || null);
     res.json({
       success: true,
       id: result.lastInsertRowid,
@@ -6031,7 +6031,7 @@ app.post('/api/invoices/upload', upload.single('invoice_file'), async (req, res)
         return { lastInsertRowid: r.rows[0] ? r.rows[0].id : null, changes: r.rowCount };
    }};
 
-    const result = stmt.run(invoice_no || `RE INT - UPL - ${Date.now()}`, invoice_date || new Date().toISOString().split('T')[0], client_name || 'Uploaded Invoice', parseFloat(amount || 0), parseFloat(amount || 0), payment_status || 'Pending', relativePath);
+    const result = await stmt.run(invoice_no || `RE INT - UPL - ${Date.now()}`, invoice_date || new Date().toISOString().split('T')[0], client_name || 'Uploaded Invoice', parseFloat(amount || 0), parseFloat(amount || 0), payment_status || 'Pending', relativePath);
     res.json({
       success: true,
       id: result.lastInsertRowid,
