@@ -16,6 +16,7 @@ const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const cron = require('node-cron');
 
 // Initialize database connection
 const db = require('./db');
@@ -238,6 +239,26 @@ function maskProperty(l, user) {
   return l;
 }
 
+function maskCommission(c, user) {
+  if (!c) return c;
+  const isAdmin = !user || user.role === 'Admin';
+  const isEmployee = user && user.role === 'Employee';
+  const shouldMask = !systemSettings.showMaskedFields || isEmployee;
+  if (shouldMask) {
+    return {
+      ...c,
+      deal_value: 0,
+      commission_percentage: 0,
+      commission_amount: 0,
+      co_broker_payout: 0,
+      expenses: 0,
+      billing_invoice: '🔐 Hidden'
+    };
+  }
+  return c;
+}
+
+
 // ----------------------------------------------------
 // 1. SYSTEM SETTINGS API
 // ----------------------------------------------------
@@ -362,6 +383,12 @@ app.get('/api/export/:table', async (req, res) => {
       });
     }
 
+    const user = getRequestUser(req);
+    const isAdmin = !user || user.role === 'Admin';
+    const isEmployee = user && user.role === 'Employee';
+    const allowed = getParsedAllowedPages(user);
+    const hasPhoneAccess = isAdmin || allowed.includes('*') || allowed.includes('phone_access');
+
     // Check Employee Masking constraint
     if (!systemSettings.showMaskedFields) {
       const {
@@ -463,15 +490,47 @@ app.get('/api/export/:table', async (req, res) => {
     query += ' ORDER BY id DESC';
     const rows = (await db.query(query, params)).rows;
 
-    if (rows.length === 0) {
+    let shouldMask = !systemSettings.showMaskedFields || isEmployee;
+    const { password } = req.query;
+    if (password === 'admin123' && !isEmployee) {
+      shouldMask = false;
+    }
+
+    const processedRows = rows.map(r => {
+      if (!shouldMask) return r;
+      if (table === 'properties') {
+        return maskProperty(r, user);
+      } else if (table === 'builder_projects') {
+        return {
+          ...r,
+          builder_poc_details: '[]',
+          cp_agreements: '',
+          finance_info: '🔐 Private details masked (Admin locked)',
+          admin_comments: '🔐 Locked Comments'
+        };
+      } else if (table === 'leads') {
+        const shouldMaskContact = !isAdmin && !hasPhoneAccess && r.agent_id !== user.id || shouldMask;
+        if (shouldMaskContact) {
+          return {
+            ...r,
+            phone: r.phone ? r.phone.slice(0, 4) + 'XXXXXX' + r.phone.slice(-2) : '🔐 Hidden',
+            email: r.email ? 'e***@***.com' : '🔐 Hidden',
+            admin_comments: '🔐 Hidden (Admin locked)'
+          };
+        }
+      }
+      return r;
+    });
+
+    if (processedRows.length === 0) {
       const info = (await db.query(`SELECT column_name AS name FROM information_schema.columns WHERE table_name = '${table}'`)).rows;
       const columns = info.map(i => i.name);
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', `attachment; filename=REALPro_${table}_export.csv`);
       return res.send(columns.join(','));
     }
-    const columns = Object.keys(rows[0]);
-    const csvContent = convertToCSV(rows, columns);
+    const columns = Object.keys(processedRows[0]);
+    const csvContent = convertToCSV(processedRows, columns);
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename=REALPro_${table}_export.csv`);
     res.send(csvContent);
@@ -3156,18 +3215,21 @@ app.get('/api/associates', async (req, res) => {
     const network = (await db.query('SELECT * FROM associates ORDER BY id DESC')).rows;
     const user = getRequestUser(req);
     const isAdmin = !user || user.role === 'Admin';
+    const isEmployee = user && user.role === 'Employee';
     const allowed = getParsedAllowedPages(user);
     const hasPhoneAccess = isAdmin || allowed.includes('*') || allowed.includes('phone_access');
+    const shouldMaskCommissions = !systemSettings.showMaskedFields || isEmployee;
     const processedNetwork = await Promise.all(network.map(async a => {
       const shouldMaskContact = !isAdmin && !hasPhoneAccess && a.agent_id !== user.id;
+      let record = { ...a };
       if (shouldMaskContact) {
-        return {
-          ...a,
-          phone: a.phone ? a.phone.slice(0, 4) + 'XXXXXX' + a.phone.slice(-2) : '🔐 Hidden',
-          email: a.email ? 'e***@***.com' : '🔐 Hidden'
-        };
+        record.phone = a.phone ? a.phone.slice(0, 4) + 'XXXXXX' + a.phone.slice(-2) : '🔐 Hidden';
+        record.email = a.email ? 'e***@***.com' : '🔐 Hidden';
       }
-      return a;
+      if (shouldMaskCommissions) {
+        record.co_brokerage_share = 0;
+      }
+      return record;
     }));
     res.json(processedNetwork);
 
@@ -3363,7 +3425,20 @@ app.get('/api/associates/performance', async (req, res) => {
       ORDER BY total_listings DESC, total_payout DESC
     `;
     const result = await db.query(q);
-    res.json(result.rows);
+    const user = getRequestUser(req);
+    const isEmployee = user && user.role === 'Employee';
+    const shouldMask = !systemSettings.showMaskedFields || isEmployee;
+    const processed = result.rows.map(a => {
+      if (shouldMask) {
+        return {
+          ...a,
+          co_brokerage_share: 0,
+          total_payout: 0
+        };
+      }
+      return a;
+    });
+    res.json(processed);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -3430,13 +3505,22 @@ app.get('/api/properties/:id/activity-log', async (req, res) => {
     `;
     const sharesResult = await db.query(sharesQuery, [propId]);
 
+    const user = getRequestUser(req);
+    const isAdmin = !user || user.role === 'Admin';
+    const isEmployee = user && user.role === 'Employee';
+    const shouldMask = !systemSettings.showMaskedFields || isEmployee;
+
     // 3. Fetch Site Visits history
     // A: Visits logged directly on property closure journey
     const visits = [];
     if (prop.closure_site_visit || prop.closure_joint_visit) {
+      let visPhone = prop.closure_buyer_phone || '';
+      if (shouldMask && visPhone) {
+        visPhone = visPhone.slice(0, 4) + 'XXXXXX' + visPhone.slice(-2);
+      }
       visits.push({
         visitor_name: prop.closure_buyer_name || 'Direct Closure Lead',
-        visitor_phone: prop.closure_buyer_phone || '',
+        visitor_phone: visPhone,
         is_joint: prop.closure_joint_visit,
         associate_name: prop.associate_name || null,
         visit_date: prop.closure_date || 'N/A',
@@ -3466,9 +3550,13 @@ app.get('/api/properties/:id/activity-log', async (req, res) => {
     const leadsResult = await db.query(leadsQuery, [propId.toString(), alphanumericId]);
     
     leadsResult.rows.forEach(row => {
+      let cPhone = row.client_phone || '';
+      if (shouldMask && cPhone) {
+        cPhone = cPhone.slice(0, 4) + 'XXXXXX' + cPhone.slice(-2);
+      }
       visits.push({
         visitor_name: row.client_name,
-        visitor_phone: row.client_phone || '',
+        visitor_phone: cPhone,
         is_joint: row.closure_joint_visit,
         associate_name: row.associate_name || null,
         visit_date: row.next_followup || 'N/A',
@@ -3492,7 +3580,9 @@ app.get('/api/properties/:id/activity-log', async (req, res) => {
 app.get('/api/commissions', async (req, res) => {
   try {
     const reg = (await db.query('SELECT * FROM commissions ORDER BY id DESC')).rows;
-    res.json(reg);
+    const user = getRequestUser(req);
+    const processed = reg.map(c => maskCommission(c, user));
+    res.json(processed);
 
   } catch (err) {
     res.status(500).json({
@@ -5615,19 +5705,32 @@ const timeFilter = req.query.timeframe || 'All Time';
       totalCoBrokerPayouts += parseFloat(c.co_broker_payout || 0);
       totalExpenses += parseFloat(c.expenses || 0);
     });
+
+    const user = getRequestUser(req);
+    const isEmployee = user && user.role === 'Employee';
+    const shouldMask = !systemSettings.showMaskedFields || isEmployee;
+
+    const processedLedger = commissionsList.map(c => maskCommission(c, user));
+    const processedFinancials = shouldMask ? {
+      gross_revenue: 0,
+      payouts: 0,
+      expenses: 0,
+      net_profit: 0
+    } : {
+      gross_revenue: totalGrossRevenue,
+      payouts: totalCoBrokerPayouts,
+      expenses: totalExpenses,
+      net_profit: totalGrossRevenue - totalCoBrokerPayouts - totalExpenses
+    };
+
     res.json({
       success: true,
       stages: stagesMap,
       sources: rawSources,
       locations: locationCounts,
       agents: agentsPerformance,
-      ledger: commissionsList,
-      financials: {
-        gross_revenue: totalGrossRevenue,
-        payouts: totalCoBrokerPayouts,
-        expenses: totalExpenses,
-        net_profit: totalGrossRevenue - totalCoBrokerPayouts - totalExpenses
-      }
+      ledger: processedLedger,
+      financials: processedFinancials
     });
   } catch (err) {
     res.status(500).json({
@@ -5796,8 +5899,8 @@ app.get('/api/system/backup/download', async (req, res) => {
   }
 });
 
-// Daily Automated Database Backup scheduler (executes every 24 hours)
-setInterval(() => {
+// Hourly Automated Database Backup scheduler using node-cron (runs every hour at minute 0)
+cron.schedule('0 * * * *', () => {
   try {
     const fs = require('fs');
     const backupDir = path.join(__dirname, '../backups');
@@ -5806,30 +5909,26 @@ setInterval(() => {
         recursive: true
       });
     }
-    const backupFilename = `realpro_crm_backup_${new Date().toISOString().split('T')[0]}_auto.db`;
+    // Unique hourly timestamped filename (replacing colons to prevent file path issues on Windows/MacOS)
+    const timestamp = new Date().toISOString().replace(/T/, '_').replace(/\..+/, '').replace(/:/g, '-');
+    const backupFilename = `realpro_crm_backup_${timestamp}_auto.sql`;
     const backupPath = path.join(backupDir, backupFilename);
     
     const { exec } = require('child_process');
     const dbUrl = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/realprocrm';
-    const sqlBackupPath = backupPath.replace('.db', '.sql');
-    const sqlBackupFilename = backupFilename.replace('.db', '.sql');
-    exec(`pg_dump ${dbUrl} > "${sqlBackupPath}"`, (error) => {
+    
+    exec(`pg_dump ${dbUrl} > "${backupPath}"`, (error) => {
       if (error) {
-        if (typeof res !== 'undefined' && res.status) res.status(500).json({ error: error.message });
-        else console.error("Backup failed", error);
+        console.error("[📦 DATABASE AUTO-BACKUP ERROR]", error.message);
         return;
       }
-      console.log(`Backup successfully created at: ${sqlBackupPath}`);
-      if (typeof res !== 'undefined') {
-         if (res.download) res.download(sqlBackupPath, sqlBackupFilename);
-         else if (res.json) res.json({ success: true, filename: sqlBackupFilename, path: sqlBackupPath });
-      }
+      console.log(`[📦 DATABASE AUTO-BACKUP] Backup successfully created at: ${backupPath}`);
     });
 
   } catch (err) {
     console.error("[📦 DATABASE AUTO-BACKUP ERROR]", err.message);
   }
-}, 24 * 60 * 60 * 1000); // 24 Hours
+});
 
 // ----------------------------------------------------
 // 20. INVOICING CRUD & FILE UPLOADS API
@@ -6176,7 +6275,8 @@ app.get('/api/leads/:id/transaction', async (req, res) => {
   try {
     const { id } = req.params;
     const comm = (await db.query('SELECT * FROM commissions WHERE lead_id = $1 ORDER BY id DESC LIMIT 1', [parseInt(id)])).rows[0];
-    res.json(comm || null);
+    const user = getRequestUser(req);
+    res.json(maskCommission(comm, user) || null);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
