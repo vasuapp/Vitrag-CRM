@@ -955,6 +955,10 @@ html, body {
   border-color: var(--gold);
   box-shadow: var(--shadow-gold);
 }
+.form-select option {
+  background: #0d121f;
+  color: var(--text-primary);
+}
 
 .btn {
   padding: 8px 16px;

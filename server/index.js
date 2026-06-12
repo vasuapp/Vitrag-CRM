@@ -2928,7 +2928,8 @@ app.post('/api/projects', async (req, res) => {
       mother_docs,
       assignments,
       kyc_docs,
-      photos
+      photos,
+      custom_data
     } = req.body;
 
     // Duplicate detection check (project_name + builder_name)
@@ -2977,9 +2978,9 @@ app.post('/api/projects', async (req, res) => {
         metro_station, other_usp, special_tags, videos, cp_agreements,
         builder_details, finance_info, analytics_info, zone, onboarded_year,
         google_map_url, unit_details, builder_poc_details, admin_comments,
-        brochure_link, floor_plans, mother_docs, assignments, kyc_docs, photos, created_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, CURRENT_TIMESTAMP)
-     RETURNING id`, [pId, builder_name, project_name, location || '', land_parcel || '', tower || '', elevation || '', configuration || '', carpet_area || '', price_final || '', uc_rtmi || 'UC', possession || '', subvention || '', clp_due || '', floor_rise || '', location_usp || '', metro_station || '', other_usp || '', special_tags || '', videos || '', cp_agreements || '', builder_details || '', finance_info || '', analytics_info || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), google_map_url || '', unit_details || '', builder_poc_details || '', admin_comments || '', brochure_link || '', floor_plans || '', mother_docs || '', assignments || '', kyc_docs || '', photos || '']);
+        brochure_link, floor_plans, mother_docs, assignments, kyc_docs, photos, custom_data, created_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, CURRENT_TIMESTAMP)
+     RETURNING id`, [pId, builder_name, project_name, location || '', land_parcel || '', tower || '', elevation || '', configuration || '', carpet_area || '', price_final || '', uc_rtmi || 'UC', possession || '', subvention || '', clp_due || '', floor_rise || '', location_usp || '', metro_station || '', other_usp || '', special_tags || '', videos || '', cp_agreements || '', builder_details || '', finance_info || '', analytics_info || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), google_map_url || '', unit_details || '', builder_poc_details || '', admin_comments || '', brochure_link || '', floor_plans || '', mother_docs || '', assignments || '', kyc_docs || '', photos || '', JSON.stringify(custom_data || {})]);
       return {
         lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
         changes: r.rowCount
@@ -3035,7 +3036,8 @@ app.put('/api/projects/:id', async (req, res) => {
       mother_docs,
       assignments,
       kyc_docs,
-      photos
+      photos,
+      custom_data
     } = req.body;
     await (async () => {
       const r = await db.query(`
@@ -3046,9 +3048,10 @@ app.put('/api/projects/:id', async (req, res) => {
         metro_station = $16, other_usp = $17, special_tags = $18, videos = $19, cp_agreements = $20,
         builder_details = $21, finance_info = $22, analytics_info = $23, zone = $24, onboarded_year = $25,
         google_map_url = $26, unit_details = $27, builder_poc_details = $28, admin_comments = $29,
-        brochure_link = $30, floor_plans = $31, mother_docs = $32, assignments = $33, kyc_docs = $34, photos = $35
-      WHERE id = $36
-    `, [builder_name, project_name, location || '', land_parcel || '', tower || '', elevation || '', configuration || '', carpet_area || '', price_final || '', uc_rtmi || 'UC', possession || '', subvention || '', clp_due || '', floor_rise || '', location_usp || '', metro_station || '', other_usp || '', special_tags || '', videos || '', cp_agreements || '', builder_details || '', finance_info || '', analytics_info || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), google_map_url || '', unit_details || '', builder_poc_details || '', admin_comments || '', brochure_link || '', floor_plans || '', mother_docs || '', assignments || '', kyc_docs || '', photos || '', req.params.id]);
+        brochure_link = $30, floor_plans = $31, mother_docs = $32, assignments = $33, kyc_docs = $34, photos = $35,
+        custom_data = $36
+      WHERE id = $37
+    `, [builder_name, project_name, location || '', land_parcel || '', tower || '', elevation || '', configuration || '', carpet_area || '', price_final || '', uc_rtmi || 'UC', possession || '', subvention || '', clp_due || '', floor_rise || '', location_usp || '', metro_station || '', other_usp || '', special_tags || '', videos || '', cp_agreements || '', builder_details || '', finance_info || '', analytics_info || '', zone || 'N', onboarded_year || new Date().getFullYear().toString(), google_map_url || '', unit_details || '', builder_poc_details || '', admin_comments || '', brochure_link || '', floor_plans || '', mother_docs || '', assignments || '', kyc_docs || '', photos || '', JSON.stringify(custom_data || {}), req.params.id]);
       return {
         lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
         changes: r.rowCount
@@ -3648,13 +3651,14 @@ app.post('/api/commissions', async (req, res) => {
       handover_date,
       associate_id,
       lead_id,
-      property_id
+      property_id,
+      custom_data
     } = req.body;
     const info = await (async () => {
       const r = await db.query(`
-      INSERT INTO commissions (deal_name, deal_value, commission_percentage, commission_amount, co_broker_payout, billing_invoice, expenses, payment_status, booking_date, agreement_date, registration_date, handover_date, associate_id, lead_id, property_id)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-     RETURNING id`, [deal_name, deal_value || 0, commission_percentage || 0, commission_amount || 0, co_broker_payout || 0, billing_invoice || '', expenses || 0, payment_status || 'Pending', booking_date || '', agreement_date || '', registration_date || '', handover_date || '', associate_id ? parseInt(associate_id) : null, lead_id ? parseInt(lead_id) : null, property_id ? parseInt(property_id) : null]);
+      INSERT INTO commissions (deal_name, deal_value, commission_percentage, commission_amount, co_broker_payout, billing_invoice, expenses, payment_status, booking_date, agreement_date, registration_date, handover_date, associate_id, lead_id, property_id, custom_data)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+     RETURNING id`, [deal_name, deal_value || 0, commission_percentage || 0, commission_amount || 0, co_broker_payout || 0, billing_invoice || '', expenses || 0, payment_status || 'Pending', booking_date || '', agreement_date || '', registration_date || '', handover_date || '', associate_id ? parseInt(associate_id) : null, lead_id ? parseInt(lead_id) : null, property_id ? parseInt(property_id) : null, JSON.stringify(custom_data || {})]);
       return {
         lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
         changes: r.rowCount
@@ -3687,14 +3691,15 @@ app.put('/api/commissions/:id', async (req, res) => {
       handover_date,
       associate_id,
       lead_id,
-      property_id
+      property_id,
+      custom_data
     } = req.body;
     await (async () => {
       const r = await db.query(`
       UPDATE commissions
-      SET deal_name = $1, deal_value = $2, commission_percentage = $3, commission_amount = $4, co_broker_payout = $5, billing_invoice = $6, expenses = $7, payment_status = $8, booking_date = $9, agreement_date = $10, registration_date = $11, handover_date = $12, associate_id = $13, lead_id = $14, property_id = $15
-      WHERE id = $16
-    `, [deal_name, deal_value, commission_percentage, commission_amount || 0, co_broker_payout, billing_invoice, expenses, payment_status, booking_date, agreement_date, registration_date, handover_date, associate_id ? parseInt(associate_id) : null, lead_id ? parseInt(lead_id) : null, property_id ? parseInt(property_id) : null, req.params.id]);
+      SET deal_name = $1, deal_value = $2, commission_percentage = $3, commission_amount = $4, co_broker_payout = $5, billing_invoice = $6, expenses = $7, payment_status = $8, booking_date = $9, agreement_date = $10, registration_date = $11, handover_date = $12, associate_id = $13, lead_id = $14, property_id = $15, custom_data = $16
+      WHERE id = $17
+    `, [deal_name, deal_value, commission_percentage, commission_amount || 0, co_broker_payout, billing_invoice, expenses, payment_status, booking_date, agreement_date, registration_date, handover_date, associate_id ? parseInt(associate_id) : null, lead_id ? parseInt(lead_id) : null, property_id ? parseInt(property_id) : null, JSON.stringify(custom_data || {}), req.params.id]);
       return {
         lastInsertRowid: r.rows?.[0] ? r.rows[0].id : null,
         changes: r.rowCount

@@ -1925,6 +1925,13 @@
           <div class="sheet-body" id="blueprint-content-pane">
             <!-- Dynamically switched blueprint columns -->
           </div>
+          <!-- Real-Time Form Layout Preview -->
+          <div style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.08); padding-top:15px;">
+            <div style="font-size:13px; font-weight:700; color:var(--gold-l); margin-bottom:12px;"><i class="ti ti-eye"></i> Final Form Layout Preview</div>
+            <div id="blueprint-form-preview-container" style="background:rgba(0,0,0,0.15); border:1px solid var(--border); padding:15px; border-radius:8px;">
+              <!-- Live Preview of the custom form fields -->
+            </div>
+          </div>
         </div>
         
         <!-- ================= PAGE 13: SOPs ================= -->
@@ -5138,6 +5145,8 @@
             <label class="form-label">🔐 Private Admin Comments</label>
             <textarea class="form-input" id="proj-admin-comments" rows="2" placeholder="Strictly private admin comments..."></textarea>
           </div>
+          <!-- Dynamic Projects Custom Fields -->
+          <div id="custom-projects-fields-container" style="margin-top: 15px; border-top: 1px dashed var(--border); padding-top: 15px;"></div>
 
           <!-- Dynamic Unit Details -->
           <div style="margin-top:20px; padding:12px; border:1px solid rgba(255,255,255,0.05); border-radius:6px; background:rgba(0,0,0,0.1);">
@@ -5504,6 +5513,8 @@
               <option value="Paid">Paid</option>
             </select>
           </div>
+          <!-- Dynamic Commissions Custom Fields -->
+          <div id="custom-commissions-fields-container" style="margin-top: 15px; border-top: 1px dashed var(--border); padding-top: 15px;"></div>
         </div>
         <div class="mft">
           <button class="btn btn-ghost" type="button" onclick="closeModal('modal-add-commission')">Close</button>
@@ -6299,6 +6310,8 @@
                 <div>Other USPs: <strong id="det-proj-otherusp"></strong></div>
               </div>
             </div>
+            <!-- Dynamic Projects Custom Details -->
+            <div id="custom-projects-details-container" style="grid-column: span 2; margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); padding: 10px; border-radius: 8px; display: none;"></div>
           </div>
           
           <div style="margin-top:16px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:12px; border-radius:8px;">

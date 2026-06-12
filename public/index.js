@@ -4984,17 +4984,39 @@ async function switchBlueprintTab(tabId) {
   } else if (tabId === 'projects') {
     pane.innerHTML = `
       <div style="font-size:13px; font-weight:700; margin-bottom:8px; color:#fff">Tab 3 — PROJECTS_PRIMARY (Construction tracking sheets)</div>
-      <div style="margin-bottom:12px;">
+      <div style="margin-bottom:12px; display:flex; flex-wrap:wrap; gap:6px;" id="blueprint-native-cols">
         <span class="sheet-col req">Project_ID*</span><span class="sheet-col req">Project_Name*</span><span class="sheet-col req">Builder*</span><span class="sheet-col opt">RERA_No</span><span class="sheet-col req">Tower*</span><span class="sheet-col req">Unit_Type*</span><span class="sheet-col req">Size_Sqft*</span><span class="sheet-col req">Base_Price_Psqft*</span><span class="sheet-col auto">Total_Price</span><span class="sheet-col req">Units_Total*</span><span class="sheet-col req">Units_Available*</span><span class="sheet-col lock">Our_Commission_%</span><span class="sheet-col opt">Construction_%</span>
       </div>
+
+      <div style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.08); padding-top:15px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div style="font-size:13px; font-weight:700; color:var(--gold-l);"><i class="ti ti-tool"></i> Custom Customizable Columns (Table Rules)</div>
+          <button class="btn btn-primary btn-sm" onclick="window.showAddBlueprintColumnModal('Projects')"><i class="ti ti-plus"></i> Add Custom Column</button>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;" id="blueprint-custom-cols">
+          <div style="font-size:11px; color:var(--text-muted);">Loading custom fields...</div>
+        </div>
+      </div>
     `;
+    await renderBlueprintCustomFields('Projects');
   } else if (tabId === 'commissions') {
     pane.innerHTML = `
       <div style="font-size:13px; font-weight:700; margin-bottom:8px; color:#fff">Tab 4 — COMMISSIONS Ledger statement</div>
-      <div style="margin-bottom:12px;">
+      <div style="margin-bottom:12px; display:flex; flex-wrap:wrap; gap:6px;" id="blueprint-native-cols">
         <span class="sheet-col req">Deal_ID*</span><span class="sheet-col req">Lead_ID*</span><span class="sheet-col req">Client_Name*</span><span class="sheet-col req">Property*</span><span class="sheet-col req">Deal_Value*</span><span class="sheet-col lock">Our_Comm_%</span><span class="sheet-col auto">Our_Comm_Value</span><span class="sheet-col opt">Co_Broker_ID</span><span class="sheet-col lock">Co_Broker_Share_%</span><span class="sheet-col auto">Co_Broker_Amount</span><span class="sheet-col auto">Net_Commission</span><span class="sheet-col opt">Invoice_No</span><span class="sheet-col opt">Payment_Status</span>
       </div>
+
+      <div style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.08); padding-top:15px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div style="font-size:13px; font-weight:700; color:var(--gold-l);"><i class="ti ti-tool"></i> Custom Customizable Columns (Table Rules)</div>
+          <button class="btn btn-primary btn-sm" onclick="window.showAddBlueprintColumnModal('Commissions')"><i class="ti ti-plus"></i> Add Custom Column</button>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:8px;" id="blueprint-custom-cols">
+          <div style="font-size:11px; color:var(--text-muted);">Loading custom fields...</div>
+        </div>
+      </div>
     `;
+    await renderBlueprintCustomFields('Commissions');
   }
 }
 
@@ -5030,6 +5052,9 @@ async function renderBlueprintCustomFields(moduleType) {
     });
 
     container.innerHTML = html;
+    if (typeof window.renderFormLayoutPreview === 'function') {
+      await window.renderFormLayoutPreview(moduleType);
+    }
   } catch (err) {
     console.error(err);
     container.innerHTML = `<div style="font-size:11px; color:var(--red);">Failed to load custom columns.</div>`;
@@ -5849,6 +5874,14 @@ function addPocRow(name='', phone='', email='', role='') {
 async function submitAddProject(e) {
   e.preventDefault();
   
+  if (typeof window.validateCustomFields === 'function') {
+    const errorMsg = await window.validateCustomFields('Projects', 'custom-projects-fields-container');
+    if (errorMsg) {
+      showToast(errorMsg, 'error');
+      return;
+    }
+  }
+  
   // Extract dynamic units
   const units = [];
   document.querySelectorAll('#unit-details-container .unit-row').forEach(row => {
@@ -5907,7 +5940,8 @@ async function submitAddProject(e) {
     videos: document.getElementById('proj-videos').value,
     cp_agreements: document.getElementById('proj-cp-agreements').value,
     finance_info: document.getElementById('proj-finance-info').value,
-    analytics_info: document.getElementById('proj-analytics-info').value
+    analytics_info: document.getElementById('proj-analytics-info').value,
+    custom_data: typeof window.serializeCustomFields === 'function' ? window.serializeCustomFields('custom-projects-fields-container') : {}
   };
 
   saveCustomDropdownValue('projectBuilders', data.builder_name);
@@ -6021,6 +6055,15 @@ let editingCommissionId = null;
 
 async function submitAddCommission(e) {
   e.preventDefault();
+  
+  if (typeof window.validateCustomFields === 'function') {
+    const errorMsg = await window.validateCustomFields('Commissions', 'custom-commissions-fields-container');
+    if (errorMsg) {
+      showToast(errorMsg, 'error');
+      return;
+    }
+  }
+  
   const commAmount = parseFloat(document.getElementById('comm-amount').value || 0);
   const data = {
     deal_name: document.getElementById('comm-name').value,
@@ -6031,7 +6074,8 @@ async function submitAddCommission(e) {
     expenses: parseFloat(document.getElementById('comm-expenses').value || 0),
     billing_invoice: document.getElementById('comm-invoice').value,
     payment_status: document.getElementById('comm-status').value,
-    associate_id: document.getElementById('comm-associate-id').value ? parseInt(document.getElementById('comm-associate-id').value) : null
+    associate_id: document.getElementById('comm-associate-id').value ? parseInt(document.getElementById('comm-associate-id').value) : null,
+    custom_data: typeof window.serializeCustomFields === 'function' ? window.serializeCustomFields('custom-commissions-fields-container') : {}
   };
 
   try {
@@ -6077,6 +6121,9 @@ function editCommission(id) {
     
     editingCommissionId = id;
     document.querySelector('#form-add-commission button[type="submit"]').innerText = 'Update Deal';
+    if (typeof window.renderCustomFields === 'function') {
+      window.renderCustomFields('Commissions', c.custom_data || {});
+    }
     openModal('modal-add-commission');
   }
 }
@@ -6733,6 +6780,10 @@ window.showAddProjectModal = function() {
   addUnitRow();
   addPocRow();
   
+  if (typeof window.renderCustomFields === 'function') {
+    window.renderCustomFields('Projects', {});
+  }
+  
   openModal('modal-add-project');
 }
 
@@ -6813,6 +6864,11 @@ window.editProject = function(id) {
 
   document.querySelector('#form-add-project button[type="submit"]').innerText = 'Save Changes';
   document.querySelector('#modal-add-project .mtitle').innerText = '🏗️ Edit Project';
+  
+  if (typeof window.renderCustomFields === 'function') {
+    await window.renderCustomFields('Projects', p.custom_data || {});
+  }
+  
   openModal('modal-add-project');
 }
 
@@ -7460,7 +7516,15 @@ window.addAssocRequirementDirectly = function() {
   }
 };
 
-window.showAddCommissionModal = () => openModal('modal-add-commission');
+window.showAddCommissionModal = function() {
+  editingCommissionId = null;
+  document.getElementById('form-add-commission').reset();
+  document.querySelector('#form-add-commission button[type="submit"]').innerText = 'Submit Deal';
+  if (typeof window.renderCustomFields === 'function') {
+    window.renderCustomFields('Commissions', {});
+  }
+  openModal('modal-add-commission');
+};
 window.closeModal = closeModal;
 window.navToPage = navToPage;
 
@@ -11505,6 +11569,10 @@ window.showProjectDetails = async function(projectId) {
       }
     }
     
+    if (typeof window.renderCustomDetails === 'function') {
+      await window.renderCustomDetails('Projects', proj.custom_data || {});
+    }
+    
   } catch(e) {
     console.error(e);
   }
@@ -15325,7 +15393,10 @@ window.submitBlueprintColumnForm = async function(e) {
     if (saveRes.ok) {
       showToast('Column rule synchronized successfully.');
       closeModal('modal-blueprint-field');
-      const activeTabId = moduleType === 'Leads' ? 'leads' : 'inventory';
+      let activeTabId = 'leads';
+      if (moduleType === 'Properties') activeTabId = 'inventory';
+      else if (moduleType === 'Projects') activeTabId = 'projects';
+      else if (moduleType === 'Commissions') activeTabId = 'commissions';
       await switchBlueprintTab(activeTabId);
     } else {
       showToast('Failed to save column template.', 'error');
@@ -15355,7 +15426,10 @@ window.deleteBlueprintColumn = async function(moduleType, formId, secIdx, fieldI
 
     if (saveRes.ok) {
       showToast('Column deleted from sheet blueprint.');
-      const activeTabId = moduleType === 'Leads' ? 'leads' : 'inventory';
+      let activeTabId = 'leads';
+      if (moduleType === 'Properties') activeTabId = 'inventory';
+      else if (moduleType === 'Projects') activeTabId = 'projects';
+      else if (moduleType === 'Commissions') activeTabId = 'commissions';
       await switchBlueprintTab(activeTabId);
     }
   } catch (err) {

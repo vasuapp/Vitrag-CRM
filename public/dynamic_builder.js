@@ -1195,7 +1195,12 @@ window.exportBuilderReportCSV = function() {
 // ------------------------------------------
 
 window.renderCustomFields = async function(module, customData) {
-  const container = document.getElementById('custom-lead-fields-container');
+  let containerId = 'custom-lead-fields-container';
+  if (module === 'Properties') containerId = 'custom-properties-fields-container';
+  else if (module === 'Projects') containerId = 'custom-projects-fields-container';
+  else if (module === 'Commissions') containerId = 'custom-commissions-fields-container';
+
+  const container = document.getElementById(containerId);
   if (!container) return;
 
   try {
@@ -1203,10 +1208,12 @@ window.renderCustomFields = async function(module, customData) {
     const forms = await res.json();
     const form = forms.find(f => f.module_type === module);
 
-    if (!form || !form.sections || form.sections.length === 0) {
+    if (!form || !form.sections || form.sections.length === 0 || form.sections.every(s => !s.fields || s.fields.length === 0)) {
       container.innerHTML = '';
+      container.style.display = 'none';
       return;
     }
+    container.style.display = 'block';
 
     let html = `
       <h4 style="margin:0 0 12px 0; color:var(--gold-l); font-size:13px; text-transform:uppercase; border-bottom:1px solid var(--border); padding-bottom:6px;">
@@ -1267,9 +1274,11 @@ window.renderCustomFields = async function(module, customData) {
   }
 };
 
-window.serializeCustomFields = function() {
+window.serializeCustomFields = function(containerId) {
   const data = {};
-  const inputs = document.querySelectorAll('.custom-dynamic-field-input');
+  const container = document.getElementById(containerId || 'custom-lead-fields-container');
+  if (!container) return data;
+  const inputs = container.querySelectorAll('.custom-dynamic-field-input');
   inputs.forEach(el => {
     const key = el.getAttribute('data-key');
     const type = el.getAttribute('data-type');
@@ -1286,7 +1295,12 @@ window.serializeCustomFields = function() {
 };
 
 window.renderCustomDetails = async function(module, customData) {
-  const container = document.getElementById('custom-lead-details-container');
+  let containerId = 'custom-lead-details-container';
+  if (module === 'Properties') containerId = 'custom-properties-details-container';
+  else if (module === 'Projects') containerId = 'custom-projects-details-container';
+  else if (module === 'Commissions') containerId = 'custom-commissions-details-container';
+
+  const container = document.getElementById(containerId);
   if (!container) return;
 
   try {
@@ -1342,7 +1356,7 @@ window.renderCustomDetails = async function(module, customData) {
   }
 };
 
-window.validateCustomFields = async function(module) {
+window.validateCustomFields = async function(module, containerId) {
   try {
     const res = await fetch('/api/custom-forms');
     const forms = await res.json();
@@ -1352,7 +1366,9 @@ window.validateCustomFields = async function(module) {
       return null; // No custom fields, no validation errors
     }
 
-    const inputs = document.querySelectorAll('.custom-dynamic-field-input');
+    const container = document.getElementById(containerId || 'custom-lead-fields-container');
+    if (!container) return null;
+    const inputs = container.querySelectorAll('.custom-dynamic-field-input');
     const inputVals = {};
     inputs.forEach(el => {
       const key = el.getAttribute('data-key');
@@ -1446,3 +1462,80 @@ window.validateCustomFields = async function(module) {
     return null; // In case of network errors, bypass validation to prevent blockages
   }
 };
+
+window.renderFormLayoutPreview = async function(moduleType) {
+  const previewContainer = document.getElementById('blueprint-form-preview-container');
+  if (!previewContainer) return;
+
+  try {
+    const res = await fetch('/api/custom-forms');
+    const forms = await res.json();
+    const form = forms.find(f => f.module_type === moduleType);
+
+    if (!form || !form.sections || form.sections.length === 0 || form.sections.every(s => !s.fields || s.fields.length === 0)) {
+      previewContainer.innerHTML = `<div style="font-size:11.5px; color:var(--text-muted); text-align:center; padding: 10px 0;">No custom fields to preview. Add a column above to see the layout.</div>`;
+      return;
+    }
+
+    let previewHtml = `
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:5px; margin-bottom:5px;">
+          ${moduleType} Form — Additional Fields Preview
+        </div>
+        <div class="form-row" style="margin-bottom:0;">
+    `;
+
+    form.sections.forEach(sec => {
+      if (!sec.fields || sec.fields.length === 0) return;
+      sec.fields.forEach(f => {
+        let inputHtml = '';
+        if (f.type === 'number') {
+          let rangeTxt = '';
+          if (f.rules?.min !== undefined || f.rules?.max !== undefined) {
+            rangeTxt = ` (Min: ${f.rules.min ?? 0}, Max: ${f.rules.max ?? '∞'})`;
+          }
+          inputHtml = `<input type="number" class="form-input" placeholder="Enter numeric value...${rangeTxt}" disabled>`;
+        } else if (f.type === 'select') {
+          const opts = (f.options || '').split(',').map(o => o.trim()).filter(Boolean);
+          inputHtml = `
+            <select class="form-select" disabled>
+              <option value="">-- Choose Option --</option>
+              ${opts.map(o => `<option value="${o}">${o}</option>`).join('')}
+            </select>
+          `;
+        } else if (f.type === 'boolean') {
+          inputHtml = `
+            <select class="form-select" disabled>
+              <option value="false">No</option>
+              <option value="true">Yes</option>
+            </select>
+          `;
+        } else if (f.type === 'textarea') {
+          inputHtml = `<textarea class="form-input" rows="2" placeholder="Enter notes..." disabled></textarea>`;
+        } else {
+          inputHtml = `<input type="text" class="form-input" placeholder="Enter text..." disabled>`;
+        }
+
+        previewHtml += `
+          <div class="form-group">
+            <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
+              <span>${escapeHTML(f.label)} ${f.required ? '<span style="color:var(--red);">*</span>' : ''}</span>
+              ${f.rules?.regex ? `<span style="font-size:9.5px; color:var(--gold-l); font-family:monospace;" title="Regex: ${f.rules.regex}">RegEx Validated</span>` : ''}
+            </label>
+            ${inputHtml}
+          </div>
+        `;
+      });
+    });
+
+    previewHtml += `
+        </div>
+      </div>
+    `;
+    previewContainer.innerHTML = previewHtml;
+  } catch (err) {
+    console.error('Failed to render form layout preview:', err);
+    previewContainer.innerHTML = `<div style="font-size:11.5px; color:var(--red);">Failed to render form layout preview.</div>`;
+  }
+};
+

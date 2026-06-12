@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS builder_projects (
     other_usp TEXT,
     special_tags TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  , brochure_link TEXT, floor_plans TEXT, mother_docs TEXT, assignments TEXT, kyc_docs TEXT, photos TEXT, videos TEXT, cp_agreements TEXT, builder_details TEXT, finance_info TEXT, analytics_info TEXT, zone TEXT, onboarded_year TEXT, proj_id TEXT, google_map_url TEXT, unit_details TEXT, builder_poc_details TEXT, plot_dimension TEXT, plot_size TEXT, house_facing TEXT, plot_facing TEXT, deleted_at TEXT, admin_comments TEXT);
+  , brochure_link TEXT, floor_plans TEXT, mother_docs TEXT, assignments TEXT, kyc_docs TEXT, photos TEXT, videos TEXT, cp_agreements TEXT, builder_details TEXT, finance_info TEXT, analytics_info TEXT, zone TEXT, onboarded_year TEXT, proj_id TEXT, google_map_url TEXT, unit_details TEXT, builder_poc_details TEXT, plot_dimension TEXT, plot_size TEXT, house_facing TEXT, plot_facing TEXT, deleted_at TEXT, admin_comments TEXT, custom_data JSONB DEFAULT '{}');
 CREATE TABLE IF NOT EXISTS daily_checklist (
     id SERIAL PRIMARY KEY,
     item_name TEXT NOT NULL,
@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS commissions (
     expenses NUMERIC,
     payment_status TEXT DEFAULT 'Pending',
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
-  , booking_date TEXT, agreement_date TEXT, registration_date TEXT, handover_date TEXT, commission_amount NUMERIC);
+  , booking_date TEXT, agreement_date TEXT, registration_date TEXT, handover_date TEXT, commission_amount NUMERIC, custom_data JSONB DEFAULT '{}');
 CREATE TABLE IF NOT EXISTS todo_tasks (
     id SERIAL PRIMARY KEY,
     task TEXT NOT NULL,
@@ -445,6 +445,8 @@ CREATE TABLE IF NOT EXISTS communication_templates (
       // Dynamic Forms & Tables Schema Migrations
       await pool.query('ALTER TABLE leads ADD COLUMN IF NOT EXISTS custom_data JSONB DEFAULT \'{}\';');
       await pool.query('ALTER TABLE properties ADD COLUMN IF NOT EXISTS custom_data JSONB DEFAULT \'{}\';');
+      await pool.query('ALTER TABLE builder_projects ADD COLUMN IF NOT EXISTS custom_data JSONB DEFAULT \'{}\';');
+      await pool.query('ALTER TABLE commissions ADD COLUMN IF NOT EXISTS custom_data JSONB DEFAULT \'{}\';');
 
       await pool.query(`CREATE TABLE IF NOT EXISTS custom_forms (
         id SERIAL PRIMARY KEY,
