@@ -6787,7 +6787,7 @@ window.showAddProjectModal = function() {
   openModal('modal-add-project');
 }
 
-window.editProject = function(id) {
+window.editProject = async function(id) {
   const p = state.projects.find(x => x.id == id);
   if(!p) return;
   closeModal('modal-project-detail');
