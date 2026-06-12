@@ -258,7 +258,16 @@ function maskCommission(c, user) {
   }
   return c;
 }
-
+// Diagnostics endpoint to inspect database connection and migrations status
+app.get('/api/system/db-status', (req, res) => {
+  res.json({
+    initialized: db.dbStatus ? db.dbStatus.initialized : false,
+    attempts: db.dbStatus ? db.dbStatus.attempts : 0,
+    error: db.dbStatus ? db.dbStatus.error : null,
+    databaseUrlConfigured: !!process.env.DATABASE_URL,
+    isLocalDb: !process.env.DATABASE_URL || process.env.DATABASE_URL.includes('localhost') || process.env.DATABASE_URL.includes('127.0.0.1')
+  });
+});
 
 // ----------------------------------------------------
 // 1. SYSTEM SETTINGS API

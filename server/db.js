@@ -23,11 +23,18 @@ pool.on('error', (err) => {
 const maxRetries = 10;
 const retryDelayMs = 3000;
 
+const dbStatus = {
+  initialized: false,
+  error: null,
+  attempts: 0
+};
+
 const initPromise = (async () => {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    dbStatus.attempts = attempt;
     try {
       console.log(`Database initialization attempt ${attempt}/${maxRetries}...`);
-    await pool.query(`CREATE TABLE IF NOT EXISTS leads (
+      await pool.query(`CREATE TABLE IF NOT EXISTS leads (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     phone TEXT,
@@ -657,9 +664,11 @@ CREATE TABLE IF NOT EXISTS communication_templates (
         console.log("Seeded 15 standard SOP real estate procedures successfully.");
       }
       console.log("PostgreSQL database successfully initialized and migrated.");
+      dbStatus.initialized = true;
       return;
     } catch (err) {
       console.error(`Database initialization attempt ${attempt} failed:`, err.message);
+      dbStatus.error = err.message;
       if (attempt === maxRetries) {
         console.error("FATAL ERROR: Failed to initialize PostgreSQL after max retries. Exiting...");
         process.exit(1);
@@ -672,7 +681,14 @@ CREATE TABLE IF NOT EXISTS communication_templates (
 
 const db = {
   query: async (text, params) => {
-    await initPromise;
+    if (!dbStatus.initialized) {
+      if (dbStatus.error) {
+        throw new Error(`Database connection not ready. Last error: ${dbStatus.error}`);
+      }
+      // Wait for it with a timeout of 4 seconds
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Database initialization timeout")), 4000));
+      await Promise.race([initPromise, timeoutPromise]);
+    }
     let actualParams = params || [];
     if (!Array.isArray(actualParams)) {
       actualParams = [actualParams];
@@ -684,7 +700,8 @@ const db = {
     return pool.query(pgText, actualParams);
   },
   pool: pool,
-  initPromise: initPromise
+  initPromise: initPromise,
+  dbStatus: dbStatus
 };
 
 module.exports = db;
