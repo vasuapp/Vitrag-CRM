@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vitrag CRM — Mobile Layout</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* Luxury Obsidian & Brushed Gold Variables */
+  --color-bg-base: #0c0b09;
+  --color-bg-surface: rgba(20, 18, 16, 0.7);
+  --color-bg-surface-hover: rgba(30, 27, 24, 0.85);
+  --color-bg-surface-subtle: rgba(16, 14, 12, 0.45);
+  --color-bg-nav: #060505;
+  
+  --color-gold-brass: #c5a867;
+  --color-gold-accent: #b89047;
+  --color-gold-glow: rgba(197, 168, 103, 0.05);
+  --color-gold-border: rgba(197, 168, 103, 0.12);
+  --color-gold-border-bright: rgba(197, 168, 103, 0.28);
+  
+  --color-status-available: #10b981;
+  --color-status-sold: #ef4444;
+  --color-status-hold: #3b82f6;
+  --color-status-ref: #8b5cf6;
+  
+  --color-text-primary: #f5f4f0;
+  --color-text-secondary: #a3a097;
+  --color-text-muted: #6e6b62;
+  
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-title: 'Plus Jakarta Sans', var(--font-sans);
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Original Mappings to maintain compatibility */
+  --acc: var(--color-gold-brass);
+  --acc2: var(--color-status-available);
+  --acc3: var(--color-gold-accent);
+  --acc4: var(--color-status-sold);
+  --acc5: var(--color-status-ref);
+  --nav: var(--color-bg-nav);
+  --surf: var(--color-bg-surface);
+  --surf2: var(--color-bg-surface-hover);
+  --surf3: var(--color-bg-surface-subtle);
+  --bdr: var(--color-gold-border);
+  --bdr2: var(--color-gold-border-bright);
+  --t1: var(--color-text-primary);
+  --t2: var(--color-text-secondary);
+  --t3: var(--color-text-muted);
+  --r: 10px;
+  --r2: 16px;
+  --ff: var(--font-sans);
+  --ffm: var(--font-mono);
+}
+body{
+  font-family:var(--ff);
+  font-size:13px;
+  background: radial-gradient(circle at 50% 0%, #1a1815 0%, var(--color-bg-base) 100%);
+  color: var(--t1);
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:32px 24px 48px;
+  gap:0;
+}
+
+/* Page header */
+.page-header{text-align:center;margin-bottom:36px}
+.page-header h1{
+  font-family: var(--font-title);
+  font-size:28px;
+  font-weight:700;
+  background: linear-gradient(135deg, #fff 30%, var(--color-gold-brass) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing:-.5px;
+}
+.page-header p{font-size:13px;color:var(--t2);margin-top:6px}
+.ph-tag{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  background:rgba(197, 168, 103, 0.08);
+  border:0.5px solid rgba(197, 168, 103, 0.25);
+  border-radius:20px;
+  padding:4px 12px;
+  font-size:11px;
+  color:var(--color-gold-brass);
+  margin-bottom:16px;
+  font-weight:500;
+}
+
+/* Phones row */
+.phones{display:flex;gap:24px;align-items:flex-start;justify-content:center;flex-wrap:wrap}
+.phone-col{display:flex;flex-direction:column;align-items:center;gap:12px}
+.phone-label{
+  font-family: var(--font-title);
+  font-size:10px;
+  color:var(--color-gold-brass);
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  font-weight:600;
+}
+
+/* Phone frame */
+.phone{
+  width:260px;
+  height:520px;
+  border-radius:32px;
+  background: #090807;
+  border:1.5px solid rgba(197, 168, 103, 0.22);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  box-shadow:
+    0 0 0 6px #060505,
+    0 0 0 7.5px rgba(197, 168, 103, 0.25),
+    0 24px 48px rgba(0,0,0,0.85);
+  position:relative;
+}
+
+/* Notch */
+.notch{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:90px;height:24px;
+  background:#060505;
+  border-radius:0 0 16px 16px;
+  border: 0.5px solid rgba(197, 168, 103, 0.15);
+  border-top: none;
+  z-index:100;
+}
+
+/* Status bar */
+.sbar{
+  padding:10px 16px 4px;
+  display:flex;justify-content:space-between;align-items:center;
+  flex-shrink:0;padding-top:14px;
+  background: rgba(12, 11, 9, 0.4);
+}
+.stime{font-size:11px;font-weight:600;color:var(--t1);font-family:var(--ffm)}
+.sicons{display:flex;gap:4px;align-items:center;color:var(--t1);font-size:10px}
+
+/* Top nav */
+.tnav{
+  padding:4px 14px 10px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:0.5px solid var(--bdr);
+  background: rgba(12, 11, 9, 0.4);
+  flex-shrink:0;
+}
+.ttl{font-family:var(--font-title);font-size:15px;font-weight:600;color:var(--t1)}
+.ttl-sub{font-size:9px;color:var(--t2);margin-top:1px}
+.tact{display:flex;gap:5px}
+.tibtn{
+  width:30px;height:30px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--t2);font-size:14px;cursor:pointer;
+  transition: all 0.2s ease;
+}
+.tibtn:hover{
+  background:rgba(197, 168, 103, 0.08);
+  color:var(--t1);
+}
+.av-sm{
+  width:30px;height:30px;border-radius:50%;
+  background: linear-gradient(135deg, var(--color-gold-brass) 0%, var(--color-gold-accent) 100%);
+  display:flex;align-items:center;justify-content:center;
+  color:#0c0b09;font-size:9px;font-weight:700;cursor:pointer;
+  box-shadow: 0 0 0 2px rgba(197, 168, 103, 0.2);
+}
+
+/* Scrollable body */
+.pbody{flex:1;overflow-y:auto;overflow-x:hidden}
+.pbody::-webkit-scrollbar{width:0}
+
+/* Bottom tab bar */
+.tabbar{
+  display:flex;
+  border-top:0.5px solid rgba(197, 168, 103, 0.15);
+  padding:6px 0 10px;
+  flex-shrink:0;
+  background: rgba(12, 11, 9, 0.95);
+  backdrop-filter: blur(10px);
+  position:relative;z-index:10;
+}
+.tab{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;gap:2px;cursor:pointer;
+  position:relative;
+}
+.tab i{font-size:18px;color:var(--t3)}
+.tab.on i{color:var(--acc)}
+.tlbl{font-size:8px;color:var(--t3);font-weight:500}
+.tab.on .tlbl{color:var(--acc)}
+.tbadge{
+  position:absolute;top:0;right:calc(50% - 15px);
+  background:var(--color-status-sold);color:#fff;
+  font-size:7px;padding:1px 4px;border-radius:8px;font-weight:700;
+  border: 0.5px solid rgba(255, 255, 255, 0.15);
+}
+
+/* ── COMPONENT STYLES ── */
+
+/* Horizontal scroll section */
+.hscroll{display:flex;gap:8px;padding:10px 12px;overflow-x:auto}
+.hscroll::-webkit-scrollbar{height:0}
+
+/* KPI cards */
+.kcard{
+  flex-shrink:0;width:105px;
+  background: rgba(20, 18, 16, 0.6);
+  border:0.5px solid var(--bdr);
+  backdrop-filter: blur(8px);
+  border-radius:var(--r);padding:10px 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.kcard:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(197, 168, 103, 0.08);
+}
+.kcard.accent{
+  background: linear-gradient(135deg, var(--color-gold-brass) 0%, var(--color-gold-accent) 100%);
+  border-color: var(--color-gold-border-bright);
+}
+.kl{font-size:8px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.kcard.accent .kl{color:rgba(12,11,9,0.85);font-weight:600}
+.kv{font-family:var(--font-title);font-size:18px;font-weight:600;color:var(--t1);line-height:1}
+.kcard.accent .kv{color:#0c0b09}
+.ksub{font-size:9px;margin-top:3px;display:flex;align-items:center;gap:3px}
+.up{color:var(--acc2)}.dn{color:var(--acc4)}
+.kcard.accent .ksub{color:rgba(12,11,9,0.75);font-weight:500}
+
+/* Section label */
+.slbl{
+  padding:12px 12px 4px;
+  font-family: var(--font-title);
+  font-size:9px;
+  color:var(--color-gold-brass);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  font-weight:600;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.slbl a{color:var(--color-gold-accent);font-size:9px;text-transform:none;letter-spacing:0;cursor:pointer}
+
+/* Lead swipe cards */
+.lcards{display:flex;gap:8px;padding:4px 12px 10px;overflow-x:auto}
+.lcards::-webkit-scrollbar{height:0}
+.lcard{
+  flex-shrink:0;width:148px;
+  background: rgba(24, 22, 20, 0.5);
+  border:0.5px solid var(--bdr);
+  backdrop-filter: blur(8px);
+  border-radius:var(--r);padding:10px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.lcard:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(197, 168, 103, 0.08);
+}
+.lc-top{display:flex;align-items:center;gap:6px;margin-bottom:7px}
+.lc-av{
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-size:8px;
+  font-weight:600;
+  flex-shrink:0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+.lc-name{font-size:11px;font-weight:600;color:var(--t1)}
+.lc-prop{font-size:9px;color:var(--t2);margin-bottom:5px;line-height:1.4}
+.lc-tags{display:flex;gap:3px;flex-wrap:wrap}
+.tag{font-size:8px;padding:2px 5px;border-radius:3px;font-weight:600}
+.hot{
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 0.5px solid rgba(239, 68, 68, 0.3);
+}
+.warm{
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 0.5px solid rgba(245, 158, 11, 0.3);
+}
+.cold{
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 0.5px solid rgba(59, 130, 246, 0.3);
+}
+.tsrc{
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--t2);
+  border: 0.5px solid var(--bdr);
+}
+.lc-btns{display:flex;gap:4px;margin-top:8px}
+.lb{
+  flex:1;padding:5px 0;border-radius:6px;font-size:9px;font-weight:600;text-align:center;cursor:pointer;
+  border:0.5px solid var(--bdr);color:var(--t2);
+  transition: all 0.2s ease;
+}
+.lb.wa{
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.25);
+  color: #34d399;
+}
+.lb.wa:hover{
+  background: rgba(16, 185, 129, 0.2);
+}
+.lb.cl{
+  background: rgba(197, 168, 103, 0.1);
+  border-color: rgba(197, 168, 103, 0.25);
+  color: #c5a867;
+}
+.lb.cl:hover{
+  background: rgba(197, 168, 103, 0.2);
+}
+
+/* Task panel */
+.mpanel{
+  background: rgba(20, 18, 16, 0.65);
+  border:0.5px solid var(--bdr);
+  border-radius:var(--r);margin:4px 12px 8px;overflow:hidden;
+}
+.mph{
+  padding:9px 11px;display:flex;align-items:center;gap:5px;
+  border-bottom:0.5px solid var(--bdr);
+  background: rgba(197, 168, 103, 0.02);
+}
+.mpt{font-family:var(--font-title);font-size:11px;font-weight:600;color:var(--t1);flex:1}
+.mpa{font-size:10px;color:var(--acc);cursor:pointer;font-weight:500}
+.titem{display:flex;align-items:center;gap:8px;padding:8px 11px;border-bottom:0.5px solid rgba(197, 168, 103, 0.06)}
+.titem:last-child{border-bottom:none}
+.tchk{
+  width:15px;height:15px;
+  border:1px solid var(--color-gold-border-bright);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius:4px;
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;
+}
+.tchk.done{background:var(--acc2);border-color:var(--acc2)}
+.ttxt{font-size:10px;color:var(--t1);flex:1;line-height:1.3}
+.ttxt.done{color:var(--t3);text-decoration:line-through}
+.tdate{font-size:9px;color:var(--t3);flex-shrink:0}
+.tdate.late{color:var(--color-status-sold);font-weight:600}
+
+/* ── LEADS LIST SCREEN ── */
+.fchips{
+  display:flex;gap:5px;padding:8px 12px;overflow-x:auto;
+  border-bottom:0.5px solid var(--bdr);
+  background: rgba(12, 11, 9, 0.4);
+}
+.fchips::-webkit-scrollbar{height:0}
+.fchip{font-size:9px;padding:4px 10px;border-radius:16px;flex-shrink:0;cursor:pointer;white-space:nowrap;font-weight:500;transition:all 0.2s ease}
+.fchip.on{
+  background: linear-gradient(135deg, var(--color-gold-brass) 0%, var(--color-gold-accent) 100%);
+  color: #0c0b09;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(197, 168, 103, 0.2);
+}
+.fchip.off{border:0.5px solid var(--bdr);color:var(--t2);background:rgba(20, 18, 16, 0.5)}
+.fchip.off:hover{
+  background:rgba(30, 27, 24, 0.7);
+  color:var(--t1);
+}
+
+.lrow{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 12px;border-bottom:0.5px solid rgba(197, 168, 103, 0.06);cursor:pointer;
+  transition: background 0.2s ease;
+}
+.lrow:hover{background:rgba(197, 168, 103, 0.03)}
+.lrow:last-child{border-bottom:none}
+.lav{
+  width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:9px;font-weight:700;flex-shrink:0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+.lbody{flex:1;min-width:0}
+.lname{font-size:11px;font-weight:600;color:var(--t1)}
+.lsub{font-size:9px;color:var(--t2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lright{text-align:right;flex-shrink:0}
+.ltime{font-size:9px;color:var(--t3)}
+.lbadge{
+  font-size:8px;padding:2px 5px;border-radius:3px;font-weight:600;margin-top:2px;display:block;text-align:center;
+}
+.bh{
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 0.5px solid rgba(239, 68, 68, 0.3);
+}
+.bw{
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 0.5px solid rgba(245, 158, 11, 0.3);
+}
+.bc2{
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 0.5px solid rgba(59, 130, 246, 0.3);
+}
+.bo{color:var(--color-status-sold);font-weight:700;font-size:9px;margin-top:3px;display:block}
+
+/* Search bar */
+.searchbar{
+  display:flex;align-items:center;gap:7px;
+  margin:8px 12px;padding:8px 11px;
+  background:rgba(20, 18, 16, 0.5);border:0.5px solid var(--bdr);
+  border-radius:10px;font-size:11px;color:var(--t3);
+}
+
+/* ── CHAT SCREEN ── */
+.chat-header{
+  padding:8px 12px 10px;
+  display:flex;align-items:center;gap:8px;
+  border-bottom:0.5px solid var(--bdr);flex-shrink:0;
+  background: rgba(12, 11, 9, 0.4);
+}
+.chat-av{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--acc);display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:9px;font-weight:700;flex-shrink:0;position:relative;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+.online{
+  position:absolute;bottom:0;right:0;
+  width:8px;height:8px;background:var(--acc2);
+  border-radius:50%;border:1.5px solid #0c0b09;
+  animation: pulse-green 2s infinite;
+}
+.chat-name{font-family:var(--font-title);font-size:12px;font-weight:600;color:var(--t1)}
+.chat-status{font-size:9px;color:var(--acc2);display:flex;align-items:center;gap:3px}
+.chat-btns{margin-left:auto;display:flex;gap:4px}
+
+.chattabs{
+  display:flex;overflow-x:auto;
+  border-bottom:0.5px solid var(--bdr);flex-shrink:0;
+  background: rgba(12, 11, 9, 0.2);
+}
+.chattabs::-webkit-scrollbar{height:0}
+.ct{
+  padding:7px 10px;font-size:9px;color:var(--t3);
+  border-bottom:2px solid transparent;cursor:pointer;
+  white-space:nowrap;flex-shrink:0;font-weight:500;
+  transition: all 0.2s ease;
+}
+.ct.on{color:var(--acc);border-bottom-color:var(--acc);font-weight:600}
+
+.msgs{
+  padding:10px 12px;
+  display:flex;flex-direction:column;gap:8px;
+  flex:1;overflow-y:auto;
+}
+.msgs::-webkit-scrollbar{width:0}
+
+.bin{
+  background: rgba(30, 28, 26, 0.85);
+  border: 0.5px solid rgba(197, 168, 103, 0.08);
+  padding:7px 10px;
+  border-radius:4px 12px 12px 12px;
+  font-size:10px;color:var(--t1);max-width:170px;line-height:1.5;
+}
+.bout{
+  background: linear-gradient(135deg, var(--color-gold-brass) 0%, var(--color-gold-accent) 100%);
+  color: #0c0b09;
+  font-weight: 500;
+  padding:7px 10px;
+  border-radius:12px 4px 12px 12px;
+  font-size:10px;max-width:170px;
+  line-height:1.5;margin-left:auto;
+  box-shadow: 0 2px 8px rgba(197, 168, 103, 0.15);
+}
+.mtime{font-size:8px;color:var(--t3);margin-top:2px}
+.mtime.r{text-align:right}
+
+/* Lead context strip */
+.ctx-strip{
+  margin:0 12px 10px;
+  background: rgba(20, 18, 16, 0.75);
+  border:0.5px solid var(--bdr);
+  border-radius:10px;padding:10px;flex-shrink:0;
+}
+.ctx-hd{
+  font-family:var(--font-title);
+  font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;font-weight:600;margin-bottom:7px;
+}
+.ctx-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ctx-cell .cl{font-size:8px;color:var(--t3)}
+.ctx-cell .cv{font-size:10px;font-weight:600;color:var(--t1);margin-top:1px}
+.ctx-btns{display:flex;gap:5px;margin-top:8px}
+.ctxb{
+  flex:1;padding:5px 0;border-radius:7px;font-size:9px;font-weight:600;
+  text-align:center;cursor:pointer;
+  transition: all 0.2s ease;
+}
+.ctxb.profile{
+  background: rgba(16, 185, 129, 0.1);
+  border: 0.5px solid rgba(16, 185, 129, 0.25);
+  color: #34d399;
+}
+.ctxb.profile:hover{
+  background: rgba(16, 185, 129, 0.2);
+}
+.ctxb.log{
+  background: rgba(197, 168, 103, 0.1);
+  border: 0.5px solid rgba(197, 168, 103, 0.25);
+  color: #c5a867;
+}
+.ctxb.log:hover{
+  background: rgba(197, 168, 103, 0.2);
+}
+
+.compose{
+  display:flex;gap:6px;padding:8px 12px;
+  border-top:0.5px solid var(--bdr);
+  background: rgba(12, 11, 9, 0.95);
+  flex-shrink:0;
+}
+.cinput{
+  flex:1;
+  background: rgba(24, 22, 20, 0.6);
+  border:0.5px solid var(--bdr);
+  border-radius:18px;padding:7px 12px;font-size:10px;color:var(--t1);
+  font-family:var(--ff);
+}
+.catt{
+  width:30px;height:30px;border-radius:50%;
+  background: rgba(24, 22, 20, 0.6);
+  border:0.5px solid var(--bdr);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--t2);cursor:pointer;font-size:12px;flex-shrink:0;
+  transition: all 0.2s ease;
+}
+.catt:hover{
+  background: rgba(30, 27, 24, 0.8);
+  color: var(--t1);
+}
+.csend{
+  width:30px;height:30px;border-radius:50%;
+  background: linear-gradient(135deg, var(--color-gold-brass) 0%, var(--color-gold-accent) 100%);
+  display:flex;align-items:center;justify-content:center;
+  color:#0c0b09;cursor:pointer;font-size:12px;flex-shrink:0;
+  box-shadow:0 2px 8px rgba(197,168,103,.35);
+  transition: all 0.2s ease;
+}
+.csend:hover{
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(197, 168, 103, 0.5);
+}
+
+/* FAB */
+.fab{
+  position:absolute;bottom:70px;right:14px;
+  width:42px;height:42px;border-radius:50%;
+  background: linear-gradient(135deg, var(--color-gold-brass) 0%, var(--color-gold-accent) 100%);
+  display:flex;align-items:center;justify-content:center;
+  color:#0c0b09;font-size:18px;
+  box-shadow:0 4px 14px rgba(197,168,103,.4);
+  cursor:pointer;z-index:20;
+  transition: all 0.2s ease;
+}
+.fab:hover{
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(197, 168, 103, 0.55);
+}
+
+/* Property cards */
+.pcards{display:flex;gap:8px;padding:4px 12px 10px;overflow-x:auto}
+.pcards::-webkit-scrollbar{height:0}
+.pcard{
+  flex-shrink:0;width:140px;
+  background: rgba(20, 18, 16, 0.6);
+  border:0.5px solid var(--bdr);
+  border-radius:var(--r);overflow:hidden;
+  transition: transform 0.2s ease;
+}
+.pcard:hover{
+  transform: translateY(-2px);
+}
+.pthumb{height:72px;display:flex;align-items:center;justify-content:center;font-size:28px}
+.pinfo{padding:8px 9px}
+.pname{font-family:var(--font-title);font-size:10px;font-weight:600;color:var(--t1)}
+.ploc{font-size:8px;color:var(--t2);margin-top:1px}
+.pprice{font-size:10px;font-weight:600;color:var(--color-gold-accent);margin-top:4px}
+
+/* Notification dot for bell */
+.bell-wrap{position:relative}
+.bell-dot{
+  position:absolute;top:2px;right:2px;width:6px;height:6px;
+  background:var(--color-status-sold);border-radius:50%;border:1.5px solid #0c0b09;
+  animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+  70% { box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+@keyframes pulse-green {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+  70% { box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+@keyframes pulse-gold {
+  0% { box-shadow: 0 0 0 0 rgba(197, 168, 103, 0.5); }
+  70% { box-shadow: 0 0 0 6px rgba(197, 168, 103, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(197, 168, 103, 0); }
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="ph-tag"><i class="fa-solid fa-mobile-screen"></i> Mobile Layout</div>
+  <h1>Vitrag CRM — Mobile</h1>
+  <p>Feature-complete · Bottom tab navigation · Three key screens</p>
+</div>
+
+<div class="phones">
+
+  <!-- ═══ PHONE 1: DASHBOARD ═══ -->
+  <div class="phone-col">
+    <div class="phone-label">Dashboard</div>
+    <div class="phone">
+      <div class="notch"></div>
+
+      <div class="sbar">
+        <span class="stime">9:41</span>
+        <span class="sicons">
+          <i class="fa-solid fa-signal" style="font-size:9px"></i>
+          <i class="fa-solid fa-wifi" style="font-size:9px"></i>
+          <i class="fa-solid fa-battery-full" style="font-size:9px"></i>
+        </span>
+      </div>
+
+      <div class="tnav">
+        <div>
+          <div style="font-size:9px;color:var(--t2)">Good morning,</div>
+          <div class="ttl">Rahul M 👋</div>
+        </div>
+        <div class="tact">
+          <div class="tibtn bell-wrap">
+            <i class="fa-regular fa-bell"></i>
+            <span class="bell-dot"></span>
+          </div>
+          <div class="av-sm">RM</div>
+        </div>
+      </div>
+
+      <div class="pbody">
+        <!-- KPI strip -->
+        <div class="hscroll">
+          <div class="kcard accent">
+            <div class="kl">Enquiries</div>
+            <div class="kv">142</div>
+            <div class="ksub"><i class="fa-solid fa-arrow-up" style="font-size:8px"></i> 18% this month</div>
+          </div>
+          <div class="kcard">
+            <div class="kl">Active Leads</div>
+            <div class="kv">87</div>
+            <div class="ksub up"><i class="fa-solid fa-arrow-up" style="font-size:8px"></i> 7%</div>
+          </div>
+          <div class="kcard">
+            <div class="kl">Bookings</div>
+            <div class="kv">23</div>
+            <div class="ksub dn"><i class="fa-solid fa-arrow-down" style="font-size:8px"></i> 3%</div>
+          </div>
+          <div class="kcard">
+            <div class="kl">Revenue</div>
+            <div class="kv">₹9Cr</div>
+            <div class="ksub up"><i class="fa-solid fa-arrow-up" style="font-size:8px"></i> 18%</div>
+          </div>
+        </div>
+
+        <!-- Hot leads -->
+        <div class="slbl">Hot Leads <a>View all</a></div>
+        <div class="lcards">
+          <div class="lcard">
+            <div class="lc-top">
+              <div class="lc-av" style="background:#2563EB">PS</div>
+              <div class="lc-name">Priya Sharma</div>
+            </div>
+            <div class="lc-prop">3BHK · Bandra W · ₹2.4Cr</div>
+            <div class="lc-tags"><span class="tag hot">Hot</span><span class="tag tsrc">Insta</span></div>
+            <div class="lc-btns">
+              <div class="lb wa"><i class="fa-brands fa-whatsapp"></i> WA</div>
+              <div class="lb cl"><i class="fa-solid fa-phone"></i> Call</div>
+            </div>
+          </div>
+          <div class="lcard">
+            <div class="lc-top">
+              <div class="lc-av" style="background:#8B5CF6">RJ</div>
+              <div class="lc-name">Rahul Joshi</div>
+            </div>
+            <div class="lc-prop">Villa · Juhu · ₹6.8Cr</div>
+            <div class="lc-tags"><span class="tag hot">Hot</span><span class="tag tsrc">Ref</span></div>
+            <div class="lc-btns">
+              <div class="lb wa"><i class="fa-brands fa-whatsapp"></i> WA</div>
+              <div class="lb cl"><i class="fa-solid fa-phone"></i> Call</div>
+            </div>
+          </div>
+          <div class="lcard">
+            <div class="lc-top">
+              <div class="lc-av" style="background:#F59E0B">VB</div>
+              <div class="lc-name">Vikram Bose</div>
+            </div>
+            <div class="lc-prop">3BHK · Worli · ₹4.5Cr</div>
+            <div class="lc-tags"><span class="tag hot">Hot</span><span class="tag tsrc">FB</span></div>
+            <div class="lc-btns">
+              <div class="lb wa"><i class="fa-brands fa-whatsapp"></i> WA</div>
+              <div class="lb cl"><i class="fa-solid fa-phone"></i> Call</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tasks -->
+        <div class="mpanel">
+          <div class="mph">
+            <i class="fa-regular fa-circle-check" style="font-size:12px;color:var(--t2)"></i>
+            <span class="mpt">Today's Tasks</span>
+            <span class="mpa">+ Add</span>
+          </div>
+          <div class="titem">
+            <div class="tchk done"><i class="fa-solid fa-check" style="font-size:7px;color:#fff"></i></div>
+            <span class="ttxt done">Call Priya Sharma — site visit</span>
+            <span class="tdate">10 AM</span>
+          </div>
+          <div class="titem">
+            <div class="tchk"></div>
+            <span class="ttxt">Send proposal — Rahul Joshi</span>
+            <span class="tdate">2 PM</span>
+          </div>
+          <div class="titem">
+            <div class="tchk"></div>
+            <span class="ttxt">Follow up — Divya Nair</span>
+            <span class="tdate late">Overdue</span>
+          </div>
+          <div class="titem">
+            <div class="tchk"></div>
+            <span class="ttxt">Upload KYC — Sanjay Trivedi</span>
+            <span class="tdate">May 25</span>
+          </div>
+        </div>
+
+        <!-- Properties -->
+        <div class="slbl">Listings <a>View all</a></div>
+        <div class="pcards">
+          <div class="pcard">
+            <div class="pthumb" style="background:linear-gradient(135deg,#2e261a,#c5a867)">🏢</div>
+            <div class="pinfo">
+              <div class="pname">Lodha Malabar</div>
+              <div class="ploc">Bandra West</div>
+              <div class="pprice">₹2.1Cr – ₹4.8Cr</div>
+            </div>
+          </div>
+          <div class="pcard">
+            <div class="pthumb" style="background:linear-gradient(135deg,#1a2d1a,#10B981)">🌿</div>
+            <div class="pinfo">
+              <div class="pname">Godrej Greens</div>
+              <div class="ploc">Vikhroli</div>
+              <div class="pprice">₹95L – ₹1.8Cr</div>
+            </div>
+          </div>
+          <div class="pcard">
+            <div class="pthumb" style="background:linear-gradient(135deg,#2d1a2d,#8B5CF6)">🏗️</div>
+            <div class="pinfo">
+              <div class="pname">Rustomjee Seasons</div>
+              <div class="ploc">Bandra East</div>
+              <div class="pprice">₹1.8Cr – ₹3.5Cr</div>
+            </div>
+          </div>
+        </div>
+        <div style="height:16px"></div>
+      </div>
+
+      <div class="fab"><i class="fa-solid fa-plus"></i></div>
+
+      <div class="tabbar">
+        <div class="tab on"><i class="fa-solid fa-house"></i><span class="tlbl">Home</span></div>
+        <div class="tab"><i class="fa-solid fa-users"></i><span class="tbadge">4</span><span class="tlbl">Leads</span></div>
+        <div class="tab"><i class="fa-solid fa-building"></i><span class="tlbl">Properties</span></div>
+        <div class="tab"><i class="fa-regular fa-comment-dots"></i><span class="tbadge">6</span><span class="tlbl">Chat</span></div>
+        <div class="tab"><i class="fa-solid fa-ellipsis"></i><span class="tlbl">More</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PHONE 2: LEAD LIST ═══ -->
+  <div class="phone-col">
+    <div class="phone-label">Lead List</div>
+    <div class="phone">
+      <div class="notch"></div>
+
+      <div class="sbar">
+        <span class="stime">9:41</span>
+        <span class="sicons">
+          <i class="fa-solid fa-signal" style="font-size:9px"></i>
+          <i class="fa-solid fa-wifi" style="font-size:9px"></i>
+          <i class="fa-solid fa-battery-full" style="font-size:9px"></i>
+        </span>
+      </div>
+
+      <div class="tnav">
+        <div class="ttl">Leads <span style="font-size:11px;color:var(--t3);font-weight:400">87</span></div>
+        <div class="tact">
+          <div class="tibtn"><i class="fa-solid fa-sliders"></i></div>
+          <div class="tibtn"><i class="fa-solid fa-magnifying-glass"></i></div>
+        </div>
+      </div>
+
+      <div class="fchips">
+        <div class="fchip on">All · 87</div>
+        <div class="fchip off">Hot · 14</div>
+        <div class="fchip off">Warm · 29</div>
+        <div class="fchip off">Follow-up · 23</div>
+        <div class="fchip off">Cold · 21</div>
+      </div>
+
+      <div class="pbody">
+        <div class="lrow">
+          <div class="lav" style="background:#2563EB">PS</div>
+          <div class="lbody"><div class="lname">Priya Sharma</div><div class="lsub">3BHK · Bandra W · ₹2.4Cr · Insta</div></div>
+          <div class="lright"><div class="ltime">10m ago</div><span class="lbadge bh">Hot</span></div>
+        </div>
+        <div class="lrow">
+          <div class="lav" style="background:#8B5CF6">RJ</div>
+          <div class="lbody"><div class="lname">Rahul Joshi</div><div class="lsub">Villa · Juhu · ₹6.8Cr · Reference</div></div>
+          <div class="lright"><div class="ltime">1h ago</div><span class="lbadge bh">Hot</span></div>
+        </div>
+        <div class="lrow">
+          <div class="lav" style="background:#EF4444">DN</div>
+          <div class="lbody"><div class="lname">Divya Nair</div><div class="lsub">4BHK · Worli · ₹9.5Cr · Insta</div></div>
+          <div class="lright"><div class="ltime">3d ago</div><span class="bo">Overdue</span></div>
+        </div>
+        <div class="lrow">
+          <div class="lav" style="background:#F59E0B">VB</div>
+          <div class="lbody"><div class="lname">Vikram Bose</div><div class="lsub">3BHK · Worli · ₹4.5Cr · FB</div></div>
+          <div class="lright"><div class="ltime">2h ago</div><span class="lbadge bh">Hot</span></div>
+        </div>
+        <div class="lrow">
+          <div class="lav" style="background:#6366F1">AD</div>
+          <div class="lbody"><div class="lname">Amit Desai</div><div class="lsub">Office · BKC · ₹3.2Cr · GDS</div></div>
+          <div class="lright"><div class="ltime">May 21</div><span class="lbadge bw">Warm</span></div>
+        </div>
+        <div class="lrow">
+          <div class="lav" style="background:#10B981">NI</div>
+          <div class="lbody"><div class="lname">Nalini Iyer</div><div class="lsub">2BHK · Powai · ₹82L · Insta</div></div>
+          <div class="lright"><div class="ltime">9:30 AM</div><span class="lbadge bw">Warm</span></div>
+        </div>
+        <div class="lrow">
+          <div class="lav" style="background:#0D9488">GK</div>
+          <div class="lbody"><div class="lname">Geeta Kapoor</div><div class="lsub">Plot · Navi Mumbai · ₹1.8Cr</div></div>
+          <div class="lright"><div class="ltime">May 20</div><span class="lbadge bc2">Cold</span></div>
+        </div>
+        <div class="lrow">
+          <div class="lav" style="background:#F59E0B">FA</div>
+          <div class="lbody"><div class="lname">Farhan Ali</div><div class="lsub">Fractional · Goregaon · ₹45L</div></div>
+          <div class="lright"><div class="ltime">May 21</div><span class="lbadge bw">Warm</span></div>
+        </div>
+        <div class="lrow">
+          <div class="lav" style="background:#EC4899">MP</div>
+          <div class="lbody"><div class="lname">Meera Pillai</div><div class="lsub">2BHK · Andheri E · ₹1.1Cr</div></div>
+          <div class="lright"><div class="ltime">May 19</div><span class="lbadge bh">Hot</span></div>
+        </div>
+      </div>
+
+      <div class="fab" style="background:var(--acc2)"><i class="fa-solid fa-user-plus" style="font-size:15px"></i></div>
+
+      <div class="tabbar">
+        <div class="tab"><i class="fa-solid fa-house"></i><span class="tlbl">Home</span></div>
+        <div class="tab on"><i class="fa-solid fa-users"></i><span class="tbadge">4</span><span class="tlbl">Leads</span></div>
+        <div class="tab"><i class="fa-solid fa-building"></i><span class="tlbl">Properties</span></div>
+        <div class="tab"><i class="fa-regular fa-comment-dots"></i><span class="tbadge">6</span><span class="tlbl">Chat</span></div>
+        <div class="tab"><i class="fa-solid fa-ellipsis"></i><span class="tlbl">More</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PHONE 3: TOUCH POINTS / CHAT ═══ -->
+  <div class="phone-col">
+    <div class="phone-label">Touch Points</div>
+    <div class="phone" style="display:flex;flex-direction:column">
+      <div class="notch"></div>
+
+      <div class="sbar">
+        <span class="stime">9:41</span>
+        <span class="sicons">
+          <i class="fa-solid fa-signal" style="font-size:9px"></i>
+          <i class="fa-solid fa-wifi" style="font-size:9px"></i>
+          <i class="fa-solid fa-battery-full" style="font-size:9px"></i>
+        </span>
+      </div>
+
+      <div class="chat-header">
+        <div class="chat-av">
+          PS
+          <span class="online"></span>
+        </div>
+        <div>
+          <div class="chat-name">Priya Sharma</div>
+          <div class="chat-status">
+            <span style="width:5px;height:5px;background:var(--acc2);border-radius:50%;display:inline-block"></span>
+            Active now
+          </div>
+        </div>
+        <div class="chat-btns">
+          <div class="tibtn"><i class="fa-solid fa-phone"></i></div>
+          <div class="tibtn"><i class="fa-solid fa-video"></i></div>
+          <div class="tibtn"><i class="fa-solid fa-ellipsis-vertical"></i></div>
+        </div>
+      </div>
+
+      <div class="chattabs">
+        <div class="ct on">WhatsApp</div>
+        <div class="ct">Email</div>
+        <div class="ct">Calls</div>
+        <div class="ct">SMS</div>
+        <div class="ct">Chatbot</div>
+      </div>
+
+      <div class="msgs">
+        <div>
+          <div class="bin">Hi, I saw your ad for 3BHK in Bandra. Is it still available?</div>
+          <div class="mtime">May 18, 4:12 PM</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end">
+          <div class="bout">Yes! Great options available. What's your budget range?</div>
+          <div class="mtime r">4:15 PM</div>
+        </div>
+        <div>
+          <div class="bin">Around 2.2–2.5Cr. Ready to move preferred.</div>
+          <div class="mtime">4:18 PM</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end">
+          <div class="bout">Sending shortlist now. Can I call at 10 AM tomorrow?</div>
+          <div class="mtime r">4:20 PM</div>
+        </div>
+        <div>
+          <div class="bin">Yes, 10 AM works! Thank you 🙏</div>
+          <div class="mtime">4:22 PM</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end">
+          <div class="bout">Confirmed! Sending brochures now.</div>
+          <div class="mtime r">4:23 PM</div>
+        </div>
+      </div>
+
+      <!-- Lead context strip -->
+      <div class="ctx-strip">
+        <div class="ctx-hd">Lead Context</div>
+        <div class="ctx-grid">
+          <div class="ctx-cell"><div class="cl">Status</div><div class="cv" style="color:var(--acc4)">Hot</div></div>
+          <div class="ctx-cell"><div class="cl">Budget</div><div class="cv">₹2.2–2.5Cr</div></div>
+          <div class="ctx-cell"><div class="cl">Requirement</div><div class="cv">3BHK Bandra</div></div>
+          <div class="ctx-cell"><div class="cl">Follow-up</div><div class="cv" style="color:var(--acc)">Today 2 PM</div></div>
+        </div>
+        <div class="ctx-btns">
+          <div class="ctxb profile">View Profile</div>
+          <div class="ctxb log">Log Activity</div>
+        </div>
+      </div>
+
+      <div class="compose">
+        <div class="cinput">Message Priya…</div>
+        <div class="catt"><i class="fa-solid fa-paperclip" style="font-size:11px"></i></div>
+        <div class="csend"><i class="fa-solid fa-paper-plane" style="font-size:11px"></i></div>
+      </div>
+
+      <div class="tabbar">
+        <div class="tab"><i class="fa-solid fa-house"></i><span class="tlbl">Home</span></div>
+        <div class="tab"><i class="fa-solid fa-users"></i><span class="tbadge">4</span><span class="tlbl">Leads</span></div>
+        <div class="tab"><i class="fa-solid fa-building"></i><span class="tlbl">Properties</span></div>
+        <div class="tab on"><i class="fa-regular fa-comment-dots"></i><span class="tbadge">6</span><span class="tlbl">Chat</span></div>
+        <div class="tab"><i class="fa-solid fa-ellipsis"></i><span class="tlbl">More</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom nav legend -->
+<div style="margin-top:32px;display:flex;gap:20px;flex-wrap:wrap;justify-content:center">
+  <div style="font-size:10px;color:#475569;display:flex;align-items:center;gap:6px"><i class="fa-solid fa-house" style="color:#64748B"></i> Home — Dashboard overview</div>
+  <div style="font-size:10px;color:#475569;display:flex;align-items:center;gap:6px"><i class="fa-solid fa-users" style="color:#64748B"></i> Leads — All leads + Smart Lists</div>
+  <div style="font-size:10px;color:#475569;display:flex;align-items:center;gap:6px"><i class="fa-solid fa-building" style="color:#64748B"></i> Properties — Listings + Units</div>
+  <div style="font-size:10px;color:#475569;display:flex;align-items:center;gap:6px"><i class="fa-regular fa-comment-dots" style="color:#64748B"></i> Chat — WhatsApp / Email / Calls / SMS</div>
+  <div style="font-size:10px;color:#475569;display:flex;align-items:center;gap:6px"><i class="fa-solid fa-ellipsis" style="color:#64748B"></i> More — Team / Analytics / Social / Settings</div>
+</div>
+
+</body>
+</html>

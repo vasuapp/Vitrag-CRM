@@ -1,0 +1,1790 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    /* Luxury Obsidian & Brushed Gold Variables */
+    --color-bg-base: #0c0b09;
+    --color-bg-surface: rgba(20, 18, 16, 0.7);
+    --color-bg-surface-hover: rgba(30, 27, 24, 0.85);
+    --color-bg-surface-subtle: rgba(16, 14, 12, 0.45);
+    --color-bg-nav: #060505;
+    
+    --color-gold-brass: #c5a867;
+    --color-gold-accent: #b89047;
+    --color-gold-glow: rgba(197, 168, 103, 0.05);
+    --color-gold-border: rgba(197, 168, 103, 0.12);
+    --color-gold-border-bright: rgba(197, 168, 103, 0.28);
+    
+    --color-status-available: #10b981;
+    --color-status-sold: #ef4444;
+    --color-status-hold: #3b82f6;
+    --color-status-ref: #8b5cf6;
+    
+    --color-text-primary: #f5f4f0;
+    --color-text-secondary: #a3a097;
+    --color-text-muted: #6e6b62;
+    
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-title: 'Plus Jakarta Sans', var(--font-sans);
+
+    /* Original Mappings to maintain compatibility */
+    --nav: var(--color-bg-nav);
+    --nav-t: rgba(245, 244, 240, 0.55);
+    --nav-a: #fff;
+    --nav-b: rgba(197, 168, 103, 0.08);
+    --acc: var(--color-gold-brass);
+    --acc2: var(--color-status-available);
+    --acc3: var(--color-gold-accent);
+    --acc4: var(--color-status-sold);
+    --acc5: var(--color-status-ref);
+    --surf: var(--color-bg-surface);
+    --surf2: var(--color-bg-surface-subtle);
+    --bdr: var(--color-gold-border);
+    --bdr2: var(--color-gold-border-bright);
+    --t1: var(--color-text-primary);
+    --t2: var(--color-text-secondary);
+    --r: 10px;
+    --r2: 14px;
+  }
+  
+  body{
+    font-family:var(--font-sans);
+    font-size:13px;
+    background: radial-gradient(circle at 50% 0%, #171512 0%, var(--color-bg-base) 100%);
+    color: var(--t1);
+    min-height: 100vh;
+    padding: 10px;
+  }
+  
+  .shell{
+    display:grid;
+    grid-template-columns:68px 1fr;
+    border-radius:var(--r2);
+    overflow:hidden;
+    border:0.5px solid var(--bdr2);
+    min-height:760px;
+    background: var(--color-bg-base);
+  }
+  
+  /* Narrow icon nav */
+  .sidenav{
+    background:var(--nav);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:24px 0;
+    gap:8px;
+    position:relative;
+    border-right: 0.5px solid var(--bdr);
+  }
+  .sidenav .logo{
+    width:34px;
+    height:34px;
+    background: linear-gradient(135deg, #c5a867 0%, #b89047 100%);
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#0c0b09;
+    font-weight:700;
+    font-size:14px;
+    margin-bottom:20px;
+    flex-shrink:0;
+    font-family: var(--font-title);
+    letter-spacing: 0.05em;
+    box-shadow: 0 4px 12px rgba(197, 168, 103, 0.25);
+  }
+  
+  .ni{
+    width:44px;
+    height:44px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--nav-t);
+    cursor:pointer;
+    transition:all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position:relative;
+  }
+  .ni:hover{
+    background:rgba(197, 168, 103, 0.05);
+    color:var(--nav-a);
+  }
+  .ni.active{
+    background: linear-gradient(135deg, rgba(197, 168, 103, 0.15) 0%, rgba(197, 168, 103, 0.02) 100%);
+    color:#fff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  .ni.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 3px;
+    background: linear-gradient(to bottom, #c5a867, #b89047);
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 0 8px rgba(197, 168, 103, 0.5);
+  }
+  .ni .ti{font-size:19px}
+  .nsep{
+    width:32px;
+    height:1px;
+    background: linear-gradient(90deg, transparent, rgba(197, 168, 103, 0.15) 20%, rgba(197, 168, 103, 0.15) 80%, transparent);
+    margin:10px 0;
+  }
+  .nb{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:8px}
+
+  .main{display:flex;flex-direction:column;background:radial-gradient(circle at 50% 0%, #171512 0%, var(--color-bg-base) 100%)}
+  
+  /* Topbar */
+  .topbar{
+    background:var(--surf);
+    border-bottom:0.5px solid var(--bdr);
+    padding:0 18px;
+    height:54px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-shrink:0;
+    backdrop-filter: blur(12px) saturate(140%);
+  }
+  .bc{font-size:13px;color:var(--t2);font-family:var(--font-title)}
+  .bc span{color:var(--t1);font-weight:600}
+  
+  .tba{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .tbb{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 12px;
+    border-radius:6px;
+    font-size:12px;
+    cursor:pointer;
+    border:0.5px solid var(--bdr);
+    color:var(--t2);
+    font-family: var(--font-title);
+    font-weight: 500;
+    background: transparent;
+    transition: all 0.2s ease;
+  }
+  .tbb:hover{
+    background:var(--surf2);
+    border-color: var(--bdr2);
+    color: var(--t1);
+  }
+  .tbb.pri{
+    background: linear-gradient(135deg, #c5a867 0%, #b89047 100%);
+    color:#0c0b09;
+    border-color: transparent;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(197, 168, 103, 0.2);
+  }
+  .tbb.pri:hover {
+    filter: brightness(1.1);
+  }
+  
+  /* Page tabs */
+  .page-tabs{
+    background:var(--surf);
+    border-bottom:0.5px solid var(--bdr);
+    display:flex;
+    padding:0 16px;
+    gap:4px;
+    backdrop-filter: blur(12px) saturate(140%);
+  }
+  .ptab{
+    padding:14px 16px;
+    font-size:12px;
+    color:var(--t2);
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    white-space:nowrap;
+    font-family: var(--font-title);
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .ptab:hover {
+    color: var(--t1);
+  }
+  .ptab.active{
+    color:var(--acc);
+    border-bottom-color:var(--acc);
+    font-weight:600;
+  }
+  
+  .content{
+    padding:16px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    overflow:auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(197, 168, 103, 0.2) transparent;
+  }
+  .content::-webkit-scrollbar {
+    width: 6px;
+  }
+  .content::-webkit-scrollbar-thumb {
+    background: rgba(197, 168, 103, 0.2);
+    border-radius: 4px;
+  }
+  
+  .panel{
+    background:var(--surf);
+    border:0.5px solid var(--bdr);
+    border-radius:var(--r2);
+    overflow:hidden;
+    backdrop-filter: blur(12px) saturate(140%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+  .ph{
+    padding:12px 16px;
+    border-bottom:0.5px solid var(--bdr);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background: rgba(197, 168, 103, 0.02);
+  }
+  .pt{
+    font-size:13px;
+    font-weight:600;
+    color:var(--t1);
+    flex:1;
+    font-family: var(--font-title);
+    letter-spacing: 0.02em;
+  }
+  .pa{
+    font-size:11px;
+    color:var(--acc);
+    cursor:pointer;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  .pa:hover {
+    color: var(--color-gold-accent);
+  }
+  .tag{
+    font-size:9px;
+    padding:2px 7px;
+    border-radius:4px;
+    font-weight:600;
+    font-family: var(--font-title);
+  }
+
+  /* KPI strip */
+  .kpi-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+  .kpi{
+    background:var(--surf);
+    border:0.5px solid var(--bdr);
+    border-radius:var(--r);
+    padding:14px;
+    backdrop-filter: blur(12px) saturate(140%);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: all 0.25s ease;
+  }
+  .kpi:hover {
+    transform: translateY(-2px);
+    border-color: var(--bdr2);
+    box-shadow: 0 6px 20px rgba(197, 168, 103, 0.05);
+  }
+  .kpi-label{
+    font-size:10px;
+    color:var(--t2);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin-bottom:6px;
+    font-family: var(--font-title);
+    font-weight: 500;
+  }
+  .kpi-val{
+    font-size:22px;
+    font-weight:600;
+    color:var(--t1);
+    line-height:1.1;
+    font-family: var(--font-title);
+  }
+  .kpi-sub{
+    font-size:10px;
+    margin-top:4px;
+    font-weight: 500;
+  }
+  .up{color:var(--color-status-available)}
+  .dn{color:var(--color-status-sold)}
+
+  /* Chart grid */
+  .chart-row{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+  .chart-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+  /* Bar chart */
+  .bar-chart{padding:16px 18px 12px}
+  .bar-labels{display:flex;justify-content:space-between;margin-bottom:12px}
+  .bar-label{font-size:10px;color:var(--t2);font-weight:500}
+  .bars-wrap{
+    display:flex;
+    align-items:flex-end;
+    gap:8px;
+    height:100px;
+    border-bottom:0.5px solid var(--bdr);
+    padding-bottom:0;
+  }
+  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .bar{
+    width:100%;
+    border-radius:3px 3px 0 0;
+    min-height:4px;
+    cursor:pointer;
+    transition: all 0.2s ease;
+  }
+  .bar:hover{filter:brightness(1.25);transform:scaleY(1.03)}
+  .bar-month{font-size:9px;color:var(--t2);margin-top:6px;text-align:center;font-weight:500}
+  .legend-row{display:flex;gap:16px;margin-top:12px;flex-wrap:wrap}
+  .leg{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t2)}
+  .leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+  /* Funnel */
+  .funnel-wrap{padding:16px 18px}
+  .funnel-step{margin-bottom:8px}
+  .funnel-step:last-child {margin-bottom:0}
+  .fs-top{display:flex;justify-content:space-between;margin-bottom:4px}
+  .fs-label{font-size:11px;color:var(--t1);font-weight:500}
+  .fs-val{font-size:11px;font-weight:600;color:var(--t1)}
+  .fs-pct{font-size:10px;color:var(--t2);margin-left:4px}
+  .fs-bar{
+    height:22px;
+    border-radius:4px;
+    display:flex;
+    align-items:center;
+    padding:0 10px;
+    font-size:10px;
+    color:#0c0b09;
+    font-weight:600;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+
+  /* Source breakdown table */
+  .src-table{width:100%;border-collapse:collapse}
+  .src-table th{
+    font-size:10px;
+    color:var(--t2);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    padding:10px 14px;
+    text-align:left;
+    font-weight:600;
+    border-bottom:0.5px solid var(--bdr);
+    background: rgba(197, 168, 103, 0.02);
+    font-family: var(--font-title);
+  }
+  .src-table td{
+    font-size:11px;
+    padding:10px 14px;
+    border-bottom:0.5px solid var(--bdr);
+    color:var(--t1);
+    vertical-align:middle;
+  }
+  .src-table tr:last-child td{border-bottom:none}
+  .src-table tr:hover td{background:rgba(197, 168, 103, 0.02)}
+  .src-bar{height:4px;border-radius:2px;background:var(--bdr);overflow:hidden;margin-top:4px}
+  .src-fill{height:4px;border-radius:2px}
+
+  /* Heatmap */
+  .heatmap-wrap{padding:14px 16px}
+  .hmap-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+  .hmap-label-row{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px}
+  .hmap-day-label{font-size:10px;color:var(--t2);text-align:center;font-weight:600;font-family:var(--font-title)}
+  .hmap-cell{height:18px;border-radius:3px;cursor:pointer;position:relative;transition: transform 0.1s}
+  .hmap-cell:hover {transform: scale(1.1); z-index: 2}
+  .hmap-cell:hover::after{
+    content:attr(data-tip);
+    position:absolute;
+    bottom:calc(100% + 6px);
+    left:50%;
+    transform:translateX(-50%);
+    background:#12100e;
+    border: 0.5px solid var(--bdr2);
+    color:var(--t1);
+    font-size:9px;
+    padding:4px 8px;
+    border-radius:4px;
+    white-space:nowrap;
+    z-index:10;
+    pointer-events:none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  }
+
+  /* Campaign table */
+  .camp-table{width:100%;border-collapse:collapse}
+  .camp-table th{
+    font-size:10px;
+    color:var(--t2);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    padding:10px 14px;
+    text-align:left;
+    font-weight:600;
+    border-bottom:0.5px solid var(--bdr);
+    background: rgba(197, 168, 103, 0.02);
+    font-family: var(--font-title);
+  }
+  .camp-table td{
+    font-size:11px;
+    padding:10px 14px;
+    border-bottom:0.5px solid var(--bdr);
+    color:var(--t1);
+    vertical-align:middle;
+  }
+  .camp-table tr:last-child td{border-bottom:none}
+  .camp-table tr:hover td{background:rgba(197, 168, 103, 0.02)}
+  .status-dot{
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    display:inline-block;
+    margin-right:5px;
+    box-shadow: 0 0 6px currentColor;
+  }
+  .pill{
+    font-size:9px;
+    padding:2px 6px;
+    border-radius:10px;
+    font-weight:600;
+    font-family: var(--font-title);
+    border: 0.5px solid transparent;
+  }
+  .pill-live{
+    background:rgba(16, 185, 129, 0.15);
+    color:#6EE7B7;
+    border-color: rgba(16, 185, 129, 0.25);
+  }
+  .pill-end{
+    background:rgba(110, 107, 98, 0.15);
+    color:var(--t2);
+    border-color: var(--bdr);
+  }
+  .pill-sched{
+    background:rgba(184, 144, 71, 0.15);
+    color:#FDE047;
+    border-color: rgba(184, 144, 71, 0.25);
+  }
+  .cpm-bar{height:4px;border-radius:2px;background:var(--bdr);overflow:hidden;margin-top:4px}
+  .cpm-fill{height:4px;border-radius:2px;background:var(--acc)}
+
+  /* Date filter */
+  .date-filter{display:flex;gap:4px}
+  .df-btn{
+    padding:5px 12px;
+    border-radius:5px;
+    font-size:11px;
+    cursor:pointer;
+    border:0.5px solid var(--bdr);
+    color:var(--t2);
+    font-family: var(--font-title);
+    font-weight: 500;
+    background: transparent;
+    transition: all 0.2s ease;
+  }
+  .df-btn:hover{background:var(--surf2);color:var(--t1)}
+  .df-btn.active{
+    background: linear-gradient(135deg, #c5a867 0%, #b89047 100%);
+    color:#0c0b09;
+    border-color: transparent;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(197, 168, 103, 0.25);
+  }
+
+  /* MODAL OVERLAYS (Brushed Gold / Obsidian glassmorphism) */
+  .mbg {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(12, 11, 9, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity 0.25s ease;
+  }
+  .mbg.hidden {
+    display: none !important;
+    opacity: 0;
+  }
+  .modal {
+    background: radial-gradient(circle at 50% 0%, #1c1a16 0%, #0e0d0b 100%);
+    border: 0.5px solid var(--bdr2);
+    border-radius: var(--r2);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    width: 100%;
+    margin: 15px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .mhd {
+    padding: 14px 18px;
+    border-bottom: 0.5px solid var(--bdr);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(197, 168, 103, 0.02);
+  }
+  .mtitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--t1);
+    font-family: var(--font-title);
+    letter-spacing: 0.02em;
+  }
+  .mclose {
+    background: transparent;
+    border: none;
+    color: var(--t2);
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+  }
+  .mclose:hover {
+    color: var(--t1);
+  }
+  .mbdy {
+    padding: 18px;
+    overflow-y: auto;
+    max-height: 70vh;
+  }
+  .mft {
+    padding: 12px 18px;
+    border-top: 0.5px solid var(--bdr);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    background: rgba(16, 14, 12, 0.3);
+  }
+
+  /* Form Elements inside Modals */
+  .form-group {
+    margin-bottom: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .form-group.hidden {
+    display: none !important;
+  }
+  .form-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--t2);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .form-input, .form-select {
+    background: rgba(16, 14, 12, 0.6);
+    border: 0.5px solid var(--bdr);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--t1);
+    font-size: 12px;
+    font-family: var(--font-sans);
+    transition: all 0.2s ease;
+  }
+  .form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: var(--acc);
+    box-shadow: 0 0 8px rgba(197, 168, 103, 0.15);
+    background: rgba(30, 27, 24, 0.8);
+  }
+  .form-select option {
+    background: #12100e;
+    color: var(--t1);
+  }
+  .form-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--t1);
+    cursor: pointer;
+    user-select: none;
+    padding: 4px 0;
+  }
+  .form-checkbox {
+    accent-color: var(--acc);
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+  }
+
+  /* Buttons */
+  .btn {
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 0.5px solid transparent;
+    font-family: var(--font-title);
+  }
+  .btn-ghost {
+    background: transparent;
+    border-color: var(--bdr);
+    color: var(--t2);
+  }
+  .btn-ghost:hover {
+    background: var(--surf2);
+    border-color: var(--bdr2);
+    color: var(--t1);
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #c5a867 0%, #b89047 100%);
+    color: #0c0b09;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(197, 168, 103, 0.15);
+  }
+  .btn-primary:hover {
+    filter: brightness(1.1);
+  }
+
+  /* Sheet Blueprint Layouts */
+  .blueprint-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 0.5px solid var(--bdr);
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+  }
+  .blueprint-title-block {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .blueprint-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--t1);
+    font-family: var(--font-title);
+    letter-spacing: 0.02em;
+  }
+  .blueprint-desc {
+    font-size: 11px;
+    color: var(--t2);
+  }
+  
+  .sheet-tabs {
+    display: flex;
+    background: var(--surf2);
+    border: 0.5px solid var(--bdr);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .sheet-tab {
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--t2);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--font-title);
+  }
+  .sheet-tab:hover {
+    color: var(--t1);
+  }
+  .sheet-tab.active {
+    background: rgba(197, 168, 103, 0.12);
+    color: var(--acc);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  }
+
+  .sheet-col-section {
+    background: rgba(20, 18, 16, 0.35);
+    border: 0.5px solid var(--bdr);
+    border-radius: var(--r2);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .sheet-col-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--t1);
+    font-family: var(--font-title);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .sheet-cols-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+  }
+  
+  .sheet-col-card {
+    background: var(--surf);
+    border: 0.5px solid var(--bdr);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    position: relative;
+    transition: all 0.2s ease;
+  }
+  .sheet-col-card:hover {
+    border-color: var(--bdr2);
+    background: var(--color-bg-surface-hover);
+  }
+  .sheet-col-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .sheet-col-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--t1);
+    font-family: var(--font-title);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sheet-col-badge {
+    font-size: 8.5px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-family: var(--font-title);
+  }
+  .badge-required {
+    background: rgba(239, 68, 68, 0.12);
+    color: #fca5a5;
+    border: 0.5px solid rgba(239, 68, 68, 0.2);
+  }
+  .badge-auto {
+    background: rgba(16, 185, 129, 0.12);
+    color: #6ee7b7;
+    border: 0.5px solid rgba(16, 185, 129, 0.2);
+  }
+  .badge-optional {
+    background: rgba(110, 107, 98, 0.12);
+    color: var(--t2);
+    border: 0.5px solid var(--bdr);
+  }
+  .badge-readonly {
+    background: rgba(139, 92, 246, 0.12);
+    color: #c084fc;
+    border: 0.5px solid rgba(139, 92, 246, 0.2);
+  }
+
+  .sheet-col-details {
+    font-size: 10.5px;
+    color: var(--t2);
+    line-height: 1.3;
+  }
+  .sheet-col-rules {
+    font-size: 9.5px;
+    color: var(--acc);
+    font-family: var(--font-sans);
+    margin-top: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  
+  .sheet-col-actions {
+    display: flex;
+    gap: 4px;
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .sheet-col-card:hover .sheet-col-actions {
+    opacity: 1;
+  }
+  .sheet-action-btn {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--t2);
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.2s ease;
+  }
+  .sheet-action-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--t1);
+  }
+  .sheet-action-btn.delete:hover {
+    color: var(--color-status-sold);
+    background: rgba(239, 68, 68, 0.1);
+  }
+  
+  .col-add-card {
+    border-style: dashed;
+    border-color: rgba(197, 168, 103, 0.3);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 24px 12px;
+    color: var(--acc);
+    font-family: var(--font-title);
+    font-weight: 600;
+    font-size: 12px;
+    gap: 6px;
+    display: flex;
+    flex-direction: row;
+    transition: all 0.2s ease;
+  }
+  .col-add-card:hover {
+    border-color: var(--acc);
+    background: rgba(197, 168, 103, 0.03);
+    color: var(--color-gold-accent);
+  }
+
+  /* Info Banners */
+  .info-banner {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    line-height: 1.4;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--font-sans);
+    margin-top: 10px;
+  }
+  .info-green {
+    background: rgba(16, 185, 129, 0.08);
+    border: 0.5px solid rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+  }
+  .info-amber {
+    background: rgba(245, 158, 11, 0.08);
+    border: 0.5px solid rgba(245, 158, 11, 0.2);
+    color: #fde047;
+  }
+
+  /* Toast notification */
+  .toast-alert {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #0e0d0b;
+    border: 0.5px solid var(--bdr2);
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: var(--t1);
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+  }
+  .toast-alert.show {
+    transform: translateY(0);
+    opacity: 1;
+  }
+</style>
+
+<div class="shell">
+  <!-- Sidenav -->
+  <nav class="sidenav" aria-label="Main navigation">
+    <div class="logo">V</div>
+    <div class="ni" title="Dashboard"><i class="ti ti-layout-dashboard"></i></div>
+    <div class="ni" title="Leads"><i class="ti ti-users"></i></div>
+    <div class="ni" title="Listings"><i class="ti ti-building"></i></div>
+    <div class="ni" title="Finance"><i class="ti ti-receipt"></i></div>
+    <div class="nsep"></div>
+    <div class="ni" title="Team"><i class="ti ti-briefcase"></i></div>
+    <div class="ni" title="Builder"><i class="ti ti-hammer"></i></div>
+    <div class="ni" title="Documents"><i class="ti ti-file-description"></i></div>
+    <div class="ni active" title="Analytics"><i class="ti ti-chart-bar"></i></div>
+    <div class="nsep"></div>
+    <div class="ni" title="Smart Lists"><i class="ti ti-list-search"></i></div>
+    <div class="ni" title="Social"><i class="ti ti-share"></i></div>
+    <div class="ni" title="Settings"><i class="ti ti-settings"></i></div>
+    <div class="nb">
+      <div class="ni" title="Notifications"><i class="ti ti-bell"></i></div>
+      <div class="ni" title="My Profile"><i class="ti ti-user-circle"></i></div>
+    </div>
+  </nav>
+
+  <div class="main">
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="bc"><span>Analytics &amp; Reporting</span></div>
+      <div class="date-filter">
+        <div class="df-btn">7d</div>
+        <div class="df-btn active">30d</div>
+        <div class="df-btn">90d</div>
+        <div class="df-btn">YTD</div>
+        <div class="df-btn">Custom</div>
+      </div>
+      <div class="tba">
+        <div class="tbb"><i class="ti ti-download" style="font-size:13px"></i> Export PDF</div>
+        <div class="tbb pri"><i class="ti ti-share" style="font-size:13px"></i> Share Report</div>
+      </div>
+    </header>
+
+    <!-- Page Tabs -->
+    <div class="page-tabs">
+      <div class="ptab active">Overview</div>
+      <div class="ptab">Lead Analytics</div>
+      <div class="ptab">Revenue</div>
+      <div class="ptab">Campaign ROI</div>
+      <div class="ptab">Team Performance</div>
+      <div class="ptab">Escalation Matrix</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+
+      <!-- KPI strip -->
+      <div class="kpi-strip">
+        <div class="kpi"><div class="kpi-label">Total Leads</div><div class="kpi-val">287</div><div class="kpi-sub up">↑ 22% vs last month</div></div>
+        <div class="kpi"><div class="kpi-label">Conversions</div><div class="kpi-val">19</div><div class="kpi-sub up">↑ 6.6% rate</div></div>
+        <div class="kpi"><div class="kpi-label">Revenue</div><div class="kpi-val">₹4.2Cr</div><div class="kpi-sub up">↑ 12%</div></div>
+        <div class="kpi"><div class="kpi-label">Site Visits</div><div class="kpi-val">68</div><div class="kpi-sub up">↑ 8 this week</div></div>
+        <div class="kpi"><div class="kpi-label">Avg. Response</div><div class="kpi-val">4.2m</div><div class="kpi-sub dn">↑ 1.1m slower</div></div>
+        <div class="kpi"><div class="kpi-label">Campaigns Live</div><div class="kpi-val">6</div><div class="kpi-sub" style="color:var(--t2)">₹1.8L spend</div></div>
+      </div>
+
+      <!-- Revenue bar + Funnel -->
+      <div class="chart-row">
+        <div class="panel">
+          <div class="ph">
+            <i class="ti ti-chart-bar" style="font-size:14px;color:var(--t2)"></i>
+            <span class="pt">Revenue &amp; Leads — Monthly</span>
+            <span class="pa">Breakdown ›</span>
+          </div>
+          <div class="bar-chart">
+            <div class="bars-wrap">
+              <div class="bar-col"><div class="bar" style="height:38%;background:rgba(197, 168, 103, 0.25)" title="Jan"></div><div class="bar-month">Jan</div></div>
+              <div class="bar-col"><div class="bar" style="height:52%;background:rgba(197, 168, 103, 0.45)"></div><div class="bar-month">Feb</div></div>
+              <div class="bar-col"><div class="bar" style="height:44%;background:rgba(197, 168, 103, 0.35)"></div><div class="bar-month">Mar</div></div>
+              <div class="bar-col"><div class="bar" style="height:61%;background:rgba(197, 168, 103, 0.65)"></div><div class="bar-month">Apr</div></div>
+              <div class="bar-col"><div class="bar" style="height:55%;background:rgba(197, 168, 103, 0.55)"></div><div class="bar-month">May'25</div></div>
+              <div class="bar-col"><div class="bar" style="height:48%;background:rgba(197, 168, 103, 0.45)"></div><div class="bar-month">Jun</div></div>
+              <div class="bar-col"><div class="bar" style="height:70%;background:rgba(197, 168, 103, 0.75)"></div><div class="bar-month">Jul</div></div>
+              <div class="bar-col"><div class="bar" style="height:64%;background:rgba(197, 168, 103, 0.65)"></div><div class="bar-month">Aug</div></div>
+              <div class="bar-col"><div class="bar" style="height:75%;background:rgba(197, 168, 103, 0.85)"></div><div class="bar-month">Sep</div></div>
+              <div class="bar-col"><div class="bar" style="height:58%;background:rgba(197, 168, 103, 0.55)"></div><div class="bar-month">Oct</div></div>
+              <div class="bar-col"><div class="bar" style="height:82%;background:rgba(197, 168, 103, 0.85)"></div><div class="bar-month">Nov</div></div>
+              <div class="bar-col"><div class="bar" style="height:68%;background:rgba(197, 168, 103, 0.65)"></div><div class="bar-month">Dec</div></div>
+              <div class="bar-col"><div class="bar" style="height:79%;background:rgba(197, 168, 103, 0.85)"></div><div class="bar-month">Jan'26</div></div>
+              <div class="bar-col"><div class="bar" style="height:85%;background:var(--color-gold-accent)"></div><div class="bar-month">Feb</div></div>
+              <div class="bar-col"><div class="bar" style="height:90%;background:var(--color-gold-brass)"></div><div class="bar-month">Mar</div></div>
+              <div class="bar-col"><div class="bar" style="height:78%;background:var(--color-gold-accent)"></div><div class="bar-month">Apr</div></div>
+              <div class="bar-col"><div class="bar" style="height:100%;background:var(--color-gold-brass)"></div><div class="bar-month">May</div></div>
+            </div>
+            <div class="legend-row">
+              <div class="leg"><div class="leg-dot" style="background:var(--acc)"></div>Revenue (₹Cr)</div>
+              <div class="leg"><div class="leg-dot" style="background:rgba(197, 168, 103, 0.45)"></div>Leads (count)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Conversion funnel -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-filter" style="font-size:14px;color:var(--t2)"></i><span class="pt">Conversion Funnel</span></div>
+          <div class="funnel-wrap">
+            <div class="funnel-step">
+              <div class="fs-top"><span class="fs-label">Enquiries</span><div><span class="fs-val">287</span> <span class="fs-pct">100%</span></div></div>
+              <div class="fs-bar" style="width:100%;background:var(--color-gold-brass)">287</div>
+            </div>
+            <div class="funnel-step">
+              <div class="fs-top"><span class="fs-label">Contacted</span><div><span class="fs-val">214</span> <span class="fs-pct">74.6%</span></div></div>
+              <div class="fs-bar" style="width:74.6%;background:var(--color-gold-accent)">214</div>
+            </div>
+            <div class="funnel-step">
+              <div class="fs-top"><span class="fs-label">In Process</span><div><span class="fs-val">118</span> <span class="fs-pct">41.1%</span></div></div>
+              <div class="fs-bar" style="width:41.1%;background:rgba(197, 168, 103, 0.75)">118</div>
+            </div>
+            <div class="funnel-step">
+              <div class="fs-top"><span class="fs-label">Site Visit</span><div><span class="fs-val">68</span> <span class="fs-pct">23.7%</span></div></div>
+              <div class="fs-bar" style="width:23.7%;background:rgba(197, 168, 103, 0.55)">68</div>
+            </div>
+            <div class="funnel-step">
+              <div class="fs-top"><span class="fs-label">Negotiation</span><div><span class="fs-val">31</span> <span class="fs-pct">10.8%</span></div></div>
+              <div class="fs-bar" style="width:10.8%;background:rgba(197, 168, 103, 0.35)">31</div>
+            </div>
+            <div class="funnel-step">
+              <div class="fs-top"><span class="fs-label">Converted</span><div><span class="fs-val">19</span> <span class="fs-pct">6.6%</span></div></div>
+              <div class="fs-bar" style="width:6.6%;background:var(--color-status-available)">19</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Source table + Heatmap + Campaign -->
+      <div class="chart-row-3">
+
+        <!-- Lead source breakdown -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-chart-pie" style="font-size:14px;color:var(--t2)"></i><span class="pt">Source Breakdown</span></div>
+          <table class="src-table">
+            <thead><tr><th>Source</th><th>Leads</th><th>Conv.</th><th>Cost/Lead</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:#c5a867;display:inline-block;box-shadow: 0 0 6px #c5a867"></span>Facebook</span></td>
+                <td><div>86</div><div class="src-bar"><div class="src-fill" style="width:100%;background:#c5a867"></div></div></td>
+                <td style="color:var(--acc2);font-weight:600">8</td>
+                <td style="color:var(--t2)">₹420</td>
+              </tr>
+              <tr>
+                <td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:#b89047;display:inline-block;box-shadow: 0 0 6px #b89047"></span>Instagram</span></td>
+                <td><div>74</div><div class="src-bar"><div class="src-fill" style="width:86%;background:#b89047"></div></div></td>
+                <td style="color:var(--acc2);font-weight:600">5</td>
+                <td style="color:var(--t2)">₹380</td>
+              </tr>
+              <tr>
+                <td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:#10b981;display:inline-block;box-shadow: 0 0 6px #10b981"></span>Website</span></td>
+                <td><div>52</div><div class="src-bar"><div class="src-fill" style="width:60%;background:#10b981"></div></div></td>
+                <td style="color:var(--acc2);font-weight:600">4</td>
+                <td style="color:var(--t2)">₹180</td>
+              </tr>
+              <tr>
+                <td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:#8b5cf6;display:inline-block;box-shadow: 0 0 6px #8b5cf6"></span>Reference</span></td>
+                <td><div>38</div><div class="src-bar"><div class="src-fill" style="width:44%;background:#8b5cf6"></div></div></td>
+                <td style="color:var(--acc2);font-weight:600">2</td>
+                <td style="color:var(--t2)">₹0</td>
+              </tr>
+              <tr>
+                <td><span style="display:inline-flex;align-items:center;gap:5px"><span style="width:7px;height:7px;border-radius:50%;background:rgba(197, 168, 103, 0.4);display:inline-block;box-shadow: 0 0 6px rgba(197, 168, 103, 0.4)"></span>Google Ads</span></td>
+                <td><div>37</div><div class="src-bar"><div class="src-fill" style="width:43%;background:rgba(197, 168, 103, 0.4)"></div></div></td>
+                <td style="color:var(--acc2);font-weight:600">0</td>
+                <td style="color:var(--t2)">₹610</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Activity heatmap -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-calendar-stats" style="font-size:14px;color:var(--t2)"></i><span class="pt">Activity Heatmap</span><span style="font-size:10px;color:var(--t2);margin-left:auto">May 2026</span></div>
+          <div class="heatmap-wrap">
+            <div class="hmap-label-row">
+              <div class="hmap-day-label">S</div><div class="hmap-day-label">M</div><div class="hmap-day-label">T</div><div class="hmap-day-label">W</div><div class="hmap-day-label">T</div><div class="hmap-day-label">F</div><div class="hmap-day-label">S</div>
+            </div>
+            <div class="hmap-grid">
+              <!-- Week 1 -->
+              <div class="hmap-cell" style="background:var(--surf2)" data-tip="0 activities"></div>
+              <div class="hmap-cell" style="background:rgba(197, 168, 103, 0.25)" data-tip="3 activities"></div>
+              <div class="hmap-cell" style="background:rgba(197, 168, 103, 0.45)" data-tip="6 activities"></div>
+              <div class="hmap-cell" style="background:rgba(197, 168, 103, 0.65)" data-tip="9 activities"></div>
+              <div class="hmap-cell" style="background:rgba(197, 168, 103, 0.85)" data-tip="12 activities"></div>
+              <div class="hmap-cell" style="background:var(--color-gold-accent)" data-tip="15 activities"></div>
+              <div class="hmap-cell" style="background:var(--surf2)" data-tip="0 activities"></div>
+              <!-- Week 2 -->
+              <div class="hmap-cell" style="background:var(--surf2)" data-tip="0 activities"></div>
+              <div class="hmap-cell" style="background:var(--color-gold-brass)" data-tip="18 activities"></div>
+              <div class="hmap-cell" style="background:var(--color-gold-accent)" data-tip="14 activities"></div>
+              <div class="hmap-cell" style="background:rgba(197, 168, 103, 0.65)" data-tip="8 activities"></div>
+              <div class="hmap-cell" style="background:rgba(197, 168, 103, 0.45)" data-tip="5 activities"></div>
+              <div class="hmap-cell" style="background:rgba(197, 168, 103, 0.85)" data-tip="11 activities"></div>
+              <div class="hmap-cell" style="background:var(--surf2)" data-tip="1 activity"></div>
+              <!-- Week 3 -->
+              <div class="hmap-cell" style="background:var(--surf2)" data-tip="0 activities"></div>
+              <div class="hmap-cell" style="background:rgba(197, 168, 103, 0.25)" data-tip="2 activities"></div>
+              <div class="hmap-cell" style="background:rgba(197, 168, 103, 0.85)" data-tip="10 activities"></div>
+              <div class="hmap-cell" style="background:var(--color-gold-brass)" data-tip="19 activities"></div>
+              <div class="hmap-cell" style="background:var(--color-gold-accent)" data-tip="16 activities"></div>
+              <div class="hmap-cell" style="background:rgba(197, 168, 103, 0.65)" data-tip="9 activities"></div>
+              <div class="hmap-cell" style="background:var(--surf2)" data-tip="0 activities"></div>
+              <!-- Week 4 -->
+              <div class="hmap-cell" style="background:var(--surf2)" data-tip="0 activities"></div>
+              <div class="hmap-cell" style="background:var(--color-gold-accent)" data-tip="13 activities"></div>
+              <div class="hmap-cell" style="background:var(--color-gold-brass)" data-tip="17 activities"></div>
+              <div class="hmap-cell" style="background:rgba(197, 168, 103, 0.85)" data-tip="11 activities"></div>
+              <div class="hmap-cell" style="background:rgba(197, 168, 103, 0.45)" data-tip="7 activities"></div>
+              <div class="hmap-cell" style="background:var(--color-gold-brass)" data-tip="Today · 22"></div>
+              <div class="hmap-cell" style="background:var(--surf2)" data-tip="—"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;margin-top:8px;font-size:9px;color:var(--t2)">
+              Less <div style="display:flex;gap:2px">
+                <div style="width:10px;height:10px;border-radius:2px;background:var(--surf2)"></div>
+                <div style="width:10px;height:10px;border-radius:2px;background:rgba(197, 168, 103, 0.25)"></div>
+                <div style="width:10px;height:10px;border-radius:2px;background:rgba(197, 168, 103, 0.65)"></div>
+                <div style="width:10px;height:10px;border-radius:2px;background:var(--color-gold-accent)"></div>
+                <div style="width:10px;height:10px;border-radius:2px;background:var(--color-gold-brass)"></div>
+              </div> More
+            </div>
+          </div>
+        </div>
+
+        <!-- Campaign ROI -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-speakerphone" style="font-size:14px;color:var(--t2)"></i><span class="pt">Campaigns</span><span class="pa">Manage ›</span></div>
+          <table class="camp-table">
+            <thead><tr><th>Campaign</th><th>Leads</th><th>Spend</th><th>ROI</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <span class="status-dot" style="color:#10b981;background:#10b981"></span>
+                    <div>
+                      <div style="font-size:11px;font-weight:600">FB — Lodha 3BHK</div>
+                      <span class="pill pill-live">Live</span>
+                    </div>
+                  </div>
+                </td>
+                <td><div>42</div><div class="cpm-bar"><div class="cpm-fill" style="width:100%;background:var(--acc)"></div></div></td>
+                <td style="color:var(--t2)">₹42K</td>
+                <td style="color:var(--acc2);font-weight:600">4.8×</td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <span class="status-dot" style="color:#10b981;background:#10b981"></span>
+                    <div>
+                      <div style="font-size:11px;font-weight:600">Insta — Bandra Reel</div>
+                      <span class="pill pill-live">Live</span>
+                    </div>
+                  </div>
+                </td>
+                <td><div>31</div><div class="cpm-bar"><div class="cpm-fill" style="width:74%;background:var(--acc)"></div></div></td>
+                <td style="color:var(--t2)">₹28K</td>
+                <td style="color:var(--acc2);font-weight:600">3.2×</td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <span class="status-dot" style="color:#F59E0B;background:#F59E0B"></span>
+                    <div>
+                      <div style="font-size:11px;font-weight:600">GDS — Commercial</div>
+                      <span class="pill pill-sched">Scheduled</span>
+                    </div>
+                  </div>
+                </td>
+                <td><div>0</div><div class="cpm-bar"><div class="cpm-fill" style="width:0%;background:var(--acc)"></div></div></td>
+                <td style="color:var(--t2)">₹0</td>
+                <td style="color:var(--t2)">—</td>
+              </tr>
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <span class="status-dot" style="color:#9CA3AF;background:#9CA3AF"></span>
+                    <div>
+                      <div style="font-size:11px;font-weight:600">FB — Worli Luxury</div>
+                      <span class="pill pill-end">Ended</span>
+                    </div>
+                  </div>
+                </td>
+                <td><div>19</div><div class="cpm-bar"><div class="cpm-fill" style="width:45%;background:var(--acc)"></div></div></td>
+                <td style="color:var(--t2)">₹38K</td>
+                <td style="color:var(--acc3);font-weight:600">1.9×</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ================= SHEET BLUEPRINT MODALS & SCRIPT ENGINE ================= -->
+<div class="mbg hidden" id="modal-blueprint-field">
+  <div class="modal" style="max-width: 440px;">
+    <div class="mhd">
+      <div class="mtitle" id="blueprint-field-modal-title">➕ Add Custom Column</div>
+      <button class="mclose" onclick="closeBlueprintModal()">&times;</button>
+    </div>
+    <form onsubmit="handleBlueprintFormSubmit(event)">
+      <div class="mbdy">
+        <input type="hidden" id="field-edit-index">
+        <div class="form-group">
+          <label class="form-label">Column Label Name</label>
+          <input type="text" class="form-input" id="field-label" required placeholder="e.g. GST Number" oninput="autoPopulateKey(this.value)">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Database Column Key</label>
+          <input type="text" class="form-input" id="field-key" required placeholder="e.g. gst_number" pattern="[a-z0-9_]+">
+          <span style="font-size: 10px; color: var(--t2);">Lowercase letters, numbers, and underscores only.</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Column Data Type</label>
+          <select class="form-select" id="field-type" required onchange="handleModalFieldTypeChange(this.value)">
+            <option value="text">Text Input</option>
+            <option value="number">Number</option>
+            <option value="select">Dropdown Options</option>
+            <option value="boolean">Boolean Toggle (Yes/No)</option>
+            <option value="textarea">Multiline Description</option>
+          </select>
+        </div>
+        
+        <!-- Dropdown Options Choice list -->
+        <div class="form-group hidden" id="field-options-group">
+          <label class="form-label">Dropdown Choices (Comma separated list)</label>
+          <input type="text" class="form-input" id="field-options" placeholder="e.g. Option A, Option B, Option C">
+        </div>
+
+        <!-- Customizable Validation Rules Section -->
+        <div style="margin-top: 15px; border-top: 0.5px solid var(--bdr); padding-top: 12px;">
+          <div style="font-size: 11px; font-weight: 700; color: var(--t1); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em;">Customizable Table Rules</div>
+          
+          <div class="form-group">
+            <label class="form-checkbox-label">
+              <input type="checkbox" class="form-checkbox" id="rule-mandatory">
+              <span>Mandatory (Required Field)</span>
+            </label>
+          </div>
+
+          <!-- Validation Constraints for Numbers -->
+          <div class="form-group hidden" id="rule-range-group">
+            <label class="form-label">Min / Max Constraint Range</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="number" class="form-input" id="rule-min" placeholder="Min" style="flex: 1;">
+              <input type="number" class="form-input" id="rule-max" placeholder="Max" style="flex: 1;">
+            </div>
+          </div>
+
+          <!-- Regex Pattern Validation for advanced rules -->
+          <div class="form-group" id="rule-regex-group">
+            <label class="form-label">Custom RegEx Pattern (Input Validator)</label>
+            <input type="text" class="form-input" id="rule-regex" placeholder="e.g. ^[0-9]{10}$ for 10-digit number">
+            <span style="font-size: 10px; color: var(--t2);">Enforces specific string matching rules.</span>
+          </div>
+        </div>
+      </div>
+      <div class="mft">
+        <button class="btn btn-ghost" type="button" onclick="closeBlueprintModal()">Cancel</button>
+        <button class="btn btn-primary" type="submit">Save Column Rule</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast alert element -->
+<div class="toast-alert" id="blueprint-toast">
+  <i class="ti ti-circle-check" style="color: var(--acc); font-size: 14px;"></i>
+  <span id="blueprint-toast-msg">Column rule saved.</span>
+</div>
+
+<script>
+  // Global State for Blueprint Mockup
+  const defaultLeadsCols = [
+    { label: 'Lead_ID', key: 'lead_id', type: 'text', required: true, system: true, desc: 'Unique lead database identifier' },
+    { label: 'Date_Captured', key: 'created_at', type: 'text', auto: true, system: true, desc: 'Auto-recorded lead capture date' },
+    { label: 'Client_Name', key: 'client_name', type: 'text', required: true, system: true, desc: 'Lead full primary contact name' },
+    { label: 'Mobile_Primary', key: 'mobile', type: 'text', required: true, system: true, desc: 'Primary WhatsApp/phone number' },
+    { label: 'Email', key: 'email', type: 'text', optional: true, system: true, desc: 'Client communication email address' },
+    { label: 'Source', key: 'source', type: 'text', required: true, system: true, desc: 'Lead referral or ad campaign source' },
+    { label: 'Property_Type', key: 'property_type', type: 'text', required: true, system: true, desc: 'Interest category (Resale/Rental/Commercial)' },
+    { label: 'Budget_Min', key: 'budget_min', type: 'number', required: true, system: true, desc: 'Minimum price limit constraint' },
+    { label: 'Budget_Max', key: 'budget_max', type: 'number', required: true, system: true, desc: 'Maximum price limit constraint' },
+    { label: 'Timeline', key: 'timeline', type: 'text', required: true, system: true, desc: 'Preferred deal execution timeline' }
+  ];
+
+  const defaultPropertiesCols = [
+    { label: 'Prop_ID', key: 'prop_id', type: 'text', required: true, system: true, desc: 'Unique property asset database key' },
+    { label: 'Date_Added', key: 'created_at', type: 'text', auto: true, system: true, desc: 'Timestamp of upload' },
+    { label: 'Society_Name', key: 'society_name', type: 'text', required: true, system: true, desc: 'Residential/Commercial society name' },
+    { label: 'Location', key: 'location', type: 'text', required: true, system: true, desc: 'Specialty zone area location' },
+    { label: 'Ask_Price', key: 'ask_price', type: 'number', required: true, system: true, desc: 'Quoted base seller listing price' },
+    { label: 'Area_Sqft', key: 'area_sqft', type: 'number', required: true, system: true, desc: 'SBA square footage dimensions' },
+    { label: 'Availability', key: 'availability', type: 'text', required: true, system: true, desc: 'Current units state status' },
+    { label: 'Owner_Name', key: 'owner_name', type: 'text', readonly: true, system: true, desc: 'Owner name (Masked for Agents)' },
+    { label: 'Owner_Mobile', key: 'owner_mobile', type: 'text', readonly: true, system: true, desc: 'Owner mobile contact number' }
+  ];
+
+  const defaultProjectsCols = [
+    { label: 'Project_ID', key: 'project_id', type: 'text', required: true, system: true, desc: 'Unique primary project registry code' },
+    { label: 'Project_Name', key: 'project_name', type: 'text', required: true, system: true, desc: 'Branded real estate project title' },
+    { label: 'Builder', key: 'builder', type: 'text', required: true, system: true, desc: 'Development company builder name' },
+    { label: 'RERA_No', key: 'rera_no', type: 'text', optional: true, system: true, desc: 'RERA regulatory certification number' },
+    { label: 'Tower', key: 'tower', type: 'text', required: true, system: true, desc: 'Construction block name/number' },
+    { label: 'Base_Price_Psqft', key: 'price_psqft', type: 'number', required: true, system: true, desc: 'Construction base sqft rates' }
+  ];
+
+  const defaultCommissionsCols = [
+    { label: 'Deal_ID', key: 'deal_id', type: 'text', required: true, system: true, desc: 'Unique Deal closing transaction record' },
+    { label: 'Deal_Value', key: 'deal_value', type: 'number', required: true, system: true, desc: 'Total transaction value logged' },
+    { label: 'Our_Comm_%', key: 'comm_pct', type: 'number', required: true, system: true, desc: 'Inward agency brokerage percentage' },
+    { label: 'Net_Commission', key: 'net_commission', type: 'number', auto: true, system: true, desc: 'Brokerage value minus splits' },
+    { label: 'Payment_Status', key: 'payment_status', type: 'text', optional: true, system: true, desc: 'Invoice collection tracking state' }
+  ];
+
+  let currentSheetModule = 'Leads'; // Active sheet: Leads, Properties, Projects, Commissions
+
+  // Initialize columns registry in localStorage to mock backend sync
+  function initLocalStorageData() {
+    if (!localStorage.getItem('vitrag_mock_custom_cols_Leads')) {
+      const mockLeads = [
+        { label: 'GST Number', key: 'gst_number', type: 'text', required: true, rules: { mandatory: true, regex: '^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$' } },
+        { label: 'Alternate Mobile', key: 'alt_mobile', type: 'text', required: false, rules: { mandatory: false, regex: '^[0-9]{10}$' } }
+      ];
+      localStorage.setItem('vitrag_mock_custom_cols_Leads', JSON.stringify(mockLeads));
+    }
+    if (!localStorage.getItem('vitrag_mock_custom_cols_Properties')) {
+      const mockProps = [
+        { label: 'Negotiation Buffer', key: 'negotiation_buffer', type: 'number', required: false, rules: { mandatory: false, min: '100000', max: '2000000' } },
+        { label: 'RERA Registered', key: 'is_rera', type: 'boolean', required: true, rules: { mandatory: true } }
+      ];
+      localStorage.setItem('vitrag_mock_custom_cols_Properties', JSON.stringify(mockProps));
+    }
+    if (!localStorage.getItem('vitrag_mock_custom_cols_Projects')) {
+      localStorage.setItem('vitrag_mock_custom_cols_Projects', JSON.stringify([]));
+    }
+    if (!localStorage.getItem('vitrag_mock_custom_cols_Commissions')) {
+      localStorage.setItem('vitrag_mock_custom_cols_Commissions', JSON.stringify([]));
+    }
+  }
+
+  // Switch between Overview Dashboard and Sheet Blueprint tab
+  function switchTab(element, tabId) {
+    document.querySelectorAll('.page-tabs .ptab').forEach(el => el.classList.remove('active'));
+    element.classList.add('active');
+
+    const overviewPane = document.getElementById('tab-content-overview');
+    const blueprintPane = document.getElementById('tab-content-blueprint');
+
+    if (tabId === 'blueprint') {
+      overviewPane.style.display = 'none';
+      blueprintPane.style.display = 'flex';
+      renderBlueprintGrid();
+    } else {
+      blueprintPane.style.display = 'none';
+      overviewPane.style.display = 'block';
+    }
+  }
+
+  // Switch between Sheet tabs (Leads, Properties, Projects, Commissions)
+  function switchBlueprintSheet(element, sheetName) {
+    document.querySelectorAll('.sheet-tabs .sheet-tab').forEach(el => {
+      el.classList.remove('active');
+      el.setAttribute('aria-selected', 'false');
+    });
+    element.classList.add('active');
+    element.setAttribute('aria-selected', 'true');
+    currentSheetModule = sheetName;
+    renderBlueprintGrid();
+  }
+
+  // Render native system and custom column cards
+  function renderBlueprintGrid() {
+    let nativeCols = [];
+    let bannerText = '';
+    
+    if (currentSheetModule === 'Leads') {
+      nativeCols = defaultLeadsCols;
+      bannerText = '<i class="ti ti-info-circle"></i> <strong>Budgets & Zone Routing:</strong> Leads coordinates automatically match against secondary inventory society lists and Whitefield zones.';
+    } else if (currentSheetModule === 'Properties') {
+      nativeCols = defaultPropertiesCols;
+      bannerText = '<i class="ti ti-info-circle"></i> <strong>7-Day Staleness Tracker:</strong> Listings without verification activities inside 7 days automatically trigger system alerts.';
+    } else if (currentSheetModule === 'Projects') {
+      nativeCols = defaultProjectsCols;
+      bannerText = '<i class="ti ti-info-circle"></i> <strong>RERA Sync:</strong> Primary projects database fields mirror external registry portals tracking tower completions.';
+    } else if (currentSheetModule === 'Commissions') {
+      nativeCols = defaultCommissionsCols;
+      bannerText = '<i class="ti ti-info-circle"></i> <strong>Commission Ledger Audit:</strong> Lock rules prevent co-brokerage and agency split records modification for sales agents.';
+    }
+
+    document.getElementById('blueprint-info-banner').className = `info-banner ${currentSheetModule === 'Properties' ? 'info-amber' : 'info-green'}`;
+    document.getElementById('blueprint-info-banner').innerHTML = bannerText;
+
+    // Render Native Columns
+    const nativeGrid = document.getElementById('blueprint-system-cols-grid');
+    nativeGrid.innerHTML = nativeCols.map(col => {
+      let badgeClass = 'badge-optional';
+      let badgeLabel = 'optional';
+      if (col.required) { badgeClass = 'badge-required'; badgeLabel = 'required'; }
+      else if (col.auto) { badgeClass = 'badge-auto'; badgeLabel = 'auto'; }
+      else if (col.readonly) { badgeClass = 'badge-readonly'; badgeLabel = 'readonly'; }
+
+      return `
+        <div class="sheet-col-card">
+          <div class="sheet-col-card-header">
+            <span class="sheet-col-name">${col.label}</span>
+            <span class="sheet-col-badge ${badgeClass}">${badgeLabel}</span>
+          </div>
+          <div class="sheet-col-details">DB Key: <code>${col.key}</code></div>
+          <div class="sheet-col-details" style="color:var(--t2); margin-top:2px;">Type: ${col.type}</div>
+          <div class="sheet-col-rules" style="color:var(--text-muted); font-size:9.5px; border-top:0.5px solid rgba(255,255,255,0.03); padding-top:4px;">
+            ${col.desc}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Render Custom Columns
+    const customGrid = document.getElementById('blueprint-custom-cols-grid');
+    const customCols = JSON.parse(localStorage.getItem(`vitrag_mock_custom_cols_${currentSheetModule}`) || '[]');
+
+    let customHTML = customCols.map((col, idx) => {
+      let rulesHTML = '';
+      if (col.rules) {
+        if (col.rules.mandatory) rulesHTML += '<div>• Mandatory Column</div>';
+        if (col.rules.min || col.rules.max) {
+          rulesHTML += `<div>• Range: ${col.rules.min || 0} - ${col.rules.max || '∞'}</div>`;
+        }
+        if (col.rules.regex) {
+          rulesHTML += `<div style="text-overflow:ellipsis; overflow:hidden;" title="Pattern: ${col.rules.regex}">• Pattern: <code>${col.rules.regex}</code></div>`;
+        }
+      }
+      if (!rulesHTML) rulesHTML = '<div>• No custom validations</div>';
+
+      return `
+        <div class="sheet-col-card">
+          <div class="sheet-col-card-header">
+            <span class="sheet-col-name">${escapeHTML(col.label)}</span>
+            <span class="sheet-col-badge ${col.required ? 'badge-required' : 'badge-optional'}">${col.required ? 'required' : 'optional'}</span>
+          </div>
+          <div class="sheet-col-details">DB Key: <code>${col.key}</code></div>
+          <div class="sheet-col-details" style="color:var(--t2); margin-top:2px;">Type: ${col.type}</div>
+          <div class="sheet-col-rules" style="border-top:0.5px solid rgba(255,255,255,0.03); padding-top:4px;">
+            ${rulesHTML}
+          </div>
+          <div class="sheet-col-actions">
+            <div class="sheet-action-btn" onclick="openEditColumnModal(${idx})" title="Edit Column Details"><i class="ti ti-edit"></i></div>
+            <div class="sheet-action-btn delete" onclick="deleteBlueprintColumn(${idx})" title="Delete Column"><i class="ti ti-trash"></i></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Append the "Add Custom Column" card
+    customHTML += `
+      <div class="sheet-col-card col-add-card" onclick="openAddColumnModal()">
+        <i class="ti ti-plus"></i> Add Custom Column
+      </div>
+    `;
+    customGrid.innerHTML = customHTML;
+
+    // Render Mock Form Preview
+    const previewContainer = document.getElementById('blueprint-form-preview-container');
+    if (previewContainer) {
+      if (customCols.length === 0) {
+        previewContainer.innerHTML = `<div style="font-size:11.5px; color:var(--t2); text-align:center; padding:10px 0;">No custom fields to preview. Add a column above to see the layout.</div>`;
+      } else {
+        let previewHtml = `
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            <div style="font-size:11px; font-weight:700; color:var(--t2); text-transform:uppercase; border-bottom:0.5px solid rgba(255,255,255,0.05); padding-bottom:5px; margin-bottom:5px;">
+              ${currentSheetModule} Form — Custom Section Preview
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+        `;
+        customCols.forEach(f => {
+          let inputHtml = '';
+          if (f.type === 'number') {
+            let rangeTxt = '';
+            if (f.rules?.min !== undefined || f.rules?.max !== undefined) {
+              rangeTxt = ` (Min: ${f.rules.min ?? 0}, Max: ${f.rules.max ?? '∞'})`;
+            }
+            inputHtml = `<input type="number" class="form-input" placeholder="Enter numeric value...${rangeTxt}" style="width:100%;" disabled>`;
+          } else if (f.type === 'select') {
+            const opts = (f.options || '').split(',').map(o => o.trim()).filter(Boolean);
+            inputHtml = `
+              <select class="form-select" style="width:100%; height:36px; padding: 0 12px; background: rgba(16, 14, 12, 0.6); border: 0.5px solid var(--bdr); color: var(--t1); border-radius: 6px;" disabled>
+                <option value="">-- Choose Option --</option>
+                ${opts.map(o => `<option value="${o}">${o}</option>`).join('')}
+              </select>
+            `;
+          } else if (f.type === 'boolean') {
+            inputHtml = `
+              <select class="form-select" style="width:100%; height:36px; padding: 0 12px; background: rgba(16, 14, 12, 0.6); border: 0.5px solid var(--bdr); color: var(--t1); border-radius: 6px;" disabled>
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
+            `;
+          } else if (f.type === 'textarea') {
+            inputHtml = `<textarea class="form-input" rows="2" placeholder="Enter notes..." style="width:100%;" disabled></textarea>`;
+          } else {
+            inputHtml = `<input type="text" class="form-input" placeholder="Enter text..." style="width:100%;" disabled>`;
+          }
+          previewHtml += `
+            <div class="form-group" style="display:flex; flex-direction:column; gap:6px;">
+              <label class="form-label" style="font-size:11.5px; font-weight:600; color:var(--t2); display:flex; justify-content:space-between; align-items:center;">
+                <span>${escapeHTML(f.label)} ${f.required ? '<span style="color:var(--color-status-sold);">*</span>' : ''}</span>
+                ${f.rules?.regex ? `<span style="font-size:9.5px; color:var(--acc); font-family:monospace;">RegEx Validated</span>` : ''}
+              </label>
+              ${inputHtml}
+            </div>
+          `;
+        });
+        previewHtml += `
+            </div>
+          </div>
+        `;
+        previewContainer.innerHTML = previewHtml;
+      }
+    }
+  }
+
+  // Auto populate DB key based on label
+  function autoPopulateKey(value) {
+    const editIdx = document.getElementById('field-edit-index').value;
+    if (editIdx !== '') return; // Don't auto-change during edit
+    const key = value.toLowerCase().replace(/[^a-z0-9_]+/g, '_').replace(/^_+|_+$/g, '');
+    document.getElementById('field-key').value = key;
+  }
+
+  // Open modal for adding custom column
+  function openAddColumnModal() {
+    document.getElementById('blueprint-field-modal-title').innerText = '➕ Add Custom Column';
+    document.getElementById('field-edit-index').value = '';
+    document.getElementById('field-label').value = '';
+    document.getElementById('field-key').value = '';
+    document.getElementById('field-key').disabled = false;
+    document.getElementById('field-type').value = 'text';
+    document.getElementById('field-options').value = '';
+    document.getElementById('rule-mandatory').checked = false;
+    document.getElementById('rule-min').value = '';
+    document.getElementById('rule-max').value = '';
+    document.getElementById('rule-regex').value = '';
+
+    handleModalFieldTypeChange('text');
+    document.getElementById('modal-blueprint-field').classList.remove('hidden');
+  }
+
+  // Open modal for editing custom column
+  function openEditColumnModal(index) {
+    const customCols = JSON.parse(localStorage.getItem(`vitrag_mock_custom_cols_${currentSheetModule}`) || '[]');
+    const col = customCols[index];
+    if (!col) return;
+
+    document.getElementById('blueprint-field-modal-title').innerText = '📝 Edit Custom Column';
+    document.getElementById('field-edit-index').value = index;
+    document.getElementById('field-label').value = col.label;
+    document.getElementById('field-key').value = col.key;
+    document.getElementById('field-key').disabled = true; // Key cannot be edited
+    document.getElementById('field-type').value = col.type;
+    document.getElementById('field-options').value = col.options || '';
+    
+    document.getElementById('rule-mandatory').checked = col.rules ? col.rules.mandatory : false;
+    document.getElementById('rule-min').value = col.rules ? (col.rules.min || '') : '';
+    document.getElementById('rule-max').value = col.rules ? (col.rules.max || '') : '';
+    document.getElementById('rule-regex').value = col.rules ? (col.rules.regex || '') : '';
+
+    handleModalFieldTypeChange(col.type);
+    document.getElementById('modal-blueprint-field').classList.remove('hidden');
+  }
+
+  // Close modals
+  function closeBlueprintModal() {
+    document.getElementById('modal-blueprint-field').classList.add('hidden');
+  }
+
+  // Handle field type constraints visibility toggling
+  function handleModalFieldTypeChange(type) {
+    const optionsGroup = document.getElementById('field-options-group');
+    const rangeGroup = document.getElementById('rule-range-group');
+
+    if (type === 'select') {
+      optionsGroup.classList.remove('hidden');
+    } else {
+      optionsGroup.classList.add('hidden');
+    }
+
+    if (type === 'number') {
+      rangeGroup.classList.remove('hidden');
+    } else {
+      rangeGroup.classList.add('hidden');
+    }
+  }
+
+  // Save/Edit custom column rule
+  function handleBlueprintFormSubmit(e) {
+    e.preventDefault();
+    const index = document.getElementById('field-edit-index').value;
+    const label = document.getElementById('field-label').value.trim();
+    const key = document.getElementById('field-key').value.trim();
+    const type = document.getElementById('field-type').value;
+    const options = document.getElementById('field-options').value.trim();
+    const mandatory = document.getElementById('rule-mandatory').checked;
+    const min = document.getElementById('rule-min').value;
+    const max = document.getElementById('rule-max').value;
+    const regex = document.getElementById('rule-regex').value.trim();
+
+    const customCols = JSON.parse(localStorage.getItem(`vitrag_mock_custom_cols_${currentSheetModule}`) || '[]');
+
+    // Duplicate check for add
+    if (index === '') {
+      const isDuplicate = customCols.some(c => c.key === key) || 
+                          defaultLeadsCols.some(c => c.key === key) ||
+                          defaultPropertiesCols.some(c => c.key === key);
+      if (isDuplicate) {
+        showBlueprintToast('A column with this key already exists on this sheet blueprint.', true);
+        return;
+      }
+    }
+
+    const colObj = {
+      label,
+      key,
+      type,
+      required: mandatory,
+      options: type === 'select' ? options : undefined,
+      rules: {
+        mandatory,
+        min: type === 'number' && min ? min : undefined,
+        max: type === 'number' && max ? max : undefined,
+        regex: regex ? regex : undefined
+      }
+    };
+
+    if (index === '') {
+      customCols.push(colObj);
+      showBlueprintToast('Custom column added to blueprint schema.');
+    } else {
+      customCols[parseInt(index)] = colObj;
+      showBlueprintToast('Column validation rule updated successfully.');
+    }
+
+    localStorage.setItem(`vitrag_mock_custom_cols_${currentSheetModule}`, JSON.stringify(customCols));
+    closeBlueprintModal();
+    renderBlueprintGrid();
+  }
+
+  // Delete custom column rule
+  function deleteBlueprintColumn(index) {
+    if (!confirm('Are you sure you want to delete this custom column validation rule from the sheet blueprint?')) return;
+    const customCols = JSON.parse(localStorage.getItem(`vitrag_mock_custom_cols_${currentSheetModule}`) || '[]');
+    customCols.splice(index, 1);
+    localStorage.setItem(`vitrag_mock_custom_cols_${currentSheetModule}`, JSON.stringify(customCols));
+    showBlueprintToast('Column deleted from sheet blueprint.');
+    renderBlueprintGrid();
+  }
+
+  // Display toast alerts
+  function showBlueprintToast(msg, isError = false) {
+    const toast = document.getElementById('blueprint-toast');
+    const toastMsg = document.getElementById('blueprint-toast-msg');
+    toastMsg.innerText = msg;
+    if (isError) {
+      toast.style.borderColor = 'var(--color-status-sold)';
+      toast.querySelector('i').className = 'ti ti-circle-x';
+      toast.querySelector('i').style.color = 'var(--color-status-sold)';
+    } else {
+      toast.style.borderColor = 'var(--bdr2)';
+      toast.querySelector('i').className = 'ti ti-circle-check';
+      toast.querySelector('i').style.color = 'var(--acc)';
+    }
+    toast.classList.add('show');
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, 3000);
+  }
+
+  // Helper escape HTML
+  function escapeHTML(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // Wrap existing content div on document ready
+  document.addEventListener('DOMContentLoaded', () => {
+    initLocalStorageData();
+    
+    // Add "Sheet Blueprint" tab inside page-tabs
+    const pageTabs = document.querySelector('.page-tabs');
+    if (pageTabs) {
+      // Modify existing tabs to call switchTab(this, 'overview')
+      const tabs = pageTabs.querySelectorAll('.ptab');
+      tabs.forEach((tab, index) => {
+        tab.setAttribute('onclick', "switchTab(this, 'overview')");
+      });
+      
+      // Add sheet blueprint tab
+      const blueprintTab = document.createElement('div');
+      blueprintTab.className = 'ptab';
+      blueprintTab.id = 'tab-btn-blueprint';
+      blueprintTab.setAttribute('onclick', "switchTab(this, 'blueprint')");
+      blueprintTab.innerText = 'Sheet Blueprint';
+      pageTabs.appendChild(blueprintTab);
+    }
+
+    // Wrap overview sections
+    const contentDiv = document.querySelector('.content');
+    if (contentDiv) {
+      const overviewWrapper = document.createElement('div');
+      overviewWrapper.id = 'tab-content-overview';
+      overviewWrapper.className = 'tab-pane';
+      
+      // Move all current children of .content into overviewWrapper
+      while (contentDiv.firstChild) {
+        overviewWrapper.appendChild(contentDiv.firstChild);
+      }
+      
+      contentDiv.appendChild(overviewWrapper);
+      
+      // Add sheet blueprint pane below it
+      const bpPaneHTML = `
+        <div id="tab-content-blueprint" class="tab-pane" style="display: none; flex-direction: column; gap: 16px;">
+          <div class="blueprint-header">
+            <div class="blueprint-title-block">
+              <h2 class="blueprint-title">Sheet Blueprint Schema Configurator</h2>
+              <div class="blueprint-desc">Customize structural database columns, validation rules, and schema indicators.</div>
+            </div>
+            <div class="sheet-tabs" role="tablist">
+              <div class="sheet-tab active" onclick="switchBlueprintSheet(this, 'Leads')" role="tab" aria-selected="true">MASTER_LEADS</div>
+              <div class="sheet-tab" onclick="switchBlueprintSheet(this, 'Properties')" role="tab" aria-selected="false">INVENTORY_SECONDARY</div>
+              <div class="sheet-tab" onclick="switchBlueprintSheet(this, 'Projects')" role="tab" aria-selected="false">PROJECTS_PRIMARY</div>
+              <div class="sheet-tab" onclick="switchBlueprintSheet(this, 'Commissions')" role="tab" aria-selected="false">COMMISSIONS</div>
+            </div>
+          </div>
+
+          <!-- System Fields Section -->
+          <div class="sheet-col-section">
+            <div class="sheet-col-section-title">
+              <i class="ti ti-server"></i> System Defined Schema Fields (Read-Only)
+            </div>
+            <div class="sheet-cols-grid" id="blueprint-system-cols-grid"></div>
+          </div>
+
+          <!-- Custom Fields Section -->
+          <div class="sheet-col-section">
+            <div class="blueprint-header" style="border-bottom:none; padding-bottom:0; margin-bottom:12px;">
+              <div class="sheet-col-section-title" style="margin-bottom:0;">
+                <i class="ti ti-settings-automation"></i> Customizable Table Columns & Rules
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="openAddColumnModal()" style="display: flex; align-items: center; gap: 6px;">
+                <i class="ti ti-plus"></i> Add Custom Column
+              </button>
+            </div>
+            <div class="sheet-cols-grid" id="blueprint-custom-cols-grid"></div>
+          </div>
+
+          <!-- Final Form Layout Preview Section -->
+          <div class="sheet-col-section" style="margin-top:20px;">
+            <div class="sheet-col-section-title">
+              <i class="ti ti-eye"></i> Final Form Layout Preview
+            </div>
+            <div id="blueprint-form-preview-container" style="background:rgba(255,255,255,0.02); border:1px solid var(--bdr); padding:20px; border-radius:8px; margin-top:10px;">
+              <!-- Form elements preview populated dynamically -->
+            </div>
+          </div>
+
+          <div class="info-banner info-green" id="blueprint-info-banner">
+            <i class="ti ti-info-circle"></i> Budgets and location matching rules are validated against system fields automatically.
+          </div>
+        </div>
+      `;
+      contentDiv.insertAdjacentHTML('beforeend', bpPaneHTML);
+    }
+  });
+</script>
+</body>
+</html>

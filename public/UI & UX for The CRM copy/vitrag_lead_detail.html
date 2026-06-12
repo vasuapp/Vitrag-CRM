@@ -1,0 +1,966 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    /* Luxury Obsidian & Brushed Gold Variables */
+    --color-bg-base: #0c0b09;
+    --color-bg-surface: rgba(20, 18, 16, 0.7);
+    --color-bg-surface-hover: rgba(30, 27, 24, 0.85);
+    --color-bg-surface-subtle: rgba(16, 14, 12, 0.45);
+    --color-bg-nav: #060505;
+    
+    --color-gold-brass: #c5a867;
+    --color-gold-accent: #b89047;
+    --color-gold-glow: rgba(197, 168, 103, 0.05);
+    --color-gold-border: rgba(197, 168, 103, 0.12);
+    --color-gold-border-bright: rgba(197, 168, 103, 0.28);
+    
+    --color-status-available: #10b981;
+    --color-status-sold: #ef4444;
+    --color-status-hold: #3b82f6;
+    --color-status-ref: #8b5cf6;
+    
+    --color-text-primary: #f5f4f0;
+    --color-text-secondary: #a3a097;
+    --color-text-muted: #6e6b62;
+    
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-title: 'Plus Jakarta Sans', var(--font-sans);
+
+    /* Original Mappings to maintain compatibility */
+    --nav: var(--color-bg-nav);
+    --nav-t: rgba(245, 244, 240, 0.55);
+    --nav-a: #fff;
+    --nav-b: rgba(197, 168, 103, 0.08);
+    --acc: var(--color-gold-brass);
+    --acc2: var(--color-status-available);
+    --acc3: var(--color-gold-accent);
+    --acc4: var(--color-status-sold);
+    --acc5: var(--color-status-ref);
+    --surf: var(--color-bg-surface);
+    --surf2: var(--color-bg-surface-subtle);
+    --bdr: var(--color-gold-border);
+    --bdr2: var(--color-gold-border-bright);
+    --t1: var(--color-text-primary);
+    --t2: var(--color-text-secondary);
+    --r: 10px;
+    --r2: 14px;
+  }
+  
+  body{
+    font-family:var(--font-sans);
+    font-size:13px;
+    background: radial-gradient(circle at 50% 0%, #171512 0%, var(--color-bg-base) 100%);
+    color: var(--t1);
+    min-height: 100vh;
+    padding: 10px;
+  }
+  
+  .shell{
+    display:grid;
+    grid-template-columns:68px 1fr;
+    border-radius:var(--r2);
+    overflow:hidden;
+    border:0.5px solid var(--bdr2);
+    min-height:760px;
+    background: var(--color-bg-base);
+  }
+  
+  /* Narrow icon nav */
+  .sidenav{
+    background:var(--nav);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:24px 0;
+    gap:8px;
+    position:relative;
+    border-right: 0.5px solid var(--bdr);
+  }
+  .sidenav .logo{
+    width:34px;
+    height:34px;
+    background: linear-gradient(135deg, #c5a867 0%, #b89047 100%);
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#0c0b09;
+    font-weight:700;
+    font-size:14px;
+    margin-bottom:20px;
+    flex-shrink:0;
+    font-family: var(--font-title);
+    letter-spacing: 0.05em;
+    box-shadow: 0 4px 12px rgba(197, 168, 103, 0.25);
+  }
+  
+  .ni{
+    width:44px;
+    height:44px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--nav-t);
+    cursor:pointer;
+    transition:all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position:relative;
+  }
+  .ni:hover{
+    background:rgba(197, 168, 103, 0.05);
+    color:var(--nav-a);
+  }
+  .ni.active{
+    background: linear-gradient(135deg, rgba(197, 168, 103, 0.15) 0%, rgba(197, 168, 103, 0.02) 100%);
+    color:#fff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  .ni.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 3px;
+    background: linear-gradient(to bottom, #c5a867, #b89047);
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 0 8px rgba(197, 168, 103, 0.5);
+  }
+  .ni .ti{font-size:19px}
+  .nsep{
+    width:32px;
+    height:1px;
+    background: linear-gradient(90deg, transparent, rgba(197, 168, 103, 0.15) 20%, rgba(197, 168, 103, 0.15) 80%, transparent);
+    margin:10px 0;
+  }
+  .nb{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:8px}
+  .dot{position:absolute;top:5px;right:5px;width:6px;height:6px;background:#EF4444;border-radius:50%;border:1px solid var(--nav)}
+
+  .main{display:flex;flex-direction:column;background:radial-gradient(circle at 50% 0%, #171512 0%, var(--color-bg-base) 100%)}
+  
+  /* Topbar */
+  .topbar{
+    background:var(--surf);
+    border-bottom:0.5px solid var(--bdr);
+    padding:0 18px;
+    height:54px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-shrink:0;
+    backdrop-filter: blur(12px) saturate(140%);
+  }
+  .back-btn{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    font-size:12px;
+    color:var(--t2);
+    cursor:pointer;
+    padding:6px 12px;
+    border-radius:6px;
+    border: 0.5px solid var(--bdr);
+    font-family: var(--font-title);
+    transition: all 0.2s ease;
+  }
+  .back-btn:hover{
+    background:var(--surf2);
+    border-color: var(--bdr2);
+    color: var(--t1);
+  }
+  .bc{font-size:13px;color:var(--t2);font-family: var(--font-title)}
+  .bc span{color:var(--t1);font-weight:600}
+  
+  .tba{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .tbb{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 12px;
+    border-radius:6px;
+    font-size:12px;
+    cursor:pointer;
+    border:0.5px solid var(--bdr);
+    color:var(--t2);
+    font-family: var(--font-title);
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .tbb:hover{
+    background:var(--surf2);
+    border-color: var(--bdr2);
+    color: var(--t1);
+  }
+  .tbb.pri{
+    background: linear-gradient(135deg, #c5a867 0%, #b89047 100%);
+    color:#0c0b09;
+    border-color: transparent;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(197, 168, 103, 0.25);
+  }
+  .tbb.pri:hover {
+    filter: brightness(1.1);
+  }
+
+  .content{display:grid;grid-template-columns:1fr 300px;gap:12px;padding:14px;flex:1;overflow:auto}
+
+  /* Left column */
+  .left{display:flex;flex-direction:column;gap:12px}
+
+  /* Lead hero card */
+  .hero{
+    background:var(--surf);
+    border:0.5px solid var(--bdr);
+    border-radius:var(--r2);
+    padding:18px;
+    backdrop-filter: blur(12px) saturate(140%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+  .hero-top{display:flex;align-items:flex-start;gap:14px}
+  .avatar{
+    width:48px;
+    height:48px;
+    border-radius:50%;
+    background: linear-gradient(135deg, #201d19 0%, #0d0c0a 100%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--t1);
+    font-size:16px;
+    font-weight:600;
+    border: 1px solid var(--color-gold-border-bright);
+    box-shadow: 0 4px 12px rgba(197, 168, 103, 0.2);
+    font-family: var(--font-title);
+  }
+  .hero-info{flex:1;min-width:0}
+  .hero-name{font-size:18px;font-weight:600;color:var(--t1);font-family: var(--font-title);letter-spacing: -0.01em}
+  .hero-sub{font-size:12px;color:var(--t2);margin-top:3px;font-weight: 500}
+  .hero-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .tag{
+    font-size:9px;
+    padding:2px 8px;
+    border-radius:4px;
+    font-weight:600;
+    font-family: var(--font-title);
+  }
+  .t-hot{background:rgba(239, 68, 68, 0.15);color:#FCA5A5;border: 0.5px solid rgba(239, 68, 68, 0.25)}
+  .t-src{background:var(--surf2);color:var(--t2);border:0.5px solid var(--bdr)}
+  .t-type{background:rgba(139, 92, 246, 0.15);color:#C084FC;border: 0.5px solid rgba(139, 92, 246, 0.25)}
+  .t-rental{background:rgba(16, 185, 129, 0.15);color:#6EE7B7;border: 0.5px solid rgba(16, 185, 129, 0.25)}
+  
+  .hero-actions{
+    display:flex;
+    gap:8px;
+    margin-top:14px;
+    padding-top:14px;
+    border-top:0.5px solid var(--bdr);
+    flex-wrap: wrap;
+  }
+  .act-btn{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 12px;
+    border-radius:6px;
+    font-size:11px;
+    cursor:pointer;
+    border:0.5px solid var(--bdr);
+    color:var(--t2);
+    background: transparent;
+    transition: all 0.2s ease;
+    font-family: var(--font-title);
+    font-weight: 600;
+  }
+  .act-btn:hover{
+    background:var(--surf2);
+    border-color: var(--bdr2);
+    color: var(--t1);
+  }
+  .act-btn .ti{font-size:14px}
+  .act-btn.wa{color:#10b981;border-color:rgba(16, 185, 129, 0.25);background:rgba(16, 185, 129, 0.08)}
+  .act-btn.wa:hover{background:rgba(16, 185, 129, 0.15)}
+  .act-btn.call{color:var(--acc);border-color:rgba(197, 168, 103, 0.25);background:rgba(197, 168, 103, 0.08)}
+  .act-btn.call:hover{background:rgba(197, 168, 103, 0.15)}
+  .act-btn.mail{color:#F59E0B;border-color:rgba(245, 158, 11, 0.25);background:rgba(245, 158, 11, 0.08)}
+  .act-btn.mail:hover{background:rgba(245, 158, 11, 0.15)}
+
+  /* Info grid */
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:0.5px solid var(--bdr);margin-top:14px}
+  .info-cell{padding:10px 0;border-bottom:0.5px solid var(--bdr);padding-right:16px}
+  .info-cell:nth-child(odd){border-right:0.5px solid var(--bdr);padding-right:16px}
+  .info-cell:nth-child(even){padding-left:16px}
+  .info-label{
+    font-size:10px;
+    color:var(--t2);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin-bottom:4px;
+    font-family: var(--font-title);
+    font-weight: 500;
+  }
+  .info-val{font-size:12px;color:var(--t1);font-weight:600}
+
+  /* Requirement card */
+  .req-card{
+    background:var(--surf);
+    border:0.5px solid var(--bdr);
+    border-radius:var(--r2);
+    padding:16px;
+    backdrop-filter: blur(12px) saturate(140%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+  .sec-head{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .sec-title{font-size:13px;font-weight:600;color:var(--t1);font-family: var(--font-title)}
+  .sec-action{
+    margin-left:auto;
+    font-size:11px;
+    color:var(--acc);
+    cursor:pointer;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  .sec-action:hover{color:var(--color-gold-accent)}
+  
+  .req-tags{display:flex;flex-wrap:wrap;gap:6px}
+  .req-tag{
+    font-size:11px;
+    padding:5px 12px;
+    border-radius:6px;
+    background:var(--surf2);
+    border:0.5px solid var(--bdr);
+    color:var(--t1);
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .req-tag:hover {
+    border-color: var(--bdr2);
+  }
+
+  /* Timeline */
+  .timeline{
+    background:var(--surf);
+    border:0.5px solid var(--bdr);
+    border-radius:var(--r2);
+    padding:16px;
+    backdrop-filter: blur(12px) saturate(140%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+  .tl-item{display:flex;gap:12px;padding-bottom:16px;position:relative}
+  .tl-item:last-child{padding-bottom:0}
+  .tl-line{
+    position:absolute;
+    left:15px;
+    top:30px;
+    bottom:0;
+    width:1px;
+    border-left: 1px dashed rgba(197, 168, 103, 0.25);
+  }
+  .tl-item:last-child .tl-line{display:none}
+  .tl-icon{
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    font-size:14px;
+    border: 0.5px solid transparent;
+  }
+  .tl-wa{background:rgba(16, 185, 129, 0.15);color:#10B981;border-color:rgba(16, 185, 129, 0.25)}
+  .tl-call{background:rgba(197, 168, 103, 0.15);color:var(--acc);border-color:rgba(197, 168, 103, 0.25)}
+  .tl-mail{background:rgba(245, 158, 11, 0.15);color:#F59E0B;border-color:rgba(245, 158, 11, 0.25)}
+  .tl-note{background:rgba(139, 92, 246, 0.15);color:#8B5CF6;border-color:rgba(139, 92, 246, 0.25)}
+  .tl-doc{background:var(--surf2);color:var(--t2);border-color:var(--bdr)}
+  
+  .tl-body{flex:1;min-width:0}
+  .tl-top{display:flex;align-items:baseline;gap:8px}
+  .tl-title{font-size:12px;font-weight:600;color:var(--t1);font-family: var(--font-title)}
+  .tl-time{font-size:10px;color:var(--t2);margin-left:auto}
+  .tl-text{font-size:11px;color:var(--t2);margin-top:3px;line-height:1.5}
+  .tl-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    font-size:10px;
+    padding:3px 8px;
+    border-radius:4px;
+    margin-top:6px;
+    background:var(--surf2);
+    border:0.5px solid var(--bdr);
+    color:var(--t2);
+    font-family: var(--font-title);
+    font-weight: 500;
+  }
+
+  /* Documents embedded */
+  .docs-card{
+    background:var(--surf);
+    border:0.5px solid var(--bdr);
+    border-radius:var(--r2);
+    padding:16px;
+    backdrop-filter: blur(12px) saturate(140%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+  .doc-drop{
+    border:1px dashed var(--bdr2);
+    border-radius:var(--r);
+    padding:14px;
+    text-align:center;
+    margin-bottom:12px;
+    cursor:pointer;
+    color:var(--t2);
+    font-size:11px;
+    font-family: var(--font-title);
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .doc-drop:hover{border-color:var(--acc);color:var(--acc);background:rgba(197, 168, 103, 0.02)}
+  
+  .doc-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--bdr)}
+  .doc-item:last-child{border-bottom:none}
+  .doc-icon{
+    width:30px;
+    height:30px;
+    border-radius:6px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:14px;
+    flex-shrink:0;
+    border: 0.5px solid transparent;
+  }
+  .doc-pdf{background:rgba(239, 68, 68, 0.15);color:#EF4444;border-color:rgba(239, 68, 68, 0.25)}
+  .doc-img{background:rgba(59, 130, 246, 0.15);color:#3B82F6;border-color:rgba(59, 130, 246, 0.25)}
+  .doc-xls{background:rgba(16, 185, 129, 0.15);color:#10B981;border-color:rgba(16, 185, 129, 0.25)}
+  
+  .doc-name{font-size:11px;color:var(--t1);font-weight:600;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .doc-meta{font-size:10px;color:var(--t2);margin-top:2px}
+  .doc-act{
+    font-size:11px;
+    color:var(--t2);
+    cursor:pointer;
+    padding:4px 6px;
+    border-radius:4px;
+    transition: all 0.2s ease;
+  }
+  .doc-act:hover{background:var(--surf2);color:var(--t1)}
+
+  /* Right column */
+  .right{display:flex;flex-direction:column;gap:12px}
+  .panel{
+    background:var(--surf);
+    border:0.5px solid var(--bdr);
+    border-radius:var(--r2);
+    overflow:hidden;
+    backdrop-filter: blur(12px) saturate(140%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+  .ph{
+    padding:12px 16px;
+    border-bottom:0.5px solid var(--bdr);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background: rgba(197, 168, 103, 0.02);
+  }
+  .pt{
+    font-size:13px;
+    font-weight:600;
+    color:var(--t1);
+    flex:1;
+    font-family: var(--font-title);
+    letter-spacing: 0.02em;
+  }
+  .pa{
+    font-size:11px;
+    color:var(--acc);
+    cursor:pointer;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  .pa:hover{color:var(--color-gold-accent)}
+
+  /* Status pipeline */
+  .pipe-steps{display:flex;padding:14px 16px;gap:0}
+  .pipe-step{flex:1;text-align:center;position:relative}
+  .pipe-step::after{content:'';position:absolute;top:10px;left:50%;width:100%;height:1px;background:var(--bdr)}
+  .pipe-step:last-child::after{display:none}
+  .ps-dot{
+    width:20px;
+    height:20px;
+    border-radius:50%;
+    border:1px solid var(--bdr);
+    background:var(--surf2);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin:0 auto 4px;
+    position:relative;
+    z-index:1;
+    font-size:10px;
+    transition: all 0.2s ease;
+  }
+  .ps-dot.done{
+    background:var(--acc2);
+    border-color:var(--acc2);
+    color:#0c0b09;
+    font-weight: bold;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+  }
+  .ps-dot.active{
+    background:var(--acc);
+    border-color:var(--acc);
+    color:#0c0b09;
+    font-weight: bold;
+    box-shadow: 0 0 8px rgba(197, 168, 103, 0.5);
+  }
+  .ps-label{font-size:9px;color:var(--t2);font-family: var(--font-title);font-weight: 500}
+  .ps-dot.done + .ps-label,.ps-dot.active + .ps-label{color:var(--t1);font-weight: 600}
+
+  /* Follow-up scheduling */
+  .fu-list{padding:8px 16px 12px}
+  .fu-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--bdr)}
+  .fu-item:last-child{border-bottom:none}
+  .fu-type{
+    font-size:9px;
+    padding:2px 6px;
+    border-radius:4px;
+    font-weight:600;
+    flex-shrink:0;
+    font-family: var(--font-title);
+    border: 0.5px solid transparent;
+  }
+  .fu-wa{background:rgba(16, 185, 129, 0.15);color:#6EE7B7;border-color:rgba(16, 185, 129, 0.25)}
+  .fu-call{background:rgba(197, 168, 103, 0.15);color:#FDE047;border-color:rgba(197, 168, 103, 0.25)}
+  .fu-text{font-size:11px;color:var(--t1);flex:1;font-weight: 500}
+  .fu-date{font-size:10px;color:var(--t2);font-weight: 500}
+
+  /* Rental renewal alert */
+  .alert-bar{
+    margin:8px 16px;
+    padding:8px 10px;
+    border-radius:6px;
+    background:rgba(197, 168, 103, 0.08);
+    border:0.5px solid var(--bdr2);
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:11px;
+    color:var(--t1);
+    font-weight: 500;
+  }
+  .alert-bar .ti{font-size:14px;color:var(--acc)}
+
+  /* Properties interested */
+  .prop-list{padding:8px 16px 12px}
+  .prop-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:8px 0;
+    border-bottom:0.5px solid var(--bdr);
+    cursor:pointer;
+    transition: background 0.2s ease;
+  }
+  .prop-item:last-child{border-bottom:none}
+  .prop-item:hover {
+    background: rgba(197, 168, 103, 0.02);
+  }
+  .prop-thumb{
+    width:36px;
+    height:36px;
+    border-radius:6px;
+    background:var(--surf2);
+    border:0.5px solid var(--bdr);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    font-size:16px;
+  }
+  .prop-name{font-size:11px;font-weight:600;color:var(--t1);font-family: var(--font-title)}
+  .prop-sub{font-size:10px;color:var(--t2);margin-top:2px}
+  .prop-price{font-size:11px;font-weight:600;color:var(--acc);margin-left:auto;font-family: var(--font-title)}
+
+  /* Opportunity score */
+  .opp-bar-wrap{padding:14px 16px}
+  .opp-label{display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;font-family: var(--font-title);font-weight: 500}
+  .opp-bar{height:6px;border-radius:3px;background:var(--surf2);overflow:hidden}
+  .opp-fill{height:6px;border-radius:3px;background:var(--acc2);box-shadow: 0 0 6px var(--acc2)}
+
+  /* Touch points tab bar */
+  .tp-tabs{
+    display:flex;
+    gap:0;
+    border-bottom:0.5px solid var(--bdr);
+    overflow-x:auto;
+    background: rgba(197, 168, 103, 0.02);
+  }
+  .tp-tab{
+    padding:10px 14px;
+    font-size:11px;
+    color:var(--t2);
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    flex-shrink:0;
+    white-space:nowrap;
+    font-family: var(--font-title);
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .tp-tab:hover {
+    color: var(--t1);
+  }
+  .tp-tab.active{color:var(--acc);border-bottom-color:var(--acc);font-weight: 600}
+  .tp-body{
+    padding:12px 14px;
+    max-height: 240px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(197, 168, 103, 0.2) transparent;
+  }
+  .tp-body::-webkit-scrollbar { width: 4px; }
+  .tp-body::-webkit-scrollbar-thumb { background: rgba(197, 168, 103, 0.2); border-radius: 2px; }
+  
+  .tp-msg{display:flex;gap:8px;margin-bottom:8px}
+  .tp-bubble{padding:8px 12px;border-radius:8px;font-size:11px;line-height:1.5;max-width:200px}
+  .tp-in{
+    background:var(--surf2);
+    color:var(--t1);
+    border-radius:0 8px 8px 8px;
+    border: 0.5px solid var(--bdr);
+  }
+  .tp-out{
+    background: linear-gradient(135deg, rgba(197, 168, 103, 0.2) 0%, rgba(197, 168, 103, 0.08) 100%);
+    border: 0.5px solid var(--color-gold-border-bright);
+    color:var(--t1);
+    border-radius:8px 0 8px 8px;
+    margin-left:auto;
+  }
+  .tp-time{font-size:9px;color:var(--t2);margin-top:3px;text-align:right}
+  
+  .tp-compose{display:flex;gap:8px;padding:10px 14px;border-top:0.5px solid var(--bdr)}
+  .tp-input{
+    flex:1;
+    background:var(--surf2);
+    border:0.5px solid var(--bdr);
+    border-radius:20px;
+    padding:7px 14px;
+    font-size:11px;
+    color:var(--t1);
+    font-family:var(--font-sans);
+    transition: all 0.2s ease;
+  }
+  .tp-input:hover { border-color: var(--bdr2); }
+  .tp-send{
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    background: linear-gradient(135deg, #c5a867 0%, #b89047 100%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#0c0b09;
+    cursor:pointer;
+    font-size:13px;
+    flex-shrink:0;
+    box-shadow: 0 2px 8px rgba(197, 168, 103, 0.3);
+    transition: all 0.2s ease;
+  }
+  .tp-send:hover { filter: brightness(1.1); }
+</style>
+
+<div class="shell">
+  <!-- Sidebar -->
+  <nav class="sidenav" aria-label="Main navigation">
+    <div class="logo">V</div>
+    <div class="ni" title="Dashboard"><i class="ti ti-layout-dashboard"></i></div>
+    <div class="ni active" title="Leads"><i class="ti ti-users"></i></div>
+    <div class="ni" title="Properties"><i class="ti ti-building"></i></div>
+    <div class="ni" title="Finance"><i class="ti ti-receipt"></i></div>
+    <div class="nsep"></div>
+    <div class="ni" title="Team"><i class="ti ti-briefcase"></i></div>
+    <div class="ni" title="Builder"><i class="ti ti-hammer"></i></div>
+    <div class="ni" title="Documents"><i class="ti ti-file-description"></i></div>
+    <div class="ni" title="Analytics"><i class="ti ti-chart-bar"></i></div>
+    <div class="nsep"></div>
+    <div class="ni" title="Smart Lists"><i class="ti ti-list-search"></i></div>
+    <div class="ni" title="Social"><i class="ti ti-share"></i></div>
+    <div class="ni" title="Settings"><i class="ti ti-settings"></i></div>
+    <div class="nb">
+      <div class="ni"><i class="ti ti-bell"></i></div>
+      <div class="ni"><i class="ti ti-user-circle"></i></div>
+    </div>
+  </nav>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="back-btn"><i class="ti ti-arrow-left" style="font-size:13px"></i> Back</div>
+      <div class="bc">Leads &nbsp;/&nbsp; <span>Priya Sharma</span></div>
+      <div class="tba">
+        <div class="tbb"><i class="ti ti-share" style="font-size:13px"></i> Share</div>
+        <div class="tbb"><i class="ti ti-dots-vertical" style="font-size:13px"></i></div>
+        <div class="tbb pri"><i class="ti ti-plus" style="font-size:13px"></i> Log Activity</div>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- LEFT -->
+      <div class="left">
+
+        <!-- Hero card -->
+        <div class="hero">
+          <div class="hero-top">
+            <div class="avatar">PS</div>
+            <div class="hero-info">
+              <div class="hero-name">Priya Sharma</div>
+              <div class="hero-sub">+91 98200 12345 &nbsp;·&nbsp; priya.sharma@gmail.com</div>
+              <div class="hero-tags">
+                <span class="tag t-hot">Hot</span>
+                <span class="tag t-src">Instagram</span>
+                <span class="tag t-type">Residential</span>
+                <span class="tag t-rental">Sales</span>
+                <span class="tag t-src">Primary</span>
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:11px;color:var(--t2);font-family:var(--font-title);font-weight:500">Opportunity</div>
+              <div style="font-size:20px;font-weight:600;color:var(--acc2);font-family:var(--font-title);margin-top:2px">78%</div>
+            </div>
+          </div>
+          <div class="hero-actions">
+            <div class="act-btn wa"><i class="ti ti-brand-whatsapp"></i> WhatsApp</div>
+            <div class="act-btn call"><i class="ti ti-phone"></i> Call</div>
+            <div class="act-btn mail"><i class="ti ti-mail"></i> Email</div>
+            <div class="act-btn"><i class="ti ti-message-circle"></i> SMS</div>
+            <div class="act-btn"><i class="ti ti-video"></i> Meet</div>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:4px">
+              <div class="act-btn" style="font-size:10px;border-color:var(--acc);color:var(--acc)">Convert to Booking</div>
+            </div>
+          </div>
+          <div class="info-grid">
+            <div class="info-cell"><div class="info-label">Budget</div><div class="info-val">₹2.0Cr – ₹2.8Cr</div></div>
+            <div class="info-cell"><div class="info-label">Source</div><div class="info-val">Instagram · Story Ad</div></div>
+            <div class="info-cell"><div class="info-label">Lead Date</div><div class="info-val">May 18, 2026</div></div>
+            <div class="info-cell"><div class="info-label">Last Contact</div><div class="info-val">Today, 10:00 AM</div></div>
+            <div class="info-cell"><div class="info-label">Follow-up Status</div><div class="info-val">In Process</div></div>
+            <div class="info-cell"><div class="info-label">Assigned To</div><div class="info-val">Rahul M (You)</div></div>
+          </div>
+        </div>
+
+        <!-- Requirement -->
+        <div class="req-card">
+          <div class="sec-head">
+            <i class="ti ti-clipboard-list" style="font-size:14px;color:var(--t2)"></i>
+            <span class="sec-title">Requirements</span>
+            <span class="sec-action">Edit</span>
+          </div>
+          <div class="req-tags">
+            <span class="req-tag">3BHK</span>
+            <span class="req-tag">Bandra West</span>
+            <span class="req-tag">Juhu</span>
+            <span class="req-tag">Andheri W</span>
+            <span class="req-tag">≥ 1200 sqft</span>
+            <span class="req-tag">Ready to move</span>
+            <span class="req-tag">Parking × 2</span>
+            <span class="req-tag">Sea view preferred</span>
+          </div>
+        </div>
+
+        <!-- Activity Timeline -->
+        <div class="timeline">
+          <div class="sec-head">
+            <i class="ti ti-timeline" style="font-size:14px;color:var(--t2)"></i>
+            <span class="sec-title">Activity Timeline</span>
+            <span class="sec-action">Filter</span>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-line"></div>
+            <div class="tl-icon tl-call"><i class="ti ti-phone"></i></div>
+            <div class="tl-body">
+              <div class="tl-top"><span class="tl-title">Call — 8 min</span><span class="tl-time">Today 10:00 AM</span></div>
+              <div class="tl-text">Discussed Bandra West options. Client prefers floors 10+. Sending shortlist by 2 PM.</div>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-line"></div>
+            <div class="tl-icon tl-wa"><i class="ti ti-brand-whatsapp"></i></div>
+            <div class="tl-body">
+              <div class="tl-top"><span class="tl-title">WhatsApp — 3 messages</span><span class="tl-time">May 21, 3:18 PM</span></div>
+              <div class="tl-text">Sent Lodha Malabar brochure. Client replied with budget confirmation ₹2.4Cr max.</div>
+              <span class="tl-chip"><i class="ti ti-paperclip" style="font-size:10px"></i> Brochure-Lodha.pdf</span>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-line"></div>
+            <div class="tl-icon tl-mail"><i class="ti ti-mail"></i></div>
+            <div class="tl-body">
+              <div class="tl-top"><span class="tl-title">Email — Proposal sent</span><span class="tl-time">May 20, 11:00 AM</span></div>
+              <div class="tl-text">Proposal for 3 units at Bandra West. Opened 2× by client.</div>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-line"></div>
+            <div class="tl-icon tl-doc"><i class="ti ti-file"></i></div>
+            <div class="tl-body">
+              <div class="tl-top"><span class="tl-title">Document uploaded</span><span class="tl-time">May 19, 9:30 AM</span></div>
+              <div class="tl-text">KYC — Aadhaar card linked to this lead profile.</div>
+            </div>
+          </div>
+
+          <div class="tl-item">
+            <div class="tl-icon tl-note"><i class="ti ti-notes"></i></div>
+            <div class="tl-body">
+              <div class="tl-top"><span class="tl-title">Note added</span><span class="tl-time">May 18, 2:00 PM</span></div>
+              <div class="tl-text">Lead acquired via Instagram Story. First call scheduled for May 19.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Documents (embedded) -->
+        <div class="docs-card">
+          <div class="sec-head">
+            <i class="ti ti-file-description" style="font-size:14px;color:var(--t2)"></i>
+            <span class="sec-title">Documents</span>
+            <span class="sec-action">Link existing</span>
+          </div>
+          <div class="doc-drop"><i class="ti ti-upload" style="font-size:16px;display:block;margin-bottom:4px"></i>Drag &amp; drop to link — auto-archived to this lead</div>
+          <div class="doc-item">
+            <div class="doc-icon doc-pdf"><i class="ti ti-file-type-pdf"></i></div>
+            <div style="flex:1;min-width:0">
+              <div class="doc-name">KYC-Aadhaar-PriyaSharma.pdf</div>
+              <div class="doc-meta">Uploaded May 19 · 1.2 MB</div>
+            </div>
+            <div class="doc-act"><i class="ti ti-download"></i></div>
+            <div class="doc-act"><i class="ti ti-dots-vertical"></i></div>
+          </div>
+          <div class="doc-item">
+            <div class="doc-icon doc-xls"><i class="ti ti-file-spreadsheet"></i></div>
+            <div style="flex:1;min-width:0">
+              <div class="doc-name">Assignment-Agreement-Draft.xlsx</div>
+              <div class="doc-meta">Uploaded May 20 · 340 KB</div>
+            </div>
+            <div class="doc-act"><i class="ti ti-download"></i></div>
+            <div class="doc-act"><i class="ti ti-dots-vertical"></i></div>
+          </div>
+          <div class="doc-item">
+            <div class="doc-icon doc-img"><i class="ti ti-photo"></i></div>
+            <div style="flex:1;min-width:0">
+              <div class="doc-name">Site-Visit-Photos-May21.zip</div>
+              <div class="doc-meta">Uploaded May 21 · 8.4 MB</div>
+            </div>
+            <div class="doc-act"><i class="ti ti-download"></i></div>
+            <div class="doc-act"><i class="ti ti-dots-vertical"></i></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="right">
+
+        <!-- Lead status pipeline -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-git-branch" style="font-size:14px;color:var(--t2)"></i><span class="pt">Lead Status</span><span class="pa">Update</span></div>
+          <div class="pipe-steps">
+            <div class="pipe-step"><div class="ps-dot done"><i class="ti ti-check" style="font-size:9px"></i></div><div class="ps-label">New</div></div>
+            <div class="pipe-step"><div class="ps-dot done"><i class="ti ti-check" style="font-size:9px"></i></div><div class="ps-label">Contacted</div></div>
+            <div class="pipe-step"><div class="ps-dot active"></div><div class="ps-label" style="color:var(--acc)">In Process</div></div>
+            <div class="pipe-step"><div class="ps-dot"></div><div class="ps-label">Visit</div></div>
+            <div class="pipe-step"><div class="ps-dot"></div><div class="ps-label">Negotiation</div></div>
+            <div class="pipe-step"><div class="ps-dot"></div><div class="ps-label">Converted</div></div>
+          </div>
+        </div>
+
+        <!-- Opportunity / Pipeline score -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-trending-up" style="font-size:14px;color:var(--t2)"></i><span class="pt">Opportunity Score</span></div>
+          <div class="opp-bar-wrap">
+            <div class="opp-label"><span style="font-size:11px;color:var(--t2)">Conversion likelihood</span><span style="font-size:13px;font-weight:600;color:var(--acc2)">78%</span></div>
+            <div class="opp-bar"><div class="opp-fill" style="width:78%"></div></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+              <div style="font-size:10px;color:var(--t2)">Calls logged<br><span style="font-size:13px;font-weight:600;color:var(--t1)">4</span></div>
+              <div style="font-size:10px;color:var(--t2)">Site visits<br><span style="font-size:13px;font-weight:600;color:var(--t1)">1</span></div>
+              <div style="font-size:10px;color:var(--t2)">Days active<br><span style="font-size:13px;font-weight:600;color:var(--t1)">5</span></div>
+              <div style="font-size:10px;color:var(--t2)">Proposals sent<br><span style="font-size:13px;font-weight:600;color:var(--t1)">2</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Follow-up schedule -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-clock" style="font-size:14px;color:var(--t2)"></i><span class="pt">Follow-up Schedule</span><span class="pa">+ Add</span></div>
+          <div class="fu-list">
+            <div class="fu-item">
+              <span class="fu-type fu-call">Call</span>
+              <span class="fu-text">Send 3-unit shortlist</span>
+              <span class="fu-date">Today 2:00 PM</span>
+            </div>
+            <div class="fu-item">
+              <span class="fu-type fu-wa">WA</span>
+              <span class="fu-text">Confirm site visit slot</span>
+              <span class="fu-date">May 24 10:00 AM</span>
+            </div>
+            <div class="fu-item">
+              <span class="fu-type fu-call">Call</span>
+              <span class="fu-text">Post-visit feedback</span>
+              <span class="fu-date">May 26 5:00 PM</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rental renewal alert -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-building" style="font-size:14px;color:var(--t2)"></i><span class="pt">Properties Interested In</span><span class="pa">+ Add</span></div>
+          <div class="prop-list">
+            <div class="prop-item">
+              <div class="prop-thumb">🏢</div>
+              <div>
+                <div class="prop-name">Lodha Malabar — 3BHK</div>
+                <div class="prop-sub">Bandra West · 1480 sqft · 14th Floor</div>
+              </div>
+              <span class="prop-price">₹2.4Cr</span>
+            </div>
+            <div class="prop-item">
+              <div class="prop-thumb">🏗️</div>
+              <div>
+                <div class="prop-name">Rustomjee Seasons — 3BHK</div>
+                <div class="prop-sub">Bandra East · 1320 sqft · 8th Floor</div>
+              </div>
+              <span class="prop-price">₹2.1Cr</span>
+            </div>
+          </div>
+          <div class="alert-bar"><i class="ti ti-alert-triangle"></i> Rental renewal due in 18 days — send reminder?</div>
+        </div>
+
+        <!-- Touch Points (contextual) -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-messages" style="font-size:14px;color:var(--t2)"></i><span class="pt">Touch Points</span></div>
+          <div class="tp-tabs">
+            <div class="tp-tab active">WhatsApp</div>
+            <div class="tp-tab">Email</div>
+            <div class="tp-tab">Calls</div>
+            <div class="tp-tab">SMS</div>
+          </div>
+          <div class="tp-body">
+            <div class="tp-msg"><div><div class="tp-bubble tp-in">Hi, I saw your ad for 3BHK in Bandra. Is this still available?</div><div class="tp-time">May 18, 4:12 PM</div></div></div>
+            <div class="tp-msg" style="justify-content:flex-end"><div><div class="tp-bubble tp-out">Yes! We have options. Budget range?</div><div class="tp-time">May 18, 4:15 PM</div></div></div>
+            <div class="tp-msg"><div><div class="tp-bubble tp-in">Around 2.2–2.5Cr. Preferably ready to move.</div><div class="tp-time">May 18, 4:18 PM</div></div></div>
+            <div class="tp-msg" style="justify-content:flex-end"><div><div class="tp-bubble tp-out">Sending you 3 options shortly. Can I call tomorrow at 10?</div><div class="tp-time">May 18, 4:20 PM</div></div></div>
+          </div>
+          <div class="tp-compose">
+            <div class="tp-input" style="display:flex;align-items:center;color:var(--t2)">Type a message…</div>
+            <div class="tp-send"><i class="ti ti-send" style="font-size:12px"></i></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

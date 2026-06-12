@@ -1,0 +1,848 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    /* Luxury Obsidian & Brushed Gold Variables */
+    --color-bg-base: #0c0b09;
+    --color-bg-surface: rgba(20, 18, 16, 0.7);
+    --color-bg-surface-hover: rgba(30, 27, 24, 0.85);
+    --color-bg-surface-subtle: rgba(16, 14, 12, 0.45);
+    --color-bg-nav: #060505;
+    
+    --color-gold-brass: #c5a867;
+    --color-gold-accent: #b89047;
+    --color-gold-glow: rgba(197, 168, 103, 0.05);
+    --color-gold-border: rgba(197, 168, 103, 0.12);
+    --color-gold-border-bright: rgba(197, 168, 103, 0.28);
+    
+    --color-status-available: #10b981;
+    --color-status-sold: #ef4444;
+    --color-status-hold: #3b82f6;
+    --color-status-ref: #8b5cf6;
+    
+    --color-text-primary: #f5f4f0;
+    --color-text-secondary: #a3a097;
+    --color-text-muted: #6e6b62;
+    
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-title: 'Plus Jakarta Sans', var(--font-sans);
+
+    /* Original Mappings to maintain compatibility */
+    --nav: var(--color-bg-nav);
+    --nav-t: rgba(245, 244, 240, 0.55);
+    --nav-a: #fff;
+    --nav-b: rgba(197, 168, 103, 0.08);
+    --acc: var(--color-gold-brass);
+    --acc2: var(--color-status-available);
+    --acc3: var(--color-gold-accent);
+    --acc4: var(--color-status-sold);
+    --surf: var(--color-bg-surface);
+    --surf2: var(--color-bg-surface-subtle);
+    --bdr: var(--color-gold-border);
+    --t1: var(--color-text-primary);
+    --t2: var(--color-text-secondary);
+    --r: 10px;
+    --r2: 14px;
+  }
+  
+  body{
+    font-family:var(--font-sans);
+    font-size:13px;
+    background: radial-gradient(circle at 50% 0%, #171512 0%, var(--color-bg-base) 100%);
+    color: var(--t1);
+    min-height: 100vh;
+    padding: 10px;
+  }
+  
+  .shell{
+    display:grid;
+    grid-template-columns:68px 1fr;
+    grid-template-rows:auto;
+    min-height:680px;
+    border-radius:var(--r2);
+    overflow:hidden;
+    border:0.5px solid var(--color-gold-border-bright);
+    background: var(--color-bg-base);
+  }
+
+  /* Narrow icon nav */
+  .sidenav{
+    background:var(--nav);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:24px 0;
+    gap:8px;
+    position:relative;
+    border-right: 0.5px solid var(--bdr);
+  }
+  .sidenav .logo{
+    width:34px;
+    height:34px;
+    background: linear-gradient(135deg, #c5a867 0%, #b89047 100%);
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#0c0b09;
+    font-weight:700;
+    font-size:14px;
+    margin-bottom:20px;
+    flex-shrink:0;
+    font-family: var(--font-title);
+    letter-spacing: 0.05em;
+    box-shadow: 0 4px 12px rgba(197, 168, 103, 0.25);
+  }
+  .nav-icon{
+    width:44px;
+    height:44px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--nav-t);
+    cursor:pointer;
+    transition:all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position:relative;
+  }
+  .nav-icon:hover{
+    background:rgba(197, 168, 103, 0.05);
+    color:var(--nav-a);
+  }
+  .nav-icon.active{
+    background: linear-gradient(135deg, rgba(197, 168, 103, 0.15) 0%, rgba(197, 168, 103, 0.02) 100%);
+    color:#fff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  /* Left golden border marker for active state */
+  .nav-icon.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 3px;
+    background: linear-gradient(to bottom, #c5a867, #b89047);
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 0 8px rgba(197, 168, 103, 0.5);
+  }
+  .nav-icon .ti{font-size:19px}
+  
+  /* Glowing pulse animations */
+  .nav-icon .dot{
+    position:absolute;
+    top:8px;
+    right:8px;
+    width:6px;
+    height:6px;
+    background:var(--color-status-sold);
+    border-radius:50%;
+    border:1px solid var(--nav);
+    animation: pulse-red 2s infinite;
+  }
+  @keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  }
+  
+  .nav-sep{
+    width:32px;
+    height:1px;
+    background: linear-gradient(90deg, transparent, rgba(197, 168, 103, 0.15) 20%, rgba(197, 168, 103, 0.15) 80%, transparent);
+    margin:10px 0;
+  }
+  .nav-bottom{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:8px}
+
+  /* Main area */
+  .main{display:flex;flex-direction:column;background:radial-gradient(circle at 50% 0%, #151310 0%, var(--color-bg-base) 100%)}
+
+  /* Top bar */
+  .topbar{
+    background:var(--surf);
+    border-bottom:0.5px solid var(--bdr);
+    padding:0 18px;
+    height:54px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-shrink:0;
+    backdrop-filter: blur(12px) saturate(140%);
+  }
+  .topbar .breadcrumb{font-size:13px;color:var(--t2);display:flex;align-items:center;gap:6px;font-family:var(--font-title)}
+  .topbar .breadcrumb span{color:var(--t1);font-weight:600}
+  .search-bar{
+    flex:1;
+    max-width:320px;
+    height:34px;
+    background:var(--surf2);
+    border:0.5px solid var(--bdr);
+    border-radius:20px;
+    display:flex;
+    align-items:center;
+    padding:0 12px;
+    gap:8px;
+    color:var(--t2);
+    font-size:12px;
+    transition: all 0.2s ease;
+  }
+  .search-bar:hover {
+    border-color: var(--color-gold-border-bright);
+  }
+  .search-bar .ti{font-size:15px}
+  .topbar-actions{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .tb-btn{
+    width:32px;
+    height:32px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--t2);
+    cursor:pointer;
+    border:0.5px solid transparent;
+    transition: all 0.2s ease;
+  }
+  .tb-btn:hover{background:var(--surf2);border-color:var(--bdr);color:var(--t1)}
+  .tb-btn .ti{font-size:17px}
+  
+  .avatar{
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    background: linear-gradient(135deg, #201d19 0%, #0d0c0a 100%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--t1);
+    font-size:11px;
+    font-weight:600;
+    cursor:pointer;
+    border: 1px solid var(--color-gold-border-bright);
+    box-shadow: 0 2px 8px rgba(197, 168, 103, 0.15);
+    font-family: var(--font-title);
+    transition: all 0.2s ease;
+  }
+  .avatar:hover {
+    border-color: var(--acc);
+    box-shadow: 0 0 12px rgba(197, 168, 103, 0.3);
+  }
+
+  /* Content */
+  .content{
+    padding:16px;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    overflow:auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(197, 168, 103, 0.2) transparent;
+  }
+  .content::-webkit-scrollbar {
+    width: 6px;
+  }
+  .content::-webkit-scrollbar-thumb {
+    background: rgba(197, 168, 103, 0.2);
+    border-radius: 4px;
+  }
+
+  /* Metric row */
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .metric-card{
+    background:var(--surf);
+    border:0.5px solid var(--bdr);
+    border-radius:var(--r);
+    padding:14px 16px;
+    cursor:pointer;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(12px) saturate(140%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+  .metric-card:hover{
+    border-color: var(--color-gold-border-bright);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(197, 168, 103, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  .metric-label{
+    font-size:10px;
+    color:var(--t2);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin-bottom:6px;
+    font-family: var(--font-title);
+    font-weight: 500;
+  }
+  .metric-val{
+    font-size:26px;
+    font-weight:600;
+    color:var(--t1);
+    line-height:1.1;
+    font-family: var(--font-title);
+    letter-spacing: -0.02em;
+  }
+  .metric-sub{
+    font-size:11px;
+    margin-top:6px;
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+  .badge-up{color:var(--color-status-available);font-weight:500}
+  .badge-dn{color:var(--color-status-sold);font-weight:500}
+
+  /* Mid section */
+  .mid{display:grid;grid-template-columns:1fr 280px;gap:12px}
+
+  /* Lead pipeline */
+  .panel{
+    background:var(--surf);
+    border:0.5px solid var(--bdr);
+    border-radius:var(--r2);
+    overflow:hidden;
+    backdrop-filter: blur(12px) saturate(140%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+  .panel-head{
+    padding:12px 16px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    border-bottom:0.5px solid var(--bdr);
+    background: rgba(197, 168, 103, 0.02);
+  }
+  .panel-title{
+    font-size:13px;
+    font-weight:600;
+    color:var(--t1);
+    font-family: var(--font-title);
+    letter-spacing: 0.02em;
+  }
+  .panel-sub{font-size:11px;color:var(--t2);margin-left:auto}
+  .panel-action{
+    font-size:11px;
+    color:var(--acc);
+    cursor:pointer;
+    margin-left:8px;
+    font-weight: 500;
+    transition: color 0.2s ease;
+  }
+  .panel-action:hover {
+    color: var(--color-gold-accent);
+  }
+
+  /* Kanban columns */
+  .kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:none}
+  .kol{border-right:0.5px solid var(--bdr);padding:14px;background:rgba(18, 16, 14, 0.15)}
+  .kol:last-child{border-right:none}
+  .kol-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .kol-name{font-size: 10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-family:var(--font-title)}
+  .kol-count{font-size:10px;color:var(--t2);background:var(--surf2);padding:2px 8px;border-radius:10px;border:0.5px solid var(--bdr)}
+  
+  .kol.hot .kol-name{color:var(--color-status-sold)}
+  .kol.warm .kol-name{color:var(--color-gold-accent)}
+  .kol.cold .kol-name{color:var(--color-status-hold)}
+  .kol.ref .kol-name{color:var(--color-status-ref)}
+  
+  .lead-card{
+    background:var(--surf2);
+    border:0.5px solid var(--bdr);
+    border-radius:8px;
+    padding:10px 12px;
+    margin-bottom:8px;
+    cursor:pointer;
+    transition:all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .lead-card:hover{
+    border-color:var(--color-gold-border-bright);
+    background: rgba(197, 168, 103, 0.04);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+  .lead-name{font-size:12px;font-weight:600;color:var(--t1);font-family:var(--font-title)}
+  .lead-prop{font-size:11px;color:var(--t2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lead-meta{display:flex;align-items:center;gap:6px;margin-top:6px}
+  
+  .tag{font-size:9px;padding:2px 6px;border-radius:4px;font-weight:600;font-family:var(--font-title)}
+  .tag-hot{background:rgba(239, 68, 68, 0.15);color:#FCA5A5;border: 0.5px solid rgba(239, 68, 68, 0.25)}
+  .tag-warm{background:rgba(197, 168, 103, 0.15);color:#FDE047;border: 0.5px solid rgba(197, 168, 103, 0.25)}
+  .tag-cold{background:rgba(59, 130, 246, 0.15);color:#93C5FD;border: 0.5px solid rgba(59, 130, 246, 0.25)}
+  .tag-src{background:var(--surf);color:var(--t2);border:0.5px solid var(--bdr)}
+
+  /* Right panel: calendar + tasks */
+  .right-stack{display:flex;flex-direction:column;gap:12px}
+
+  /* Mini calendar */
+  .cal{padding:14px}
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .cal-month{font-size:12px;font-weight:600;color:var(--t1);font-family:var(--font-title)}
+  .cal-nav{font-size:12px;color:var(--t2);cursor:pointer;padding:2px 6px;border-radius:4px;transition:background 0.2s}
+  .cal-nav:hover{background:var(--surf2);color:var(--t1)}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+  .cal-day-label{font-size:10px;color:var(--t2);padding:4px 0;font-weight:600;font-family:var(--font-title)}
+  .cal-day{font-size:11px;color:var(--t2);padding:4px 0;border-radius:6px;cursor:pointer;transition:all 0.2s}
+  .cal-day:hover{background:var(--surf2);color:var(--t1)}
+  .cal-day.today{background:var(--acc);color:#0c0b09;border-radius:6px;font-weight:600;box-shadow:0 0 10px rgba(197, 168, 103, 0.4)}
+  .cal-day.has-event::after{content:'';display:block;width:4px;height:4px;background:var(--color-gold-accent);border-radius:50%;margin:2px auto 0}
+  .cal-day.today::after{background:#0c0b09}
+
+  /* Tasks */
+  .task-list {
+    padding: 4px 14px 12px;
+    overflow-y: auto;
+    max-height: 180px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(197, 168, 103, 0.2) transparent;
+  }
+  .task-list::-webkit-scrollbar { width: 4px; }
+  .task-list::-webkit-scrollbar-thumb { background: rgba(197, 168, 103, 0.2); border-radius: 2px; }
+  .task-item{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:8px 0;
+    border-bottom:0.5px solid var(--bdr);
+  }
+  .task-item:last-child{border-bottom:none}
+  .task-check{
+    width:15px;
+    height:15px;
+    border:1px solid var(--color-gold-border-bright);
+    border-radius:4px;
+    flex-shrink:0;
+    margin-top:1px;
+    cursor:pointer;
+    background: transparent;
+    transition: all 0.2s ease;
+  }
+  .task-check:hover {
+    border-color: var(--acc);
+    box-shadow: 0 0 6px rgba(197, 168, 103, 0.25);
+  }
+  .task-check.done{
+    background:var(--acc2);
+    border-color:var(--acc2);
+    position: relative;
+  }
+  .task-check.done::after {
+    content: '✓';
+    color: #0c0b09;
+    font-size: 10px;
+    font-weight: bold;
+    position: absolute;
+    top: -1px;
+    left: 2px;
+  }
+  .task-text{font-size:12px;color:var(--t1);line-height:1.4}
+  .task-text.done{color:var(--t2);text-decoration:line-through;opacity: 0.65}
+  .task-date{font-size:10px;color:var(--t2);margin-top:2px}
+  .task-pri{
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: auto;
+    flex-shrink: 0;
+    margin-top: 1px;
+    font-weight: 600;
+    font-family: var(--font-title);
+  }
+  .pri-high{background:rgba(239, 68, 68, 0.15);color:#FCA5A5;border: 0.5px solid rgba(239, 68, 68, 0.25)}
+  .pri-med{background:rgba(197, 168, 103, 0.15);color:#FDE047;border: 0.5px solid rgba(197, 168, 103, 0.25)}
+
+  /* Bottom row */
+  .bottom{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+  /* Analytics sparkline area */
+  .spark-row{display:flex;align-items:flex-end;gap:4px;height:44px;padding:0 14px 10px}
+  .spark-bar{flex:1;border-radius:3px 3px 0 0;min-width:8px;transition:all 0.2s ease;cursor:pointer}
+  .spark-bar:hover{filter:brightness(1.25);transform:scaleY(1.05)}
+
+  /* Recent enquiries list */
+  .enq-list{
+    padding:4px 14px 12px;
+    overflow-y: auto;
+    max-height: 180px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(197, 168, 103, 0.2) transparent;
+  }
+  .enq-list::-webkit-scrollbar { width: 4px; }
+  .enq-list::-webkit-scrollbar-thumb { background: rgba(197, 168, 103, 0.2); border-radius: 2px; }
+  .enq-item{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:8px 0;
+    border-bottom:0.5px solid var(--bdr);
+    cursor:pointer;
+    transition: background 0.2s;
+  }
+  .enq-item:last-child{border-bottom:none}
+  .enq-item:hover {
+    background: rgba(197, 168, 103, 0.02);
+  }
+  .enq-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;box-shadow: 0 0 6px currentColor}
+  .enq-name{font-size:12px;font-weight:500;color:var(--t1);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .enq-time{font-size:10px;color:var(--t2);flex-shrink:0}
+  .enq-src{
+    font-size:9px;
+    padding:2px 6px;
+    border-radius:4px;
+    background:var(--surf2);
+    color:var(--t2);
+    flex-shrink:0;
+    border: 0.5px solid var(--bdr);
+    font-family: var(--font-title);
+    font-weight: 500;
+  }
+
+  /* Source donut */
+  .donut-wrap{display:flex;gap:16px;padding:12px 16px;align-items:center}
+  .donut-legend{display:flex;flex-direction:column;gap:6px;flex:1}
+  .leg-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--t2)}
+  .leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+  /* Footer dock: conversations */
+  .dock{
+    background:var(--surf);
+    border-top:0.5px solid var(--bdr);
+    height:40px;
+    display:flex;
+    align-items:center;
+    padding:0 16px;
+    gap:10px;
+    flex-shrink:0;
+    backdrop-filter: blur(12px) saturate(140%);
+  }
+  .dock-label{font-size:11px;color:var(--t2);font-weight:600;font-family:var(--font-title);text-transform:uppercase;letter-spacing:0.04em}
+  .dock-tab{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:4px 12px;
+    border-radius:20px;
+    cursor:pointer;
+    font-size:11px;
+    color:var(--t2);
+    border:0.5px solid transparent;
+    transition: all 0.2s ease;
+  }
+  .dock-tab:hover{
+    background:var(--surf2);
+    color:var(--t1);
+    border-color: var(--bdr);
+  }
+  .dock-tab.active{
+    background: linear-gradient(135deg, rgba(197, 168, 103, 0.15) 0%, rgba(197, 168, 103, 0.03) 100%);
+    border-color: var(--color-gold-border-bright);
+    color:var(--t1);
+    font-weight: 500;
+  }
+  .dock-tab .ti{font-size:14px}
+  .dock-badge{
+    font-size:9px;
+    background:var(--color-status-sold);
+    color:#fff;
+    padding:1px 5px;
+    border-radius:8px;
+    font-weight:600;
+  }
+  .dock-expand{margin-left:auto;font-size:11px;color:var(--acc);cursor:pointer;font-weight:500;transition: color 0.2s}
+  .dock-expand:hover{color:var(--color-gold-accent)}
+</style>
+
+<div class="shell">
+  <!-- Narrow sidebar -->
+  <nav class="sidenav" aria-label="Main navigation">
+    <div class="logo" title="Vitrag CRM">V</div>
+    <div class="nav-icon active" title="Dashboard"><i class="ti ti-layout-dashboard" aria-hidden="true"></i></div>
+    <div class="nav-icon" title="Lead Management"><i class="ti ti-users" aria-hidden="true"></i><span class="dot"></span></div>
+    <div class="nav-icon" title="Listing / Properties"><i class="ti ti-building" aria-hidden="true"></i></div>
+    <div class="nav-icon" title="Finance"><i class="ti ti-receipt" aria-hidden="true"></i></div>
+    <div class="nav-sep"></div>
+    <div class="nav-icon" title="Team Management"><i class="ti ti-briefcase" aria-hidden="true"></i></div>
+    <div class="nav-icon" title="Builder Management"><i class="ti ti-hammer" aria-hidden="true"></i></div>
+    <div class="nav-icon" title="Documents"><i class="ti ti-file-description" aria-hidden="true"></i></div>
+    <div class="nav-icon" title="Analytics"><i class="ti ti-chart-bar" aria-hidden="true"></i></div>
+    <div class="nav-sep"></div>
+    <div class="nav-icon" title="Smart Lists"><i class="ti ti-list-search" aria-hidden="true"></i></div>
+    <div class="nav-icon" title="Social Media"><i class="ti ti-share" aria-hidden="true"></i></div>
+    <div class="nav-icon" title="Settings"><i class="ti ti-settings" aria-hidden="true"></i></div>
+    <div class="nav-bottom">
+      <div class="nav-icon" title="Notifications"><i class="ti ti-bell" aria-hidden="true"><span class="dot"></span></i></div>
+      <div class="nav-icon" title="My Profile"><i class="ti ti-user-circle" aria-hidden="true"></i></div>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <div class="main">
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="breadcrumb">My Dashboard &nbsp;/&nbsp; <span>Overview</span></div>
+      <div class="search-bar"><i class="ti ti-search" aria-hidden="true"></i> Search leads, properties, contacts…</div>
+      <div class="topbar-actions">
+        <div class="tb-btn" title="Calendar"><i class="ti ti-calendar" aria-hidden="true"></i></div>
+        <div class="tb-btn" title="Notepad"><i class="ti ti-notebook" aria-hidden="true"></i></div>
+        <div class="tb-btn" title="Notifications"><i class="ti ti-bell" aria-hidden="true"></i></div>
+        <div class="avatar" title="Rahul M">RM</div>
+      </div>
+    </header>
+
+    <!-- Scrollable content area -->
+    <div class="content">
+
+      <!-- Metric cards -->
+      <div class="metrics" role="list">
+        <div class="metric-card" role="listitem">
+          <div class="metric-label">Recent Enquiries</div>
+          <div class="metric-val">142</div>
+          <div class="metric-sub"><span class="badge-up">↑ 18%</span><span style="color:var(--t2)">vs last month</span></div>
+        </div>
+        <div class="metric-card" role="listitem">
+          <div class="metric-label">Active Leads</div>
+          <div class="metric-val">87</div>
+          <div class="metric-sub"><span class="badge-up">↑ 7%</span><span style="color:var(--t2)">this week</span></div>
+        </div>
+        <div class="metric-card" role="listitem">
+          <div class="metric-label">Bookings / TXN</div>
+          <div class="metric-val">23</div>
+          <div class="metric-sub"><span class="badge-dn">↓ 3%</span><span style="color:var(--t2)">vs last month</span></div>
+        </div>
+        <div class="metric-card" role="listitem">
+          <div class="metric-label">Campaigns Running</div>
+          <div class="metric-val">6</div>
+          <div class="metric-sub"><span style="color:var(--t2)">3 FB · 2 Insta · 1 GDS</span></div>
+        </div>
+      </div>
+
+      <!-- Mid: Kanban + Right stack -->
+      <div class="mid">
+        <!-- Lead Kanban -->
+        <div class="panel">
+          <div class="panel-head">
+            <i class="ti ti-layout-kanban" style="font-size:14px;color:var(--t2)" aria-hidden="true"></i>
+            <span class="panel-title">Lead Pipeline</span>
+            <span class="panel-sub">87 active · sorted by last contact</span>
+            <span class="panel-action">View all ›</span>
+            <div style="display:flex;gap:4px;margin-left:8px">
+              <div style="font-size:10px;padding:3px 8px;border-radius:4px;background:var(--surf2);border:0.5px solid var(--bdr);cursor:pointer;color:var(--t2)">Kanban</div>
+              <div style="font-size:10px;padding:3px 8px;border-radius:4px;border:0.5px solid var(--bdr);cursor:pointer;color:var(--t2)">List</div>
+            </div>
+          </div>
+          <div class="kanban">
+            <div class="kol hot">
+              <div class="kol-head"><span class="kol-name">Hot</span><span class="kol-count">14</span></div>
+              <div class="lead-card">
+                <div class="lead-name">Priya Sharma</div>
+                <div class="lead-prop">3BHK · Bandra West · ₹2.4Cr</div>
+                <div class="lead-meta"><span class="tag tag-hot">Hot</span><span class="tag tag-src">Insta</span></div>
+              </div>
+              <div class="lead-card">
+                <div class="lead-name">Rahul Joshi</div>
+                <div class="lead-prop">Villa · Juhu · ₹6.8Cr</div>
+                <div class="lead-meta"><span class="tag tag-hot">Hot</span><span class="tag tag-src">Reference</span></div>
+              </div>
+              <div class="lead-card">
+                <div class="lead-name">Meena Kapoor</div>
+                <div class="lead-prop">2BHK · Andheri E · ₹1.1Cr</div>
+                <div class="lead-meta"><span class="tag tag-hot">Hot</span><span class="tag tag-src">Web</span></div>
+              </div>
+            </div>
+
+            <div class="kol warm">
+              <div class="kol-head"><span class="kol-name">Warm</span><span class="kol-count">29</span></div>
+              <div class="lead-card">
+                <div class="lead-name">Amit Desai</div>
+                <div class="lead-prop">Office · BKC · ₹3.2Cr</div>
+                <div class="lead-meta"><span class="tag tag-warm">Warm</span><span class="tag tag-src">FB</span></div>
+              </div>
+              <div class="lead-card">
+                <div class="lead-name">Sunita Rao</div>
+                <div class="lead-prop">1BHK · Powai · ₹82L</div>
+                <div class="lead-meta"><span class="tag tag-warm">Warm</span><span class="tag tag-src">GDS</span></div>
+              </div>
+              <div class="lead-card">
+                <div class="lead-name">Farhan Ali</div>
+                <div class="lead-prop">Fractional · Goregaon · ₹45L</div>
+                <div class="lead-meta"><span class="tag tag-warm">Warm</span><span class="tag tag-src">Email</span></div>
+              </div>
+            </div>
+            <div class="kol cold">
+              <div class="kol-head"><span class="kol-name">Cold</span><span class="kol-count">31</span></div>
+              <div class="lead-card">
+                <div class="lead-name">Geeta Pillai</div>
+                <div class="lead-prop">Plot · Navi Mumbai · ₹1.8Cr</div>
+                <div class="lead-meta"><span class="tag tag-cold">Cold</span><span class="tag tag-src">Web</span></div>
+              </div>
+              <div class="lead-card">
+                <div class="lead-name">Karan Mehta</div>
+                <div class="lead-prop">Warehouse · Bhiwandi</div>
+                <div class="lead-meta"><span class="tag tag-cold">Cold</span><span class="tag tag-src">WA</span></div>
+              </div>
+            </div>
+            <div class="kol ref">
+              <div class="kol-head"><span class="kol-name">Follow-up</span><span class="kol-count">13</span></div>
+              <div class="lead-card">
+                <div class="lead-name">Divya Nair</div>
+                <div class="lead-prop">4BHK · Worli · ₹9.5Cr</div>
+                <div class="lead-meta" style="flex-wrap:wrap"><span style="font-size:9px;color:var(--color-status-ref);background:rgba(139, 92, 246, 0.15);border:0.5px solid rgba(139, 92, 246, 0.25);padding:1px 5px;border-radius:3px;font-weight:600">Missed Follow-up</span></div>
+              </div>
+              <div class="lead-card">
+                <div class="lead-name">Sanjay Trivedi</div>
+                <div class="lead-prop">Commercial · Thane · ₹2.1Cr</div>
+                <div class="lead-meta"><span style="font-size:9px;color:var(--color-status-ref);background:rgba(139, 92, 246, 0.15);border:0.5px solid rgba(139, 92, 246, 0.25);padding:1px 5px;border-radius:3px;font-weight:600">In Process</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right stack: mini calendar + tasks -->
+        <div class="right-stack">
+          <div class="panel">
+            <div class="panel-head">
+              <i class="ti ti-calendar" style="font-size:14px;color:var(--t2)" aria-hidden="true"></i>
+              <span class="panel-title">Calendar</span>
+              <span class="panel-action" style="margin-left:auto">Scheduler ›</span>
+            </div>
+            <div class="cal">
+              <div class="cal-head">
+                <span class="cal-nav">‹</span>
+                <span class="cal-month">May 2026</span>
+                <span class="cal-nav">›</span>
+              </div>
+              <div class="cal-grid">
+                <div class="cal-day-label">S</div><div class="cal-day-label">M</div><div class="cal-day-label">T</div><div class="cal-day-label">W</div><div class="cal-day-label">T</div><div class="cal-day-label">F</div><div class="cal-day-label">S</div>
+                <div class="cal-day" style="color:var(--bdr)"></div><div class="cal-day" style="color:var(--bdr)"></div><div class="cal-day" style="color:var(--bdr)"></div><div class="cal-day" style="color:var(--bdr)"></div><div class="cal-day" style="color:var(--bdr)"></div>
+                <div class="cal-day">1</div><div class="cal-day has-event">2</div>
+                <div class="cal-day">3</div><div class="cal-day has-event">4</div><div class="cal-day">5</div><div class="cal-day">6</div><div class="cal-day has-event">7</div><div class="cal-day">8</div><div class="cal-day">9</div>
+                <div class="cal-day">10</div><div class="cal-day">11</div><div class="cal-day has-event">12</div><div class="cal-day">13</div><div class="cal-day">14</div><div class="cal-day has-event">15</div><div class="cal-day">16</div>
+                <div class="cal-day">17</div><div class="cal-day">18</div><div class="cal-day">19</div><div class="cal-day has-event">20</div><div class="cal-day">21</div><div class="cal-day">22</div><div class="cal-day today">23</div>
+                <div class="cal-day">24</div><div class="cal-day has-event">25</div><div class="cal-day">26</div><div class="cal-day">27</div><div class="cal-day">28</div><div class="cal-day">29</div><div class="cal-day">30</div>
+                <div class="cal-day">31</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" style="flex:1">
+            <div class="panel-head">
+              <i class="ti ti-circle-check" style="font-size:14px;color:var(--t2)" aria-hidden="true"></i>
+              <span class="panel-title">Tasks</span>
+              <span class="panel-sub">5 open</span>
+              <span class="panel-action">All ›</span>
+            </div>
+            <div class="task-list">
+              <div class="task-item">
+                <div class="task-check done"></div>
+                <div style="flex:1;min-width:0">
+                  <div class="task-text done">Call Priya Sharma — site visit</div>
+                  <div class="task-date">Today, 10:00 AM</div>
+                </div>
+              </div>
+              <div class="task-item">
+                <div class="task-check"></div>
+                <div style="flex:1;min-width:0">
+                  <div class="task-text">Send proposal to Rahul Joshi</div>
+                  <div class="task-date">Today, 2:00 PM</div>
+                </div>
+                <div class="task-pri pri-high">High</div>
+              </div>
+              <div class="task-item">
+                <div class="task-check"></div>
+                <div style="flex:1;min-width:0">
+                  <div class="task-text">Follow up — Divya Nair (4BHK Worli)</div>
+                  <div class="task-date">Tomorrow, 11:00 AM</div>
+                </div>
+                <div class="task-pri pri-med">Med</div>
+              </div>
+              <div class="task-item">
+                <div class="task-check"></div>
+                <div style="flex:1;min-width:0">
+                  <div class="task-text">Upload KYC docs — Sanjay Trivedi</div>
+                  <div class="task-date">May 25</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom row: Bookings trend, Recent enquiries, Source breakdown -->
+      <div class="bottom">
+        <!-- Bookings sparkline -->
+        <div class="panel">
+          <div class="panel-head">
+            <i class="ti ti-chart-bar" style="font-size:14px;color:var(--t2)" aria-hidden="true"></i>
+            <span class="panel-title">Project Sales</span>
+            <span class="panel-sub">Last 8 weeks</span>
+          </div>
+          <div style="padding:12px 16px 4px;font-size:20px;font-weight:600;color:var(--t1);font-family:var(--font-title)">₹4.2Cr <span style="font-size:11px;color:var(--acc2);font-weight:500;margin-left:4px">↑ 12%</span></div>
+          <div class="spark-row" role="img" aria-label="Sales bar chart">
+            <div class="spark-bar" style="height:40%;background:rgba(197, 168, 103, 0.25)"></div>
+            <div class="spark-bar" style="height:55%;background:rgba(197, 168, 103, 0.4)"></div>
+            <div class="spark-bar" style="height:45%;background:rgba(197, 168, 103, 0.35)"></div>
+            <div class="spark-bar" style="height:70%;background:rgba(197, 168, 103, 0.6)"></div>
+            <div class="spark-bar" style="height:60%;background:rgba(197, 168, 103, 0.5)"></div>
+            <div class="spark-bar" style="height:80%;background:rgba(197, 168, 103, 0.75)"></div>
+            <div class="spark-bar" style="height:65%;background:rgba(197, 168, 103, 0.65)"></div>
+            <div class="spark-bar" style="height:100%;background:var(--acc)"></div>
+          </div>
+        </div>
+
+        <!-- Recent enquiries -->
+        <div class="panel">
+          <div class="panel-head">
+            <i class="ti ti-user-plus" style="font-size:14px;color:var(--t2)" aria-hidden="true"></i>
+            <span class="panel-title">Recent Enquiries</span>
+            <span class="panel-action" style="margin-left:auto">View all ›</span>
+          </div>
+          <div class="enq-list">
+            <div class="enq-item"><div class="enq-dot" style="color:var(--color-status-sold);background:var(--color-status-sold)"></div><span class="enq-name">Vikram Bose</span><span class="enq-src">FB</span><span class="enq-time">2m</span></div>
+            <div class="enq-item"><div class="enq-dot" style="color:var(--color-gold-accent);background:var(--color-gold-accent)"></div><span class="enq-name">Nalini Iyer</span><span class="enq-src">Insta</span><span class="enq-time">18m</span></div>
+            <div class="enq-item"><div class="enq-dot" style="color:var(--color-status-available);background:var(--color-status-available)"></div><span class="enq-name">Deepak Verma</span><span class="enq-src">Web</span><span class="enq-time">1h</span></div>
+            <div class="enq-item"><div class="enq-dot" style="color:var(--color-status-hold);background:var(--color-status-hold)"></div><span class="enq-name">Pooja Patil</span><span class="enq-src">GDS</span><span class="enq-time">2h</span></div>
+            <div class="enq-item"><div class="enq-dot" style="color:var(--color-status-ref);background:var(--color-status-ref)"></div><span class="enq-name">Rajesh Menon</span><span class="enq-src">Reference</span><span class="enq-time">3h</span></div>
+          </div>
+        </div>
+
+        <!-- Lead source donut -->
+        <div class="panel">
+          <div class="panel-head">
+            <i class="ti ti-chart-pie" style="font-size:14px;color:var(--t2)" aria-hidden="true"></i>
+            <span class="panel-title">Lead Sources</span>
+            <span class="panel-sub">This month</span>
+          </div>
+          <div class="donut-wrap">
+            <svg width="80" height="80" viewBox="0 0 80 80" role="img" aria-label="Lead source donut chart">
+              <circle cx="40" cy="40" r="28" fill="none" stroke="rgba(197, 168, 103, 0.12)" stroke-width="14"/>
+              <circle cx="40" cy="40" r="28" fill="none" stroke="#c5a867" stroke-width="14" stroke-dasharray="52.78 123.15" stroke-dashoffset="0" transform="rotate(-90 40 40)"/>
+              <circle cx="40" cy="40" r="28" fill="none" stroke="#b89047" stroke-width="14" stroke-dasharray="30.79 145.14" stroke-dashoffset="-52.78" transform="rotate(-90 40 40)"/>
+              <circle cx="40" cy="40" r="28" fill="none" stroke="#10b981" stroke-width="14" stroke-dasharray="24.63 151.3" stroke-dashoffset="-83.57" transform="rotate(-90 40 40)"/>
+              <circle cx="40" cy="40" r="28" fill="none" stroke="#8b5cf6" stroke-width="14" stroke-dasharray="15.39 160.54" stroke-dashoffset="-108.2" transform="rotate(-90 40 40)"/>
+              <text x="40" y="44" text-anchor="middle" font-size="11" font-weight="600" fill="var(--t1)" font-family="var(--font-title)">142</text>
+            </svg>
+            <div class="donut-legend">
+              <div class="leg-row"><span class="leg-dot" style="background:#c5a867"></span>Facebook · 30%</div>
+              <div class="leg-row"><span class="leg-dot" style="background:#b89047"></span>Instagram · 18%</div>
+              <div class="leg-row"><span class="leg-dot" style="background:#10b981"></span>Website · 14%</div>
+              <div class="leg-row"><span class="leg-dot" style="background:#8b5cf6"></span>Reference · 9%</div>
+              <div class="leg-row"><span class="leg-dot" style="background:rgba(197, 168, 103, 0.2)"></span>Other · 29%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Persistent conversation dock -->
+    <div class="dock">
+      <span class="dock-label">Touch Points</span>
+      <div class="dock-tab active"><i class="ti ti-brand-whatsapp" aria-hidden="true"></i> WhatsApp <span class="dock-badge">4</span></div>
+      <div class="dock-tab"><i class="ti ti-mail" aria-hidden="true"></i> Email <span class="dock-badge">2</span></div>
+      <div class="dock-tab"><i class="ti ti-phone" aria-hidden="true"></i> Calls</div>
+      <div class="dock-tab"><i class="ti ti-message-circle" aria-hidden="true"></i> SMS</div>
+      <div class="dock-tab"><i class="ti ti-robot" aria-hidden="true"></i> Chatbot</div>
+      <span class="dock-expand">Expand ↗</span>
+    </div>
+  </div>
+</div>

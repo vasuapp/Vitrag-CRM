@@ -1,0 +1,884 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    /* Luxury Obsidian & Brushed Gold Variables */
+    --color-bg-base: #0c0b09;
+    --color-bg-surface: rgba(20, 18, 16, 0.7);
+    --color-bg-surface-hover: rgba(30, 27, 24, 0.85);
+    --color-bg-surface-subtle: rgba(16, 14, 12, 0.45);
+    --color-bg-nav: #060505;
+    
+    --color-gold-brass: #c5a867;
+    --color-gold-accent: #b89047;
+    --color-gold-glow: rgba(197, 168, 103, 0.05);
+    --color-gold-border: rgba(197, 168, 103, 0.12);
+    --color-gold-border-bright: rgba(197, 168, 103, 0.28);
+    
+    --color-status-available: #10b981;
+    --color-status-sold: #ef4444;
+    --color-status-hold: #3b82f6;
+    --color-status-ref: #8b5cf6;
+    
+    --color-text-primary: #f5f4f0;
+    --color-text-secondary: #a3a097;
+    --color-text-muted: #6e6b62;
+    
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-title: 'Plus Jakarta Sans', var(--font-sans);
+
+    /* Original Mappings to maintain compatibility */
+    --nav: var(--color-bg-nav);
+    --acc: var(--color-gold-brass);
+    --acc2: var(--color-status-available);
+    --acc3: var(--color-gold-accent);
+    --acc4: var(--color-status-sold);
+    --acc5: var(--color-status-ref);
+    --surf: var(--color-bg-surface);
+    --surf2: var(--color-bg-surface-subtle);
+    --bdr: var(--color-gold-border);
+    --bdr2: var(--color-gold-border-bright);
+    --t1: var(--color-text-primary);
+    --t2: var(--color-text-secondary);
+    --r: 10px;
+    --r2: 14px;
+  }
+  
+  body{
+    font-family:var(--font-sans);
+    font-size:13px;
+    background: radial-gradient(circle at 50% 0%, #171512 0%, var(--color-bg-base) 100%);
+    color: var(--t1);
+    min-height: 100vh;
+    padding: 10px;
+  }
+  
+  .shell{
+    display:grid;
+    grid-template-columns:68px 1fr;
+    border-radius:var(--r2);
+    overflow:hidden;
+    border:0.5px solid var(--bdr2);
+    min-height:740px;
+    background: var(--color-bg-base);
+  }
+  
+  /* Narrow icon nav */
+  .sidenav{
+    background:var(--nav);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:24px 0;
+    gap:8px;
+    position:relative;
+    border-right: 0.5px solid var(--bdr);
+  }
+  .sidenav .logo{
+    width:34px;
+    height:34px;
+    background: linear-gradient(135deg, #c5a867 0%, #b89047 100%);
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#0c0b09;
+    font-weight:700;
+    font-size:14px;
+    margin-bottom:20px;
+    flex-shrink:0;
+    font-family: var(--font-title);
+    letter-spacing: 0.05em;
+    box-shadow: 0 4px 12px rgba(197, 168, 103, 0.25);
+  }
+  
+  .ni{
+    width:44px;
+    height:44px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--nav-t);
+    cursor:pointer;
+    transition:all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position:relative;
+  }
+  .ni:hover{
+    background:rgba(197, 168, 103, 0.05);
+    color:var(--nav-a);
+  }
+  .ni.active{
+    background: linear-gradient(135deg, rgba(197, 168, 103, 0.15) 0%, rgba(197, 168, 103, 0.02) 100%);
+    color:#fff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  .ni.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 3px;
+    background: linear-gradient(to bottom, #c5a867, #b89047);
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 0 8px rgba(197, 168, 103, 0.5);
+  }
+  .ni .ti{font-size:19px}
+  .nsep{
+    width:32px;
+    height:1px;
+    background: linear-gradient(90deg, transparent, rgba(197, 168, 103, 0.15) 20%, rgba(197, 168, 103, 0.15) 80%, transparent);
+    margin:10px 0;
+  }
+  .nb{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:8px}
+
+  .main{display:flex;flex-direction:column;background:radial-gradient(circle at 50% 0%, #171512 0%, var(--color-bg-base) 100%)}
+  
+  /* Topbar */
+  .topbar{
+    background:var(--surf);
+    border-bottom:0.5px solid var(--bdr);
+    padding:0 18px;
+    height:54px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-shrink:0;
+    backdrop-filter: blur(12px) saturate(140%);
+  }
+  .bc{font-size:13px;color:var(--t2);font-family: var(--font-title)}
+  .bc span{color:var(--t1);font-weight:600}
+  
+  .tba{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .tbb{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 12px;
+    border-radius:6px;
+    font-size:12px;
+    cursor:pointer;
+    border:0.5px solid var(--bdr);
+    color:var(--t2);
+    font-family: var(--font-title);
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .tbb:hover{
+    background:var(--surf2);
+    border-color: var(--bdr2);
+    color: var(--t1);
+  }
+  .tbb.pri{
+    background: linear-gradient(135deg, #c5a867 0%, #b89047 100%);
+    color:#0c0b09;
+    border-color: transparent;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(197, 168, 103, 0.25);
+  }
+  .tbb.pri:hover {
+    filter: brightness(1.1);
+  }
+
+  /* Page tabs */
+  .page-tabs{
+    background:var(--surf);
+    border-bottom:0.5px solid var(--bdr);
+    display:flex;
+    padding:0 16px;
+    gap:4px;
+    backdrop-filter: blur(12px) saturate(140%);
+  }
+  .ptab{
+    padding:14px 16px;
+    font-size:12px;
+    color:var(--t2);
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    white-space:nowrap;
+    font-family: var(--font-title);
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .ptab:hover {
+    color: var(--t1);
+  }
+  .ptab.active{
+    color:var(--acc);
+    border-bottom-color:var(--acc);
+    font-weight:600;
+  }
+
+  .content{padding:16px;flex:1;display:flex;gap:12px;overflow:auto}
+  .left{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
+  .right{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:12px}
+  
+  .panel{
+    background:var(--surf);
+    border:0.5px solid var(--bdr);
+    border-radius:var(--r2);
+    overflow:hidden;
+    backdrop-filter: blur(12px) saturate(140%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+  .ph{
+    padding:12px 16px;
+    border-bottom:0.5px solid var(--bdr);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background: rgba(197, 168, 103, 0.02);
+  }
+  .pt{
+    font-size:13px;
+    font-weight:600;
+    color:var(--t1);
+    flex:1;
+    font-family: var(--font-title);
+    letter-spacing: 0.02em;
+  }
+  .pa{
+    font-size:11px;
+    color:var(--acc);
+    cursor:pointer;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  .pa:hover {
+    color: var(--color-gold-accent);
+  }
+
+  /* Member cards */
+  .member-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px}
+  .member-card{
+    background:var(--surf2);
+    border:0.5px solid var(--bdr);
+    border-radius:var(--r);
+    padding:12px;
+    cursor:pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .member-card:hover{
+    border-color:var(--color-gold-border-bright);
+    background: rgba(197, 168, 103, 0.02);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+  .member-card.me{
+    border-color:var(--acc);
+    background: rgba(197, 168, 103, 0.05);
+    box-shadow: 0 4px 15px rgba(197, 168, 103, 0.05);
+  }
+  .mc-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .mc-avatar{
+    width:36px;
+    height:36px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-size:11px;
+    font-weight:700;
+    flex-shrink:0;
+    position:relative;
+    border: 0.5px solid var(--color-gold-border-bright);
+    font-family: var(--font-title);
+  }
+  
+  /* Online status indicators */
+  .online-dot{
+    position:absolute;
+    bottom:0;
+    right:0;
+    width:8px;
+    height:8px;
+    background:#10b981;
+    border-radius:50%;
+    border:1.5px solid #0c0b09;
+    animation: pulse-green 2s infinite;
+  }
+  @keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  }
+  
+  .offline-dot{
+    position:absolute;
+    bottom:0;
+    right:0;
+    width:8px;
+    height:8px;
+    background:#6e6b62;
+    border-radius:50%;
+    border:1.5px solid #0c0b09;
+  }
+  
+  .mc-name{font-size:12px;font-weight:600;color:var(--t1);font-family: var(--font-title)}
+  .mc-role{font-size:10px;color:var(--t2);margin-top:2px;font-weight: 500}
+  
+  .mc-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .mc-stat{
+    text-align:center;
+    background:var(--surf);
+    border: 0.5px solid var(--bdr);
+    border-radius:6px;
+    padding:6px;
+  }
+  .mc-stat-val{font-size:14px;font-weight:600;color:var(--t1);font-family: var(--font-title)}
+  .mc-stat-label{font-size:8px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;font-weight: 500}
+  
+  .mc-bar{height:4px;border-radius:2px;background:var(--bdr);margin-top:10px;overflow:hidden}
+  .mc-fill{height:4px;border-radius:2px}
+  .mc-perf{display:flex;justify-content:space-between;margin-top:4px}
+  .mc-perf-label{font-size:9px;color:var(--t2);font-weight: 500}
+  .mc-perf-val{font-size:9px;font-weight:600;font-family: var(--font-title)}
+
+  /* Roles table */
+  .roles-table{width:100%;border-collapse:collapse}
+  .roles-table th{
+    font-size:10px;
+    color:var(--t2);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    padding:10px 14px;
+    text-align:left;
+    font-weight:600;
+    border-bottom:0.5px solid var(--bdr);
+    background: rgba(197, 168, 103, 0.02);
+    font-family: var(--font-title);
+  }
+  .roles-table td{
+    font-size:11px;
+    color:var(--t1);
+    padding:11px 14px;
+    border-bottom:0.5px solid var(--bdr);
+    vertical-align:middle;
+  }
+  .roles-table tr:last-child td{border-bottom:none}
+  .roles-table tr:hover td{background:rgba(197, 168, 103, 0.02)}
+  .roles-table tr:nth-child(even) td{background:rgba(30, 27, 24, 0.2)}
+  .roles-table tr:nth-child(even):hover td{background:rgba(197, 168, 103, 0.02)}
+  
+  .perm-dot{width:8px;height:8px;border-radius:50%;display:inline-block;box-shadow: 0 0 6px currentColor}
+  .perm-yes{background:var(--color-status-available);color:var(--color-status-available)}
+  .perm-no{background:var(--color-text-muted);color:var(--color-text-muted);opacity: 0.4}
+  
+  .perm-row{display:flex;align-items:center;gap:6px;font-weight: 500}
+  .role-badge{
+    font-size:9px;
+    padding:3px 8px;
+    border-radius:4px;
+    font-weight:600;
+    font-family: var(--font-title);
+    border: 0.5px solid transparent;
+  }
+  .role-admin{background:rgba(197, 168, 103, 0.15);color:var(--acc);border-color:rgba(197, 168, 103, 0.25)}
+  .role-mgr{background:rgba(184, 144, 71, 0.15);color:#FDE047;border-color:rgba(184, 144, 71, 0.25)}
+  .role-agent{background:rgba(16, 185, 129, 0.15);color:#6EE7B7;border-color:rgba(16, 185, 129, 0.25)}
+  .role-cp{background:rgba(139, 92, 246, 0.15);color:#C084FC;border-color:rgba(139, 92, 246, 0.25)}
+  .role-view{background:var(--surf2);color:var(--t2);border-color:var(--bdr)}
+
+  /* LMS Training */
+  .lms-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:14px}
+  .lms-card{
+    background:var(--surf2);
+    border:0.5px solid var(--bdr);
+    border-radius:var(--r);
+    padding:12px;
+    cursor:pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .lms-card:hover{border-color:var(--color-gold-border-bright);background: rgba(197, 168, 103, 0.02)}
+  .lms-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+  .lms-icon{
+    width:32px;
+    height:32px;
+    border-radius:6px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:16px;
+    flex-shrink:0;
+    border: 0.5px solid var(--bdr);
+  }
+  .lms-title{font-size:12px;font-weight:600;color:var(--t1);line-height:1.3;font-family: var(--font-title)}
+  .lms-sub{font-size:10px;color:var(--t2);margin-top:2px;font-weight: 500}
+  .lms-prog{height:4px;border-radius:2px;background:var(--bdr);margin-bottom:6px;overflow:hidden}
+  .lms-fill{height:4px;border-radius:2px;background:linear-gradient(90deg, var(--acc), var(--color-gold-accent))}
+  .lms-fill.done{background:linear-gradient(90deg, var(--acc2), #34d399)}
+  .lms-meta{display:flex;justify-content:space-between;font-size:10px;color:var(--t2);font-weight: 500}
+  .lms-badge{
+    font-size:9px;
+    padding:2px 6px;
+    border-radius:3px;
+    font-weight:600;
+    font-family: var(--font-title);
+    border: 0.5px solid transparent;
+  }
+  .lb-comp{background:rgba(16, 185, 129, 0.15);color:#6EE7B7;border-color:rgba(16, 185, 129, 0.25)}
+  .lb-prog{background:rgba(197, 168, 103, 0.15);color:#FDE047;border-color:rgba(197, 168, 103, 0.25)}
+  .lb-new{background:var(--surf2);color:var(--t2);border-color:var(--bdr)}
+
+  /* Performance analytics */
+  .perf-table{width:100%;border-collapse:collapse}
+  .perf-table th{
+    font-size:10px;
+    color:var(--t2);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    padding:10px 14px;
+    text-align:left;
+    font-weight:600;
+    border-bottom:0.5px solid var(--bdr);
+    background: rgba(197, 168, 103, 0.02);
+    font-family: var(--font-title);
+  }
+  .perf-table td{
+    font-size:11px;
+    padding:11px 14px;
+    border-bottom:0.5px solid var(--bdr);
+    vertical-align: middle;
+  }
+  .perf-table tr:last-child td{border-bottom:none}
+  .perf-table tr:hover td{background:rgba(197, 168, 103, 0.02)}
+  .perf-table tr:nth-child(even) td{background:rgba(30, 27, 24, 0.2)}
+  .perf-table tr:nth-child(even):hover td{background:rgba(197, 168, 103, 0.02)}
+  .perf-rank{font-size:13px;font-weight:600;color:var(--t2);width:36px;font-family: var(--font-title)}
+  .perf-rank.top{color:var(--acc3)}
+  .perf-bar-wrap{display:flex;align-items:center;gap:8px}
+  .perf-bar{flex:1;height:4px;border-radius:2px;background:var(--bdr);overflow:hidden}
+  .perf-fill{height:4px;border-radius:2px;background:linear-gradient(90deg, var(--acc), var(--color-gold-accent))}
+  .perf-val{font-size:11px;font-weight:600;color:var(--t1);white-space:nowrap;font-family: var(--font-title)}
+
+  /* Right: quick stats, org chart, escalation */
+  .stat-row{display:grid;grid-template-columns:1fr 1fr;gap:0}
+  .stat-cell{padding:12px 14px;border-right:0.5px solid var(--bdr);border-bottom:0.5px solid var(--bdr)}
+  .stat-cell:nth-child(even){border-right:none}
+  .stat-cell:nth-last-child(-n+2){border-bottom:none}
+  .stat-label{
+    font-size:9px;
+    color:var(--t2);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin-bottom:4px;
+    font-family: var(--font-title);
+    font-weight: 500;
+  }
+  .stat-val{font-size:18px;font-weight:600;color:var(--t1);font-family: var(--font-title)}
+  .stat-sub{font-size:10px;color:var(--acc2);margin-top:3px;font-weight: 500}
+
+  /* Org chart simplified */
+  .org-wrap{padding:14px}
+  .org-node{text-align:center;margin-bottom:8px}
+  .org-avatar{
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-size:11px;
+    font-weight:700;
+    margin:0 auto 4px;
+    border: 1px solid var(--color-gold-border-bright);
+    background: linear-gradient(135deg, #201d19 0%, #0d0c0a 100%);
+    box-shadow: 0 2px 8px rgba(197, 168, 103, 0.15);
+    font-family: var(--font-title);
+  }
+  .org-name{font-size:10px;font-weight:600;color:var(--t1);font-family: var(--font-title)}
+  .org-role{font-size:9px;color:var(--t2);margin-top:1px;font-weight: 500}
+  .org-children{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding-top:10px;position:relative}
+  .org-children::before{content:'';position:absolute;top:0;left:16.66%;right:16.66%;height:1px;border-top: 1px dashed rgba(197, 168, 103, 0.25)}
+  .org-child{text-align:center;position:relative;padding-top:10px}
+  .org-child::before{content:'';position:absolute;top:0;left:50%;width:1px;height:10px;border-left: 1px dashed rgba(197, 168, 103, 0.25)}
+
+  /* Escalation matrix */
+  .esc-list{padding:8px 14px 12px}
+  .esc-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--bdr)}
+  .esc-item:last-child{border-bottom:none}
+  .esc-num{
+    width:18px;
+    height:18px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:10px;
+    font-weight:700;
+    color:#0c0b09;
+    flex-shrink:0;
+    font-family: var(--font-title);
+    box-shadow: 0 0 6px currentColor;
+  }
+  .esc-text{font-size:11px;color:var(--t1);flex:1;font-weight: 500}
+  .esc-who{font-size:10px;color:var(--t2);margin-top:2px;font-weight: 500}
+  .esc-sla{
+    font-size:9px;
+    padding:2px 6px;
+    border-radius:4px;
+    background:var(--surf2);
+    color:var(--t2);
+    border: 0.5px solid var(--bdr);
+    font-family: var(--font-title);
+    font-weight: 600;
+  }
+</style>
+
+<div class="shell">
+  <nav class="sidenav">
+    <div class="logo">V</div>
+    <div class="ni" title="Dashboard"><i class="ti ti-layout-dashboard"></i></div>
+    <div class="ni" title="Leads"><i class="ti ti-users"></i></div>
+    <div class="ni" title="Listings"><i class="ti ti-building"></i></div>
+    <div class="ni" title="Finance"><i class="ti ti-receipt"></i></div>
+    <div class="nsep"></div>
+    <div class="ni active" title="Team"><i class="ti ti-briefcase"></i></div>
+    <div class="ni" title="Builder"><i class="ti ti-hammer"></i></div>
+    <div class="ni" title="Documents"><i class="ti ti-file-description"></i></div>
+    <div class="ni" title="Analytics"><i class="ti ti-chart-bar"></i></div>
+    <div class="nsep"></div>
+    <div class="ni" title="Smart Lists"><i class="ti ti-list-search"></i></div>
+    <div class="ni" title="Social"><i class="ti ti-share"></i></div>
+    <div class="ni" title="Settings"><i class="ti ti-settings"></i></div>
+    <div class="nb">
+      <div class="ni" title="Notifications"><i class="ti ti-bell"></i></div>
+      <div class="ni" title="My Profile"><i class="ti ti-user-circle"></i></div>
+    </div>
+  </nav>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="bc">Team Management &nbsp;/&nbsp; <span>Overview</span></div>
+      <div class="tba">
+        <div class="tbb"><i class="ti ti-download" style="font-size:13px"></i> Export</div>
+        <div class="tbb"><i class="ti ti-settings" style="font-size:13px"></i> Permissions</div>
+        <div class="tbb pri"><i class="ti ti-user-plus" style="font-size:13px"></i> Add Member</div>
+      </div>
+    </header>
+
+    <div class="page-tabs">
+      <div class="ptab active">Team</div>
+      <div class="ptab">Roles &amp; Permissions</div>
+      <div class="ptab">Training / LMS</div>
+      <div class="ptab">Performance</div>
+      <div class="ptab">Escalation Matrix</div>
+    </div>
+
+    <div class="content">
+      <div class="left">
+
+        <!-- Team members -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-users" style="font-size:14px;color:var(--t2)"></i><span class="pt">Team Members</span><span style="font-size:11px;color:var(--t2);margin-right:8px;font-weight: 500">7 members</span><span class="pa">Manage</span></div>
+          <div class="member-grid">
+            <div class="member-card me">
+              <div class="mc-top">
+                <div class="mc-avatar" style="background:linear-gradient(135deg, #c5a867, #b89047);color:#0c0b09"><div class="online-dot"></div>RM</div>
+                <div><div class="mc-name">Rahul Mehta</div><div class="mc-role">Senior Agent · You</div></div>
+              </div>
+              <div class="mc-stats">
+                <div class="mc-stat"><div class="mc-stat-val">32</div><div class="mc-stat-label">Leads</div></div>
+                <div class="mc-stat"><div class="mc-stat-val">4</div><div class="mc-stat-label">Closed</div></div>
+              </div>
+              <div class="mc-bar"><div class="mc-fill" style="width:84%;background:var(--acc)"></div></div>
+              <div class="mc-perf"><span class="mc-perf-label">Target</span><span class="mc-perf-val" style="color:var(--acc)">84%</span></div>
+            </div>
+            <div class="member-card">
+              <div class="mc-top">
+                <div class="mc-avatar" style="background:#8B5CF6"><div class="online-dot"></div>AK</div>
+                <div><div class="mc-name">Aisha Khan</div><div class="mc-role">Agent</div></div>
+              </div>
+              <div class="mc-stats">
+                <div class="mc-stat"><div class="mc-stat-val">28</div><div class="mc-stat-label">Leads</div></div>
+                <div class="mc-stat"><div class="mc-stat-val">3</div><div class="mc-stat-label">Closed</div></div>
+              </div>
+              <div class="mc-bar"><div class="mc-fill" style="width:72%;background:#8B5CF6"></div></div>
+              <div class="mc-perf"><span class="mc-perf-label">Target</span><span class="mc-perf-val" style="color:#8B5CF6">72%</span></div>
+            </div>
+            <div class="member-card">
+              <div class="mc-top">
+                <div class="mc-avatar" style="background:#10B981"><div class="online-dot"></div>SR</div>
+                <div><div class="mc-name">Sunita Rao</div><div class="mc-role">Agent</div></div>
+              </div>
+              <div class="mc-stats">
+                <div class="mc-stat"><div class="mc-stat-val">19</div><div class="mc-stat-label">Leads</div></div>
+                <div class="mc-stat"><div class="mc-stat-val">2</div><div class="mc-stat-label">Closed</div></div>
+              </div>
+              <div class="mc-bar"><div class="mc-fill" style="width:58%;background:#10B981"></div></div>
+              <div class="mc-perf"><span class="mc-perf-label">Target</span><span class="mc-perf-val" style="color:#10B981">58%</span></div>
+            </div>
+            <div class="member-card">
+              <div class="mc-top">
+                <div class="mc-avatar" style="background:#F59E0B"><div class="offline-dot"></div>NP</div>
+                <div><div class="mc-name">Nikhil Patel</div><div class="mc-role">Junior Agent</div></div>
+              </div>
+              <div class="mc-stats">
+                <div class="mc-stat"><div class="mc-stat-val">14</div><div class="mc-stat-label">Leads</div></div>
+                <div class="mc-stat"><div class="mc-stat-val">1</div><div class="mc-stat-label">Closed</div></div>
+              </div>
+              <div class="mc-bar"><div class="mc-fill" style="width:43%;background:#F59E0B"></div></div>
+              <div class="mc-perf"><span class="mc-perf-label">Target</span><span class="mc-perf-val" style="color:#F59E0B">43%</span></div>
+            </div>
+            <div class="member-card">
+              <div class="mc-top">
+                <div class="mc-avatar" style="background:#EF4444"><div class="online-dot"></div>DV</div>
+                <div><div class="mc-name">Deepak Verma</div><div class="mc-role">Agent</div></div>
+              </div>
+              <div class="mc-stats">
+                <div class="mc-stat"><div class="mc-stat-val">22</div><div class="mc-stat-label">Leads</div></div>
+                <div class="mc-stat"><div class="mc-stat-val">2</div><div class="mc-stat-label">Closed</div></div>
+              </div>
+              <div class="mc-bar"><div class="mc-fill" style="width:61%;background:#EF4444"></div></div>
+              <div class="mc-perf"><span class="mc-perf-label">Target</span><span class="mc-perf-val" style="color:#EF4444">61%</span></div>
+            </div>
+            <div class="member-card">
+              <div class="mc-top">
+                <div class="mc-avatar" style="background:#0D9488"><div class="offline-dot"></div>PM</div>
+                <div><div class="mc-name">Pooja Menon</div><div class="mc-role">Agent</div></div>
+              </div>
+              <div class="mc-stats">
+                <div class="mc-stat"><div class="mc-stat-val">17</div><div class="mc-stat-label">Leads</div></div>
+                <div class="mc-stat"><div class="mc-stat-val">1</div><div class="mc-stat-label">Closed</div></div>
+              </div>
+              <div class="mc-bar"><div class="mc-fill" style="width:49%;background:#0D9488"></div></div>
+              <div class="mc-perf"><span class="mc-perf-label">Target</span><span class="mc-perf-val" style="color:#0D9488">49%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Roles & Permissions -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-lock" style="font-size:14px;color:var(--t2)"></i><span class="pt">Roles &amp; Permissions</span><span class="pa">Edit roles</span></div>
+          <table class="roles-table">
+            <thead>
+              <tr>
+                <th>Role</th><th>Members</th><th>Leads</th><th>Financials</th><th>Team Mgmt</th><th>Settings</th><th>Reports</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="role-badge role-admin">Admin</span></td>
+                <td style="color:var(--t2);font-weight:600">1</td>
+                <td><div class="perm-row"><span class="perm-dot perm-yes"></span>Full</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-yes"></span>Full</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-yes"></span>Full</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-yes"></span>Full</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-yes"></span>Full</div></td>
+              </tr>
+              <tr>
+                <td><span class="role-badge role-mgr">Manager</span></td>
+                <td style="color:var(--t2);font-weight:600">2</td>
+                <td><div class="perm-row"><span class="perm-dot perm-yes"></span>Full</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-yes"></span>View</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-yes"></span>Partial</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-no"></span>No</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-yes"></span>Full</div></td>
+              </tr>
+              <tr>
+                <td><span class="role-badge role-agent">Agent</span></td>
+                <td style="color:var(--t2);font-weight:600">4</td>
+                <td><div class="perm-row"><span class="perm-dot perm-yes"></span>Own only</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-no"></span>No</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-no"></span>No</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-no"></span>No</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-yes"></span>Own only</div></td>
+              </tr>
+              <tr>
+                <td><span class="role-badge role-cp">CP Partner</span></td>
+                <td style="color:var(--t2);font-weight:600">8</td>
+                <td><div class="perm-row"><span class="perm-dot perm-yes"></span>Referred</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-no"></span>No</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-no"></span>No</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-no"></span>No</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-yes"></span>Commission</div></td>
+              </tr>
+              <tr>
+                <td><span class="role-badge role-view">View Only</span></td>
+                <td style="color:var(--t2);font-weight:600">3</td>
+                <td><div class="perm-row"><span class="perm-dot perm-yes"></span>View</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-no"></span>No</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-no"></span>No</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-no"></span>No</div></td>
+                <td><div class="perm-row"><span class="perm-dot perm-yes"></span>View</div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- LMS Training -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-school" style="font-size:14px;color:var(--t2)"></i><span class="pt">Training / LMS</span><span class="pa">+ Add module</span></div>
+          <div class="lms-grid">
+            <div class="lms-card">
+              <div class="lms-top">
+                <div class="lms-icon" style="background:rgba(197, 168, 103, 0.15);color:var(--acc);border-color:rgba(197, 168, 103, 0.25)">🎓</div>
+                <div><div class="lms-title">CRM Onboarding — Core</div><div class="lms-sub">Assigned to all agents</div></div>
+                <span class="lms-badge lb-comp" style="margin-left:auto">Done</span>
+              </div>
+              <div class="lms-prog"><div class="lms-fill done" style="width:100%"></div></div>
+              <div class="lms-meta"><span>5/5 agents</span><span>Completed</span></div>
+            </div>
+            <div class="lms-card">
+              <div class="lms-top">
+                <div class="lms-icon" style="background:rgba(59, 130, 246, 0.15);color:#93C5FD;border-color:rgba(59, 130, 246, 0.25)">📱</div>
+                <div><div class="lms-title">WhatsApp Follow-up Scripts</div><div class="lms-sub">Sales communication</div></div>
+                <span class="lms-badge lb-prog" style="margin-left:auto">In progress</span>
+              </div>
+              <div class="lms-prog"><div class="lms-fill" style="width:60%"></div></div>
+              <div class="lms-meta"><span>3/5 agents</span><span>60%</span></div>
+            </div>
+            <div class="lms-card">
+              <div class="lms-top">
+                <div class="lms-icon" style="background:rgba(16, 185, 129, 0.15);color:#6EE7B7;border-color:rgba(16, 185, 129, 0.25)">🏗️</div>
+                <div><div class="lms-title">Project Knowledge — Lodha</div><div class="lms-sub">Builder briefing</div></div>
+                <span class="lms-badge lb-prog" style="margin-left:auto">In progress</span>
+              </div>
+              <div class="lms-prog"><div class="lms-fill" style="width:40%"></div></div>
+              <div class="lms-meta"><span>2/5 agents</span><span>40%</span></div>
+            </div>
+            <div class="lms-card">
+              <div class="lms-top">
+                <div class="lms-icon" style="background:rgba(245, 158, 11, 0.15);color:#FDE047;border-color:rgba(245, 158, 11, 0.25)">📋</div>
+                <div><div class="lms-title">RERA Compliance Basics</div><div class="lms-sub">Legal &amp; compliance</div></div>
+                <span class="lms-badge lb-new" style="margin-left:auto">Not started</span>
+              </div>
+              <div class="lms-prog"><div class="lms-fill" style="width:0%"></div></div>
+              <div class="lms-meta"><span>0/5 agents</span><span>New</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT -->
+      <div class="right">
+        <!-- Team stats -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-chart-bar" style="font-size:14px;color:var(--t2)"></i><span class="pt">This Month</span></div>
+          <div class="stat-row">
+            <div class="stat-cell"><div class="stat-label">Total Leads</div><div class="stat-val">132</div><div class="stat-sub">↑ 18%</div></div>
+            <div class="stat-cell"><div class="stat-label">Closed</div><div class="stat-val">13</div><div class="stat-sub">↑ 4 vs last</div></div>
+            <div class="stat-cell"><div class="stat-label">Revenue</div><div class="stat-val">₹4.2Cr</div><div class="stat-sub" style="color:var(--acc3)">↑ 12%</div></div>
+            <div class="stat-cell"><div class="stat-label">Site Visits</div><div class="stat-val">38</div><div class="stat-sub">↑ 6</div></div>
+          </div>
+        </div>
+
+        <!-- Performance leaderboard -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-trophy" style="font-size:14px;color:var(--t2)"></i><span class="pt">Leaderboard</span><span class="pa">Full report ›</span></div>
+          <table class="perf-table">
+            <thead>
+              <tr><th>#</th><th>Agent</th><th>Leads closed</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="perf-rank top">🥇</td>
+                <td style="font-size:11px;font-weight:600;color:var(--t1);font-family:var(--font-title)">Rahul M</td>
+                <td>
+                  <div class="perf-bar-wrap">
+                    <div class="perf-bar"><div class="perf-fill" style="width:100%"></div></div>
+                    <span class="perf-val">4</span>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="perf-rank top">🥈</td>
+                <td style="font-size:11px;color:var(--t1);font-weight:500">Aisha K</td>
+                <td>
+                  <div class="perf-bar-wrap">
+                    <div class="perf-bar"><div class="perf-fill" style="width:75%"></div></div>
+                    <span class="perf-val">3</span>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="perf-rank">3</td>
+                <td style="font-size:11px;color:var(--t1)">Deepak V</td>
+                <td>
+                  <div class="perf-bar-wrap">
+                    <div class="perf-bar"><div class="perf-fill" style="width:50%"></div></div>
+                    <span class="perf-val">2</span>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="perf-rank">4</td>
+                <td style="font-size:11px;color:var(--t1)">Sunita R</td>
+                <td>
+                  <div class="perf-bar-wrap">
+                    <div class="perf-bar"><div class="perf-fill" style="width:50%"></div></div>
+                    <span class="perf-val">2</span>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="perf-rank">5</td>
+                <td style="font-size:11px;color:var(--t1)">Nikhil P</td>
+                <td>
+                  <div class="perf-bar-wrap">
+                    <div class="perf-bar"><div class="perf-fill" style="width:25%"></div></div>
+                    <span class="perf-val">1</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Org chart -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-hierarchy" style="font-size:14px;color:var(--t2)"></i><span class="pt">Org Structure</span></div>
+          <div class="org-wrap">
+            <div class="org-node">
+              <div class="org-avatar" style="border-color:var(--acc);color:var(--acc)">MD</div>
+              <div class="org-name">Manoj Desai</div>
+              <div class="org-role">Managing Director</div>
+            </div>
+            <div style="display:flex;justify-content:center;margin-bottom:8px"><div style="width:1px;height:16px;border-left:1px dashed rgba(197, 168, 103, 0.25)"></div></div>
+            <div class="org-children">
+              <div class="org-child"><div class="org-avatar" style="border-color:var(--color-gold-border-bright);width:26px;height:26px;font-size:9px">RM</div><div class="org-name">Rahul M</div><div class="org-role">Sr. Agent</div></div>
+              <div class="org-child"><div class="org-avatar" style="border-color:#8B5CF6;width:26px;height:26px;font-size:9px;color:#C084FC">AK</div><div class="org-name">Aisha K</div><div class="org-role">Agent</div></div>
+              <div class="org-child"><div class="org-avatar" style="border-color:#10B981;width:26px;height:26px;font-size:9px;color:#6EE7B7">SR</div><div class="org-name">Sunita R</div><div class="org-role">Agent</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Escalation matrix -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-alert-triangle" style="font-size:14px;color:var(--t2)"></i><span class="pt">Escalation Matrix</span><span class="pa">Edit</span></div>
+          <div class="esc-list">
+            <div class="esc-item">
+              <div class="esc-num" style="color:#10b981;background:rgba(16, 185, 129, 0.15)">1</div>
+              <div>
+                <div class="esc-text">Missed follow-up</div>
+                <div class="esc-who">Assigned agent → Manager</div>
+              </div>
+              <span class="esc-sla">24h SLA</span>
+            </div>
+            <div class="esc-item">
+              <div class="esc-num" style="color:#F59E0B;background:rgba(245, 158, 11, 0.15)">2</div>
+              <div>
+                <div class="esc-text">High-value lead uncontacted</div>
+                <div class="esc-who">Agent → Sr. Agent → Manager</div>
+              </div>
+              <span class="esc-sla">12h SLA</span>
+            </div>
+            <div class="esc-item">
+              <div class="esc-num" style="color:#EF4444;background:rgba(239, 68, 68, 0.15)">3</div>
+              <div>
+                <div class="esc-text">Complaint — unresolved 48h</div>
+                <div class="esc-who">Manager → Director</div>
+              </div>
+              <span class="esc-sla">48h SLA</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,761 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    /* Luxury Obsidian & Brushed Gold Variables */
+    --color-bg-base: #0c0b09;
+    --color-bg-surface: rgba(20, 18, 16, 0.7);
+    --color-bg-surface-hover: rgba(30, 27, 24, 0.85);
+    --color-bg-surface-subtle: rgba(16, 14, 12, 0.45);
+    --color-bg-nav: #060505;
+    
+    --color-gold-brass: #c5a867;
+    --color-gold-accent: #b89047;
+    --color-gold-glow: rgba(197, 168, 103, 0.05);
+    --color-gold-border: rgba(197, 168, 103, 0.12);
+    --color-gold-border-bright: rgba(197, 168, 103, 0.28);
+    
+    --color-status-available: #10b981;
+    --color-status-sold: #ef4444;
+    --color-status-hold: #3b82f6;
+    --color-status-ref: #8b5cf6;
+    
+    --color-text-primary: #f5f4f0;
+    --color-text-secondary: #a3a097;
+    --color-text-muted: #6e6b62;
+    
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-title: 'Plus Jakarta Sans', var(--font-sans);
+
+    /* Original Mappings to maintain compatibility */
+    --nav: var(--color-bg-nav);
+    --acc: var(--color-gold-brass);
+    --acc2: var(--color-status-available);
+    --acc3: var(--color-gold-accent);
+    --acc4: var(--color-status-sold);
+    --acc5: var(--color-status-ref);
+    --surf: var(--color-bg-surface);
+    --surf2: var(--color-bg-surface-subtle);
+    --bdr: var(--color-gold-border);
+    --bdr2: var(--color-gold-border-bright);
+    --t1: var(--color-text-primary);
+    --t2: var(--color-text-secondary);
+    --r: 10px;
+    --r2: 14px;
+  }
+  
+  body{
+    font-family:var(--font-sans);
+    font-size:13px;
+    background: radial-gradient(circle at 50% 0%, #171512 0%, var(--color-bg-base) 100%);
+    color: var(--t1);
+    min-height: 100vh;
+    padding: 10px;
+  }
+  
+  .shell{
+    display:grid;
+    grid-template-columns:68px 1fr;
+    border-radius:var(--r2);
+    overflow:hidden;
+    border:0.5px solid var(--bdr2);
+    min-height:760px;
+    background: var(--color-bg-base);
+  }
+  
+  /* Narrow icon nav */
+  .sidenav{
+    background:var(--nav);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:24px 0;
+    gap:8px;
+    position:relative;
+    border-right: 0.5px solid var(--bdr);
+  }
+  .sidenav .logo{
+    width:34px;
+    height:34px;
+    background: linear-gradient(135deg, #c5a867 0%, #b89047 100%);
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#0c0b09;
+    font-weight:700;
+    font-size:14px;
+    margin-bottom:20px;
+    flex-shrink:0;
+    font-family: var(--font-title);
+    letter-spacing: 0.05em;
+    box-shadow: 0 4px 12px rgba(197, 168, 103, 0.25);
+  }
+  
+  .ni{
+    width:44px;
+    height:44px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--nav-t);
+    cursor:pointer;
+    transition:all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position:relative;
+  }
+  .ni:hover{
+    background:rgba(197, 168, 103, 0.05);
+    color:var(--nav-a);
+  }
+  .ni.active{
+    background: linear-gradient(135deg, rgba(197, 168, 103, 0.15) 0%, rgba(197, 168, 103, 0.02) 100%);
+    color:#fff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  .ni.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 3px;
+    background: linear-gradient(to bottom, #c5a867, #b89047);
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 0 8px rgba(197, 168, 103, 0.5);
+  }
+  .ni .ti{font-size:19px}
+  .nsep{
+    width:32px;
+    height:1px;
+    background: linear-gradient(90deg, transparent, rgba(197, 168, 103, 0.15) 20%, rgba(197, 168, 103, 0.15) 80%, transparent);
+    margin:10px 0;
+  }
+  .nb{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:8px}
+
+  .main{display:flex;flex-direction:column;background:radial-gradient(circle at 50% 0%, #171512 0%, var(--color-bg-base) 100%)}
+  
+  /* Topbar */
+  .topbar{
+    background:var(--surf);
+    border-bottom:0.5px solid var(--bdr);
+    padding:0 18px;
+    height:54px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-shrink:0;
+    backdrop-filter: blur(12px) saturate(140%);
+  }
+  .topbar .back-btn{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    font-size:12px;
+    color:var(--t2);
+    cursor:pointer;
+    padding:6px 12px;
+    border-radius:6px;
+    border: 0.5px solid var(--bdr);
+    font-family: var(--font-title);
+    transition: all 0.2s ease;
+  }
+  .topbar .back-btn:hover{
+    background:var(--surf2);
+    border-color: var(--bdr2);
+    color: var(--t1);
+  }
+  .bc{font-size:13px;color:var(--t2);font-family: var(--font-title)}
+  .bc span{color:var(--t1);font-weight:600}
+  
+  .tba{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .tbb{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 12px;
+    border-radius:6px;
+    font-size:12px;
+    cursor:pointer;
+    border:0.5px solid var(--bdr);
+    color:var(--t2);
+    font-family: var(--font-title);
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .tbb:hover{
+    background:var(--surf2);
+    border-color: var(--bdr2);
+    color: var(--t1);
+  }
+  .tbb.pri{
+    background: linear-gradient(135deg, #c5a867 0%, #b89047 100%);
+    color:#0c0b09;
+    border-color: transparent;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(197, 168, 103, 0.25);
+  }
+  .tbb.pri:hover {
+    filter: brightness(1.1);
+  }
+  .tag{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:600;font-family:var(--font-title)}
+
+  /* Page tabs */
+  .page-tabs{
+    background:var(--surf);
+    border-bottom:0.5px solid var(--bdr);
+    display:flex;
+    padding:0 16px;
+    gap:4px;
+    backdrop-filter: blur(12px) saturate(140%);
+  }
+  .ptab{
+    padding:14px 16px;
+    font-size:12px;
+    color:var(--t2);
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    white-space:nowrap;
+    font-family: var(--font-title);
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .ptab:hover {
+    color: var(--t1);
+  }
+  .ptab.active{
+    color:var(--acc);
+    border-bottom-color:var(--acc);
+    font-weight:600;
+  }
+
+  .content{padding:16px;flex:1;display:flex;gap:12px;overflow:auto}
+  .left{flex:1;min-width:0;display:flex;flex-direction:column;gap:12px}
+  .right{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:12px}
+  
+  .panel{
+    background:var(--surf);
+    border:0.5px solid var(--bdr);
+    border-radius:var(--r2);
+    overflow:hidden;
+    backdrop-filter: blur(12px) saturate(140%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+  .ph{
+    padding:12px 16px;
+    border-bottom:0.5px solid var(--bdr);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background: rgba(197, 168, 103, 0.02);
+  }
+  .pt{
+    font-size:13px;
+    font-weight:600;
+    color:var(--t1);
+    flex:1;
+    font-family: var(--font-title);
+    letter-spacing: 0.02em;
+  }
+  .pa{
+    font-size:11px;
+    color:var(--acc);
+    cursor:pointer;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  .pa:hover {
+    color: var(--color-gold-accent);
+  }
+
+  /* Hero image + info */
+  .prop-hero{
+    background:var(--surf);
+    border:0.5px solid var(--bdr);
+    border-radius:var(--r2);
+    overflow:hidden;
+    backdrop-filter: blur(12px) saturate(140%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  }
+  .prop-img{
+    height:160px;
+    background: linear-gradient(135deg, #1c1813 0%, #3a3020 60%, #171410 100%);
+    display:flex;
+    align-items:flex-end;
+    padding:14px 18px;
+    gap:8px;
+    position:relative;
+    border-bottom: 0.5px solid var(--bdr);
+  }
+  .prop-img-label{font-size:11px;color:rgba(245, 244, 240, 0.75);font-family:var(--font-title);font-weight:500}
+  .prop-badge{
+    background:rgba(255,255,255,0.08);
+    border:0.5px solid rgba(255,255,255,0.2);
+    padding:4px 10px;
+    border-radius:4px;
+    font-size:10px;
+    color:#fff;
+    font-weight:600;
+    font-family:var(--font-title);
+  }
+  .prop-badge.avail{
+    background:rgba(16,185,129,0.15);
+    border-color:rgba(16,185,129,0.3);
+    color:#6EE7B7;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.2);
+  }
+  .prop-badge.sold{
+    background:rgba(239,68,68,0.15);
+    border-color:rgba(239,68,68,0.3);
+    color:#FCA5A5;
+  }
+  .prop-cam{position:absolute;top:14px;right:14px;display:flex;gap:6px}
+  .prop-cam-btn{
+    background:rgba(20, 18, 16, 0.7);
+    border:0.5px solid rgba(197, 168, 103, 0.25);
+    width:30px;
+    height:30px;
+    border-radius:6px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    cursor:pointer;
+    font-size:14px;
+    transition: all 0.2s ease;
+  }
+  .prop-cam-btn:hover {
+    border-color: var(--acc);
+    color: var(--acc);
+    background: rgba(20, 18, 16, 0.9);
+  }
+  
+  .prop-info{padding:16px 18px}
+  .prop-name{font-size:18px;font-weight:600;color:var(--t1);font-family:var(--font-title)}
+  .prop-loc{font-size:12px;color:var(--t2);margin-top:4px;display:flex;align-items:center;gap:4px;font-weight: 500}
+  .prop-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  
+  .t-comm{background:rgba(139, 92, 246, 0.15);color:#C084FC;border:0.5px solid rgba(139, 92, 246, 0.25)}
+  .t-res{background:rgba(197, 168, 103, 0.15);color:#FDE047;border:0.5px solid rgba(197, 168, 103, 0.25)}
+  .t-avail{background:rgba(16, 185, 129, 0.15);color:#6EE7B7;border:0.5px solid rgba(16, 185, 129, 0.25)}
+  
+  .info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-top:0.5px solid var(--bdr);margin-top:14px}
+  .ic{padding:12px;border-right:0.5px solid var(--bdr)}
+  .ic:last-child{border-right:none}
+  .il{
+    font-size:9px;
+    color:var(--t2);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin-bottom:4px;
+    font-family:var(--font-title);
+    font-weight:500;
+  }
+  .iv{font-size:13px;font-weight:600;color:var(--t1)}
+
+  /* Unit type table */
+  .unit-table{width:100%;border-collapse:collapse}
+  .unit-table th{
+    font-size:10px;
+    color:var(--t2);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    padding:10px 14px;
+    text-align:left;
+    border-bottom:0.5px solid var(--bdr);
+    font-weight:600;
+    background: rgba(197, 168, 103, 0.02);
+    font-family: var(--font-title);
+  }
+  .unit-table td{
+    font-size:11px;
+    color:var(--t1);
+    padding:10px 14px;
+    border-bottom:0.5px solid var(--bdr);
+    vertical-align: middle;
+  }
+  .unit-table tr:last-child td{border-bottom:none}
+  .unit-table tr:hover td{background:rgba(197, 168, 103, 0.02)}
+  .unit-table tr:nth-child(even) td{background:rgba(30, 27, 24, 0.2)}
+  .unit-table tr:nth-child(even):hover td{background:rgba(197, 168, 103, 0.02)}
+  
+  .avail-pill{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    font-size:9px;
+    padding:2px 8px;
+    border-radius:10px;
+    font-weight:600;
+    font-family: var(--font-title);
+    border: 0.5px solid transparent;
+  }
+  .pill-a{background:rgba(16, 185, 129, 0.15);color:#6EE7B7;border-color:rgba(16, 185, 129, 0.25);box-shadow: 0 0 6px rgba(16, 185, 129, 0.15)}
+  .pill-s{background:rgba(239, 68, 68, 0.15);color:#FCA5A5;border-color:rgba(239, 68, 68, 0.25)}
+  .pill-h{background:rgba(197, 168, 103, 0.15);color:#FDE047;border-color:rgba(197, 168, 103, 0.25)}
+  .unit-table .price{color:var(--acc);font-weight:600;font-family: var(--font-title)}
+
+  /* Area map bifurcation */
+  .area-map{padding:14px}
+  .area-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .area-card{
+    background:var(--surf2);
+    border:0.5px solid var(--bdr);
+    border-radius:var(--r);
+    padding:12px;
+    cursor:pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .area-card:hover{border-color:var(--bdr2);transform:translateY(-1px)}
+  .area-card.active{
+    border-color:var(--acc);
+    background:rgba(197, 168, 103, 0.05);
+    box-shadow: 0 4px 15px rgba(197, 168, 103, 0.05);
+  }
+  .area-name{font-size:12px;font-weight:600;color:var(--t1);font-family: var(--font-title)}
+  .area-sub{font-size:10px;color:var(--t2);margin-top:3px;font-weight: 500}
+  .area-bar{height:4px;border-radius:2px;background:var(--bdr);margin-top:8px;overflow:hidden}
+  .area-fill{height:4px;border-radius:2px;background:linear-gradient(90deg, var(--acc), var(--color-gold-accent))}
+
+  /* Project folders */
+  .folder-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px}
+  .folder{
+    background:var(--surf2);
+    border:0.5px solid var(--bdr);
+    border-radius:var(--r);
+    padding:12px 10px;
+    text-align:center;
+    cursor:pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .folder:hover{
+    border-color:var(--color-gold-border-bright);
+    background: rgba(197, 168, 103, 0.04);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+  .folder-icon{font-size:24px;margin-bottom:6px}
+  .folder-name{font-size:11px;color:var(--t1);font-weight:600;font-family: var(--font-title)}
+  .folder-count{font-size:9px;color:var(--t2);margin-top:3px;font-weight: 500}
+
+  /* CP Agreements */
+  .cp-list{padding:8px 14px 12px}
+  .cp-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--bdr);cursor:pointer}
+  .cp-item:last-child{border-bottom:none}
+  .cp-avatar{
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    background: linear-gradient(135deg, #201d19 0%, #0d0c0a 100%);
+    border: 1px solid var(--color-gold-border-bright);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--t1);
+    font-size:11px;
+    font-weight:600;
+    flex-shrink:0;
+    font-family: var(--font-title);
+  }
+  .cp-avatar.g{border-color:var(--color-status-sold)}
+  .cp-avatar.b{border-color:var(--color-status-available)}
+  .cp-name{font-size:11px;font-weight:600;color:var(--t1);font-family: var(--font-title)}
+  .cp-sub{font-size:10px;color:var(--t2);margin-top:2px;font-weight: 500}
+  .cp-bro{
+    font-size:9px;
+    padding:2px 6px;
+    border-radius:4px;
+    background:rgba(139, 92, 246, 0.15);
+    color:#C084FC;
+    font-weight:600;
+    font-family: var(--font-title);
+    border: 0.5px solid rgba(139, 92, 246, 0.25);
+  }
+  .cp-rate{font-size:11px;font-weight:600;color:var(--color-status-available);font-family: var(--font-title)}
+
+  /* Finance: invoices */
+  .inv-list{padding:8px 14px 12px}
+  .inv-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid var(--bdr)}
+  .inv-item:last-child{border-bottom:none}
+  .inv-num{font-size:11px;font-weight:600;color:var(--acc);flex:1;font-family: var(--font-title)}
+  .inv-amt{font-size:11px;color:var(--t1);font-weight:600;font-family: var(--font-title)}
+  .inv-status{
+    font-size:9px;
+    padding:2px 6px;
+    border-radius:4px;
+    font-weight:600;
+    margin-left:6px;
+    font-family: var(--font-title);
+    border: 0.5px solid transparent;
+  }
+  .s-paid{background:rgba(16, 185, 129, 0.15);color:#6EE7B7;border-color:rgba(16, 185, 129, 0.25)}
+  .s-pend{background:rgba(197, 168, 103, 0.15);color:#FDE047;border-color:rgba(197, 168, 103, 0.25)}
+  .s-over{background:rgba(239, 68, 68, 0.15);color:#FCA5A5;border-color:rgba(239, 68, 68, 0.25)}
+
+  /* Analytics mini */
+  .ana-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+  .ana-cell{padding:12px 14px;border-right:0.5px solid var(--bdr);border-bottom:0.5px solid var(--bdr)}
+  .ana-cell:nth-child(even){border-right:none}
+  .ana-cell:nth-last-child(-n+2){border-bottom:none}
+  .ana-label{
+    font-size:9px;
+    color:var(--t2);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin-bottom:4px;
+    font-family: var(--font-title);
+    font-weight: 500;
+  }
+  .ana-val{font-size:18px;font-weight:600;color:var(--t1);font-family: var(--font-title)}
+  .ana-sub{font-size:10px;margin-top:3px;font-weight: 500}
+  .up{color:var(--color-status-available)}.dn{color:var(--color-status-sold)}
+</style>
+
+<div class="shell">
+  <!-- Sidenav -->
+  <nav class="sidenav" aria-label="Main navigation">
+    <div class="logo">V</div>
+    <div class="ni" title="Dashboard"><i class="ti ti-layout-dashboard"></i></div>
+    <div class="ni" title="Leads"><i class="ti ti-users"></i></div>
+    <div class="ni active" title="Listings"><i class="ti ti-building"></i></div>
+    <div class="ni" title="Finance"><i class="ti ti-receipt"></i></div>
+    <div class="nsep"></div>
+    <div class="ni" title="Team"><i class="ti ti-briefcase"></i></div>
+    <div class="ni" title="Builder"><i class="ti ti-hammer"></i></div>
+    <div class="ni" title="Documents"><i class="ti ti-file-description"></i></div>
+    <div class="ni" title="Analytics"><i class="ti ti-chart-bar"></i></div>
+    <div class="nsep"></div>
+    <div class="ni" title="Smart Lists"><i class="ti ti-list-search"></i></div>
+    <div class="ni" title="Social"><i class="ti ti-share"></i></div>
+    <div class="ni" title="Settings"><i class="ti ti-settings"></i></div>
+    <div class="nb">
+      <div class="ni" title="Notifications"><i class="ti ti-bell"></i></div>
+      <div class="ni" title="My Profile"><i class="ti ti-user-circle"></i></div>
+    </div>
+  </nav>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="back-btn"><i class="ti ti-arrow-left" style="font-size:13px"></i> Back</div>
+      <div class="bc">Listings &nbsp;/&nbsp; <span>Lodha Malabar — Bandra West</span></div>
+      <div class="tba">
+        <div class="tbb"><i class="ti ti-share" style="font-size:13px"></i> Share</div>
+        <div class="tbb"><i class="ti ti-edit" style="font-size:13px"></i> Edit</div>
+        <div class="tbb pri"><i class="ti ti-user-plus" style="font-size:13px"></i> Assign Lead</div>
+      </div>
+    </header>
+
+    <div class="page-tabs">
+      <div class="ptab active">Overview</div>
+      <div class="ptab">Units</div>
+      <div class="ptab">Leads Interested</div>
+      <div class="ptab">Documents</div>
+      <div class="ptab">CP Agreements</div>
+      <div class="ptab">Finance</div>
+      <div class="ptab">Analytics</div>
+    </div>
+
+    <div class="content">
+      <div class="left">
+
+        <!-- Property hero -->
+        <div class="prop-hero">
+          <div class="prop-img">
+            <div class="prop-cam">
+              <div class="prop-cam-btn"><i class="ti ti-photo"></i></div>
+              <div class="prop-cam-btn"><i class="ti ti-360"></i></div>
+            </div>
+            <div style="margin-right:auto">
+              <div class="prop-img-label">Premium Residential · Ready to Move</div>
+            </div>
+            <span class="prop-badge avail">12 Available</span>
+            <span class="prop-badge sold" style="background:rgba(110, 107, 98, 0.15);border-color:var(--bdr);color:var(--t2)">38 Sold</span>
+          </div>
+          <div class="prop-info">
+            <div class="prop-name">Lodha Malabar</div>
+            <div class="prop-loc"><i class="ti ti-map-pin" style="font-size:12px"></i> Bandra West, Mumbai · 400050</div>
+            <div class="prop-tags">
+              <span class="tag t-comm">Residential</span>
+              <span class="tag t-avail">Ready to Move</span>
+              <span class="tag" style="background:rgba(197, 168, 103, 0.15);color:#FDE047;border:0.5px solid rgba(197, 168, 103, 0.25)">Primary</span>
+              <span class="tag" style="background:var(--surf2);color:var(--t2);border:0.5px solid var(--bdr)">RERA: MH01234/2024</span>
+            </div>
+            <div class="info-grid">
+              <div class="ic"><div class="il">Price Range</div><div class="iv">₹2.1Cr – ₹4.8Cr</div></div>
+              <div class="ic"><div class="il">Total Units</div><div class="iv">50</div></div>
+              <div class="ic"><div class="il">Possession</div><div class="iv">Dec 2025</div></div>
+              <div class="ic"><div class="il">Builder</div><div class="iv">Lodha Group</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Unit inventory table -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-table" style="font-size:14px;color:var(--t2)"></i><span class="pt">Unit Inventory</span><span class="pa">Export</span></div>
+          <table class="unit-table">
+            <thead>
+              <tr>
+                <th>Type</th><th>Area (sqft)</th><th>Floor</th><th>Base Price</th><th>Status</th><th>Leads</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>2BHK</td><td>1050 – 1120</td><td>3 – 8</td><td class="price">₹2.1Cr</td><td><span class="avail-pill pill-a">Available · 3</span></td><td style="color:var(--t2);font-weight:600">7</td></tr>
+              <tr><td>3BHK</td><td>1380 – 1520</td><td>6 – 18</td><td class="price">₹2.8Cr</td><td><span class="avail-pill pill-h">Hold · 2</span></td><td style="color:var(--t2);font-weight:600">14</td></tr>
+              <tr><td>3BHK + Study</td><td>1620</td><td>12 – 20</td><td class="price">₹3.4Cr</td><td><span class="avail-pill pill-a">Available · 4</span></td><td style="color:var(--t2);font-weight:600">9</td></tr>
+              <tr><td>4BHK Sky</td><td>2400 – 2800</td><td>22 – 28</td><td class="price">₹4.8Cr</td><td><span class="avail-pill pill-a">Available · 3</span></td><td style="color:var(--t2);font-weight:600">5</td></tr>
+              <tr><td>Penthouse</td><td>4200</td><td>30</td><td class="price">₹9.5Cr</td><td><span class="avail-pill pill-s">Sold</span></td><td style="color:var(--t2);font-weight:600">2</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Area-wise bifurcation -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-map-2" style="font-size:14px;color:var(--t2)"></i><span class="pt">Area-wise Lead Bifurcation</span><span class="pa">Full map ›</span></div>
+          <div class="area-map">
+            <div class="area-grid">
+              <div class="area-card active">
+                <div class="area-name">Bandra West</div>
+                <div class="area-sub">32 leads · ₹2.1Cr – ₹4.8Cr avg</div>
+                <div class="area-bar"><div class="area-fill" style="width:78%"></div></div>
+              </div>
+              <div class="area-card">
+                <div class="area-name">Juhu</div>
+                <div class="area-sub">18 leads · ₹1.9Cr – ₹3.5Cr avg</div>
+                <div class="area-bar"><div class="area-fill" style="width:44%"></div></div>
+              </div>
+              <div class="area-card">
+                <div class="area-name">Andheri West</div>
+                <div class="area-sub">24 leads · ₹1.2Cr – ₹2.4Cr avg</div>
+                <div class="area-bar"><div class="area-fill" style="width:58%"></div></div>
+              </div>
+              <div class="area-card">
+                <div class="area-name">Worli / Lower Parel</div>
+                <div class="area-sub">11 leads · ₹4.0Cr+ avg</div>
+                <div class="area-bar"><div class="area-fill" style="width:26%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project folders -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-folder" style="font-size:14px;color:var(--t2)"></i><span class="pt">Project Folders</span><span class="pa">+ New folder</span></div>
+          <div class="folder-grid">
+            <div class="folder"><div class="folder-icon">📋</div><div class="folder-name">Brochures</div><div class="folder-count">8 files</div></div>
+            <div class="folder"><div class="folder-icon">🏗️</div><div class="folder-name">Floor Plans</div><div class="folder-count">12 files</div></div>
+            <div class="folder"><div class="folder-icon">📑</div><div class="folder-name">Sale Deed</div><div class="folder-count">3 files</div></div>
+            <div class="folder"><div class="folder-icon">🤝</div><div class="folder-name">Assignments</div><div class="folder-count">5 files</div></div>
+            <div class="folder"><div class="folder-icon">🪪</div><div class="folder-name">KYC Docs</div><div class="folder-count">22 files</div></div>
+            <div class="folder"><div class="folder-icon">📸</div><div class="folder-name">Site Photos</div><div class="folder-count">64 files</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="right">
+
+        <!-- Property analytics (contextual) -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-chart-bar" style="font-size:14px;color:var(--t2)"></i><span class="pt">Property Analytics</span></div>
+          <div class="ana-grid">
+            <div class="ana-cell"><div class="ana-label">Total Leads</div><div class="ana-val">74</div><div class="ana-sub up">↑ 12% this month</div></div>
+            <div class="ana-cell"><div class="ana-label">Site Visits</div><div class="ana-val">18</div><div class="ana-sub up">↑ 5 this week</div></div>
+            <div class="ana-cell"><div class="ana-label">Conversions</div><div class="ana-val">6</div><div class="ana-sub" style="color:var(--t2);font-weight:500">8.1% rate</div></div>
+            <div class="ana-cell"><div class="ana-label">Revenue</div><div class="ana-val">₹16Cr</div><div class="ana-sub up">6 units closed</div></div>
+          </div>
+        </div>
+
+        <!-- CP Agreements -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-handshake" style="font-size:14px;color:var(--t2)"></i><span class="pt">CP Agreements</span><span class="pa">+ Add</span></div>
+          <div class="cp-list">
+            <div class="cp-item">
+              <div class="cp-avatar">RK</div>
+              <div>
+                <div class="cp-name">Rajiv Kapur &amp; Associates</div>
+                <div class="cp-sub">12 referrals · Active since Jan 2025</div>
+              </div>
+              <div style="margin-left:auto;text-align:right">
+                <div class="cp-bro">2.5%</div>
+                <div class="cp-rate" style="margin-top:4px">₹4.2L</div>
+              </div>
+            </div>
+            <div class="cp-item">
+              <div class="cp-avatar g">SM</div>
+              <div>
+                <div class="cp-name">Sapphire Realty</div>
+                <div class="cp-sub">7 referrals · Active since Mar 2025</div>
+              </div>
+              <div style="margin-left:auto;text-align:right">
+                <div class="cp-bro">2.0%</div>
+                <div class="cp-rate" style="margin-top:4px">₹2.8L</div>
+              </div>
+            </div>
+            <div class="cp-item">
+              <div class="cp-avatar b">NH</div>
+              <div>
+                <div class="cp-name">Nikhil Homes</div>
+                <div class="cp-sub">3 referrals · Active since May 2026</div>
+              </div>
+              <div style="margin-left:auto;text-align:right">
+                <div class="cp-bro">1.75%</div>
+                <div class="cp-rate" style="margin-top:4px">₹84K</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Finance / Invoicing -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-receipt" style="font-size:14px;color:var(--t2)"></i><span class="pt">Invoices / Accounts</span><span class="pa">+ New</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;padding:12px 14px 10px;gap:8px;border-bottom:0.5px solid var(--bdr)">
+            <div style="background:var(--surf2);border: 0.5px solid var(--bdr);border-radius:var(--r);padding:10px">
+              <div style="font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;font-family:var(--font-title);font-weight:500">Collected</div>
+              <div style="font-size:15px;font-weight:600;color:var(--acc2);margin-top:4px;font-family:var(--font-title)">₹7.4Cr</div>
+            </div>
+            <div style="background:var(--surf2);border: 0.5px solid var(--bdr);border-radius:var(--r);padding:10px">
+              <div style="font-size:9px;color:var(--t2);text-transform:uppercase;letter-spacing:.08em;font-family:var(--font-title);font-weight:500">Pending</div>
+              <div style="font-size:15px;font-weight:600;color:var(--acc3);margin-top:4px;font-family:var(--font-title)">₹1.2Cr</div>
+            </div>
+          </div>
+          <div class="inv-list">
+            <div class="inv-item">
+              <span class="inv-num">INV-2026-042</span>
+              <span class="inv-amt">₹28L</span><span class="inv-status s-paid">Paid</span>
+            </div>
+            <div class="inv-item">
+              <span class="inv-num">INV-2026-041</span>
+              <span class="inv-amt">₹14L</span><span class="inv-status s-pend">Pending</span>
+            </div>
+            <div class="inv-item">
+              <span class="inv-num">INV-2026-038</span>
+              <span class="inv-amt">₹42L</span><span class="inv-status s-paid">Paid</span>
+            </div>
+            <div class="inv-item">
+              <span class="inv-num">INV-2026-031</span>
+              <span class="inv-amt">₹9L</span><span class="inv-status s-over">Overdue</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Builder info -->
+        <div class="panel">
+          <div class="ph"><i class="ti ti-hammer" style="font-size:14px;color:var(--t2)"></i><span class="pt">Builder Details</span><span class="pa">Profile ›</span></div>
+          <div style="padding:14px;display:flex;gap:12px;align-items:flex-start">
+            <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg, #1c1813 0%, #302619 100%);border:0.5px solid var(--bdr2);display:flex;align-items:center;justify-content:center;color:var(--acc);font-size:13px;font-weight:600;flex-shrink:0;font-family:var(--font-title)">LG</div>
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--t1);font-family:var(--font-title)">Lodha Group</div>
+              <div style="font-size:10px;color:var(--t2);margin-top:3px;font-weight:500">42 active projects in Mumbai</div>
+              <div style="display:flex;gap:6px;margin-top:8px">
+                <div style="font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(16, 185, 129, 0.15);color:#6EE7B7;border:0.5px solid rgba(16, 185, 129, 0.25);font-weight:600;font-family:var(--font-title)">RERA Verified</div>
+                <div style="font-size:9px;padding:2px 6px;border-radius:4px;background:rgba(197, 168, 103, 0.15);color:#FDE047;border:0.5px solid rgba(197, 168, 103, 0.25);font-weight:600;font-family:var(--font-title)">Top Builder</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>

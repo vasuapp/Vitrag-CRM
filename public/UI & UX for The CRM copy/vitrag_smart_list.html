@@ -1,0 +1,781 @@
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    /* Luxury Obsidian & Brushed Gold Variables */
+    --color-bg-base: #0c0b09;
+    --color-bg-surface: rgba(20, 18, 16, 0.7);
+    --color-bg-surface-hover: rgba(30, 27, 24, 0.85);
+    --color-bg-surface-subtle: rgba(16, 14, 12, 0.45);
+    --color-bg-nav: #060505;
+    
+    --color-gold-brass: #c5a867;
+    --color-gold-accent: #b89047;
+    --color-gold-glow: rgba(197, 168, 103, 0.05);
+    --color-gold-border: rgba(197, 168, 103, 0.12);
+    --color-gold-border-bright: rgba(197, 168, 103, 0.28);
+    
+    --color-status-available: #10b981;
+    --color-status-sold: #ef4444;
+    --color-status-hold: #3b82f6;
+    --color-status-ref: #8b5cf6;
+    
+    --color-text-primary: #f5f4f0;
+    --color-text-secondary: #a3a097;
+    --color-text-muted: #6e6b62;
+    
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-title: 'Plus Jakarta Sans', var(--font-sans);
+
+    /* Original Mappings to maintain compatibility */
+    --nav: var(--color-bg-nav);
+    --acc: var(--color-gold-brass);
+    --acc2: var(--color-status-available);
+    --acc3: var(--color-gold-accent);
+    --acc4: var(--color-status-sold);
+    --acc5: var(--color-status-ref);
+    --surf: var(--color-bg-surface);
+    --surf2: var(--color-bg-surface-subtle);
+    --bdr: var(--color-gold-border);
+    --bdr2: var(--color-gold-border-bright);
+    --t1: var(--color-text-primary);
+    --t2: var(--color-text-secondary);
+    --r: 10px;
+    --r2: 14px;
+  }
+  
+  body{
+    font-family:var(--font-sans);
+    font-size:13px;
+    background: radial-gradient(circle at 50% 0%, #171512 0%, var(--color-bg-base) 100%);
+    color: var(--t1);
+    min-height: 100vh;
+    padding: 10px;
+  }
+  
+  .shell{
+    display:grid;
+    grid-template-columns:68px 220px 1fr;
+    border-radius:var(--r2);
+    overflow:hidden;
+    border:0.5px solid var(--bdr2);
+    min-height:700px;
+    background: var(--color-bg-base);
+  }
+  
+  /* Narrow icon nav */
+  .sidenav{
+    background:var(--nav);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:24px 0;
+    gap:8px;
+    position:relative;
+    border-right: 0.5px solid var(--bdr);
+  }
+  .sidenav .logo{
+    width:34px;
+    height:34px;
+    background: linear-gradient(135deg, #c5a867 0%, #b89047 100%);
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#0c0b09;
+    font-weight:700;
+    font-size:14px;
+    margin-bottom:20px;
+    flex-shrink:0;
+    font-family: var(--font-title);
+    letter-spacing: 0.05em;
+    box-shadow: 0 4px 12px rgba(197, 168, 103, 0.25);
+  }
+  
+  .ni{
+    width:44px;
+    height:44px;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--nav-t);
+    cursor:pointer;
+    transition:all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position:relative;
+  }
+  .ni:hover{
+    background:rgba(197, 168, 103, 0.05);
+    color:var(--nav-a);
+  }
+  .ni.active{
+    background: linear-gradient(135deg, rgba(197, 168, 103, 0.15) 0%, rgba(197, 168, 103, 0.02) 100%);
+    color:#fff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  .ni.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 3px;
+    background: linear-gradient(to bottom, #c5a867, #b89047);
+    border-radius: 0 4px 4px 0;
+    box-shadow: 0 0 8px rgba(197, 168, 103, 0.5);
+  }
+  .ni .ti{font-size:19px}
+  .nsep{
+    width:32px;
+    height:1px;
+    background: linear-gradient(90deg, transparent, rgba(197, 168, 103, 0.15) 20%, rgba(197, 168, 103, 0.15) 80%, transparent);
+    margin:10px 0;
+  }
+  .nb{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:8px}
+
+  /* Segment sidebar */
+  .seg-sidebar{
+    background:var(--surf);
+    border-right:0.5px solid var(--bdr);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    backdrop-filter: blur(12px) saturate(140%);
+  }
+  .seg-head{padding:16px 16px 12px;border-bottom:0.5px solid var(--bdr)}
+  .seg-title{font-size:13px;font-weight:600;color:var(--t1);margin-bottom:8px;font-family: var(--font-title);letter-spacing: 0.02em}
+  .seg-search{
+    background:var(--surf2);
+    border:0.5px solid var(--bdr);
+    border-radius:6px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 10px;
+    font-size:11px;
+    color:var(--t2);
+    transition: all 0.2s ease;
+  }
+  .seg-search:hover { border-color: var(--bdr2); }
+  .seg-search .ti{font-size:13px}
+  .seg-section{
+    padding:14px 14px 6px;
+    border-bottom: 0.5px solid var(--bdr);
+  }
+  .seg-section:last-of-type { border-bottom: none; }
+  .seg-section-label{
+    font-size:9px;
+    color:var(--t2);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    font-weight:600;
+    margin-bottom:8px;
+    font-family: var(--font-title);
+  }
+  
+  .seg-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:6px 10px;
+    border-radius:6px;
+    cursor:pointer;
+    color:var(--t2);
+    font-size:12px;
+    margin-bottom:4px;
+    font-family: var(--font-title);
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: 0.5px solid transparent;
+  }
+  .seg-item:hover{
+    background:var(--surf2);
+    color:var(--t1);
+  }
+  .seg-item.active{
+    background:linear-gradient(135deg, rgba(197, 168, 103, 0.15) 0%, rgba(197, 168, 103, 0.03) 100%);
+    border-color: var(--color-gold-border-bright);
+    color:var(--acc);
+    font-weight: 600;
+  }
+  .seg-item .ti{font-size:14px;flex-shrink:0}
+  
+  .seg-count{
+    margin-left:auto;
+    font-size:10px;
+    background:var(--surf2);
+    border-radius:10px;
+    padding:1px 6px;
+    color:var(--t2);
+    font-weight: 600;
+    border: 0.5px solid var(--bdr);
+  }
+  .seg-item.active .seg-count{
+    background:rgba(197, 168, 103, 0.15);
+    border-color: rgba(197, 168, 103, 0.3);
+    color:var(--acc);
+  }
+  .seg-add{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 10px;
+    border-radius:6px;
+    cursor:pointer;
+    color:var(--acc);
+    font-size:11px;
+    margin:10px 14px;
+    font-weight: 600;
+    font-family: var(--font-title);
+    transition: all 0.2s ease;
+    border: 0.5px solid transparent;
+  }
+  .seg-add:hover{
+    background:rgba(197, 168, 103, 0.08);
+    border-color: rgba(197, 168, 103, 0.25);
+  }
+
+  /* Main content area */
+  .main-area{display:flex;flex-direction:column;background:radial-gradient(circle at 50% 0%, #171512 0%, var(--color-bg-base) 100%)}
+  
+  /* Topbar */
+  .topbar{
+    background:var(--surf);
+    border-bottom:0.5px solid var(--bdr);
+    padding:0 18px;
+    height:54px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-shrink:0;
+    backdrop-filter: blur(12px) saturate(140%);
+  }
+  .list-title{font-size:14px;font-weight:600;color:var(--t1);font-family: var(--font-title);letter-spacing: 0.02em}
+  .list-count{font-size:11px;color:var(--t2);margin-top:2px;font-weight: 500}
+  
+  .tba{margin-left:auto;display:flex;align-items:center;gap:8px}
+  .tbb{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:6px 12px;
+    border-radius:6px;
+    font-size:12px;
+    cursor:pointer;
+    border:0.5px solid var(--bdr);
+    color:var(--t2);
+    font-family: var(--font-title);
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .tbb:hover{
+    background:var(--surf2);
+    border-color: var(--bdr2);
+    color: var(--t1);
+  }
+  .tbb.pri{
+    background: linear-gradient(135deg, #c5a867 0%, #b89047 100%);
+    color:#0c0b09;
+    border-color: transparent;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(197, 168, 103, 0.25);
+  }
+  .tbb.pri:hover {
+    filter: brightness(1.1);
+  }
+
+  /* Filter bar */
+  .filter-bar{
+    background:var(--surf);
+    border-bottom:0.5px solid var(--bdr);
+    padding:10px 16px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+    backdrop-filter: blur(12px) saturate(140%);
+  }
+  .filter-chip{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:5px 12px;
+    border-radius:20px;
+    border:0.5px solid var(--bdr);
+    font-size:11px;
+    color:var(--t1);
+    background:var(--surf);
+    cursor:pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .filter-chip:hover { border-color: var(--bdr2); }
+  .filter-chip .ti{font-size:12px;color:var(--t2)}
+  .filter-chip.applied{
+    border-color:var(--acc);
+    background:rgba(197, 168, 103, 0.08);
+    color:var(--acc);
+    font-weight: 600;
+  }
+  .filter-chip.applied .ti{color:var(--acc)}
+  .filter-chip .x{color:var(--t2);font-size:11px;margin-left:4px;font-weight: bold}
+  .filter-chip.applied .x{color:var(--acc)}
+  
+  .sort-btn{
+    margin-left:auto;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:11px;
+    color:var(--t2);
+    cursor:pointer;
+    padding:6px 10px;
+    border-radius:6px;
+    font-family: var(--font-title);
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  .sort-btn:hover{background:var(--surf2);color:var(--t1)}
+  
+  .view-toggle{display:flex;border:0.5px solid var(--bdr);border-radius:6px;overflow:hidden;background: var(--surf)}
+  .vt-btn{
+    padding:6px 10px;
+    font-size:13px;
+    color:var(--t2);
+    cursor:pointer;
+    background:transparent;
+    border:none;
+    display:flex;
+    align-items:center;
+    transition: all 0.2s ease;
+  }
+  .vt-btn:hover { color: var(--t1); }
+  .vt-btn.active{background:var(--surf2);color:var(--acc)}
+
+  /* Content area */
+  .content{
+    flex:1;
+    padding:16px;
+    overflow:auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(197, 168, 103, 0.2) transparent;
+  }
+  .content::-webkit-scrollbar {
+    width: 6px;
+  }
+  .content::-webkit-scrollbar-thumb {
+    background: rgba(197, 168, 103, 0.2);
+    border-radius: 4px;
+  }
+
+  /* Bulk action bar */
+  .bulk-bar{
+    background: linear-gradient(135deg, #c5a867 0%, #b89047 100%);
+    border-radius:var(--r);
+    padding:10px 16px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:12px;
+    box-shadow: 0 4px 15px rgba(197, 168, 103, 0.2);
+  }
+  .bulk-count{font-size:12px;color:#0c0b09;font-weight:700;flex:1;font-family: var(--font-title)}
+  .bulk-btn{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    padding:5px 12px;
+    border-radius:6px;
+    font-size:11px;
+    color:#f5f4f0;
+    cursor:pointer;
+    background:rgba(20, 18, 16, 0.85);
+    border:0.5px solid rgba(255, 255, 255, 0.12);
+    font-family: var(--font-title);
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  .bulk-btn:hover{background:rgba(20, 18, 16, 0.95);border-color: rgba(255,255,255,0.25)}
+
+  /* Lead table */
+  .lead-table{
+    width:100%;
+    border-collapse:collapse;
+    background:var(--surf);
+    border:0.5px solid var(--bdr);
+    border-radius:var(--r2);
+    overflow:hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  }
+  .lead-table thead tr{border-bottom:0.5px solid var(--bdr);background: rgba(197, 168, 103, 0.02)}
+  .lead-table th{
+    font-size:10px;
+    color:var(--t2);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    padding:12px 14px;
+    text-align:left;
+    font-weight:600;
+    white-space:nowrap;
+    font-family: var(--font-title);
+  }
+  .lead-table td{
+    font-size:11px;
+    color:var(--t1);
+    padding:12px 14px;
+    border-bottom:0.5px solid var(--bdr);
+    vertical-align:middle;
+  }
+  .lead-table tr:last-child td{border-bottom:none}
+  .lead-table tbody tr{cursor:pointer;transition: all 0.2s ease}
+  .lead-table tbody tr:hover td{background:rgba(197, 168, 103, 0.02)}
+  .lead-table tbody tr:nth-child(even) td { background: rgba(30, 27, 24, 0.2); }
+  .lead-table tbody tr:nth-child(even):hover td { background: rgba(197, 168, 103, 0.02); }
+  
+  .lead-table .cb{width:40px}
+  .chk{
+    width:15px;
+    height:15px;
+    border:1px solid var(--color-gold-border-bright);
+    border-radius:4px;
+    cursor:pointer;
+    flex-shrink:0;
+    transition: all 0.2s ease;
+    background: transparent;
+  }
+  .chk:hover {
+    border-color: var(--acc);
+    box-shadow: 0 0 6px rgba(197, 168, 103, 0.25);
+  }
+  .chk.checked{
+    background:var(--acc);
+    border-color:var(--acc);
+    position: relative;
+  }
+  .chk.checked::after {
+    content: '✓';
+    color: #0c0b09;
+    font-size: 10px;
+    font-weight: bold;
+    position: absolute;
+    top: -1px;
+    left: 2px;
+  }
+  
+  .lead-name-cell{display:flex;align-items:center;gap:10px}
+  .mini-avatar{
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-size:10px;
+    font-weight:700;
+    flex-shrink:0;
+    border: 0.5px solid var(--color-gold-border-bright);
+    font-family: var(--font-title);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  }
+  .lead-nm{font-size:12px;font-weight:600;color:var(--t1);font-family: var(--font-title)}
+  .lead-ph{font-size:10px;color:var(--t2);margin-top:2px;font-weight: 500}
+  
+  .tag{
+    font-size:9px;
+    padding:2px 6px;
+    border-radius:4px;
+    font-weight:600;
+    font-family: var(--font-title);
+  }
+  .t-hot{background:rgba(239, 68, 68, 0.15);color:#FCA5A5;border: 0.5px solid rgba(239, 68, 68, 0.25)}
+  .t-warm{background:rgba(197, 168, 103, 0.15);color:#FDE047;border: 0.5px solid rgba(197, 168, 103, 0.25)}
+  .t-cold{background:rgba(59, 130, 246, 0.15);color:#93C5FD;border: 0.5px solid rgba(59, 130, 246, 0.25)}
+  .t-ref{background:rgba(139, 92, 246, 0.15);color:#C084FC;border: 0.5px solid rgba(139, 92, 246, 0.25)}
+  .t-src{background:var(--surf2);color:var(--t2);border:0.5px solid var(--bdr)}
+  .t-conv{background:rgba(16, 185, 129, 0.15);color:#6EE7B7;border: 0.5px solid rgba(16, 185, 129, 0.25)}
+  .t-missed{background:rgba(239, 68, 68, 0.15);color:#FCA5A5;border: 0.5px solid rgba(239, 68, 68, 0.25)}
+  
+  .fu-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:6px;box-shadow: 0 0 6px currentColor}
+  
+  .row-actions{display:flex;gap:6px;opacity:0;transition: opacity 0.2s ease}
+  .lead-table tbody tr:hover .row-actions{opacity:1}
+  .ra-btn{
+    width:26px;
+    height:26px;
+    border-radius:5px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--t2);
+    cursor:pointer;
+    font-size:13px;
+    transition: all 0.2s ease;
+    border: 0.5px solid transparent;
+  }
+  .ra-btn:hover{
+    background:var(--surf);
+    border-color:var(--bdr2);
+    color:var(--acc);
+  }
+
+  /* Pagination */
+  .pagination{display:flex;align-items:center;justify-content:space-between;padding:12px 0;font-size:11px;color:var(--t2);font-weight: 500}
+  .page-btn{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    padding:5px 12px;
+    border-radius:6px;
+    cursor:pointer;
+    border:0.5px solid var(--bdr);
+    color:var(--t2);
+    font-family: var(--font-title);
+    font-weight: 600;
+    transition: all 0.2s ease;
+    background: var(--surf);
+  }
+  .page-btn:hover{background:var(--surf2);border-color:var(--bdr2);color:var(--t1)}
+  .page-nums{display:flex;gap:4px}
+  .pg{
+    width:28px;
+    height:28px;
+    border-radius:6px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    font-size:11px;
+    color:var(--t2);
+    font-weight: 600;
+    font-family: var(--font-title);
+    transition: all 0.2s ease;
+    border: 0.5px solid transparent;
+  }
+  .pg:hover{background:var(--surf2);color:var(--t1)}
+  .pg.active{
+    background: linear-gradient(135deg, #c5a867 0%, #b89047 100%);
+    color:#0c0b09;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(197, 168, 103, 0.25);
+  }
+</style>
+
+<div class="shell">
+  <!-- Icon nav -->
+  <nav class="sidenav">
+    <div class="logo">V</div>
+    <div class="ni" title="Dashboard"><i class="ti ti-layout-dashboard"></i></div>
+    <div class="ni active" title="Leads"><i class="ti ti-users"></i></div>
+    <div class="ni" title="Listings"><i class="ti ti-building"></i></div>
+    <div class="ni" title="Finance"><i class="ti ti-receipt"></i></div>
+    <div class="nsep"></div>
+    <div class="ni" title="Team"><i class="ti ti-briefcase"></i></div>
+    <div class="ni" title="Builder"><i class="ti ti-hammer"></i></div>
+    <div class="ni" title="Documents"><i class="ti ti-file-description"></i></div>
+    <div class="ni" title="Analytics"><i class="ti ti-chart-bar"></i></div>
+    <div class="nsep"></div>
+    <div class="ni" title="Smart Lists"><i class="ti ti-list-search"></i></div>
+    <div class="ni" title="Social"><i class="ti ti-share"></i></div>
+    <div class="ni" title="Settings"><i class="ti ti-settings"></i></div>
+    <div class="nb">
+      <div class="ni" title="Notifications"><i class="ti ti-bell"></i></div>
+      <div class="ni" title="My Profile"><i class="ti ti-user-circle"></i></div>
+    </div>
+  </nav>
+
+  <!-- Segment sidebar -->
+  <div class="seg-sidebar">
+    <div class="seg-head">
+      <div class="seg-title">Smart Lists</div>
+      <div class="seg-search"><i class="ti ti-search"></i> Search lists…</div>
+    </div>
+
+    <div class="seg-section">
+      <div class="seg-section-label">Default Views</div>
+      <div class="seg-item"><i class="ti ti-users"></i> All Leads <span class="seg-count">287</span></div>
+      <div class="seg-item active"><i class="ti ti-flame"></i> Hot Leads <span class="seg-count">14</span></div>
+      <div class="seg-item"><i class="ti ti-clock-exclamation"></i> Missed Follow-ups <span class="seg-count">23</span></div>
+      <div class="seg-item"><i class="ti ti-phone-off"></i> Missed Calls <span class="seg-count">8</span></div>
+      <div class="seg-item"><i class="ti ti-user-x"></i> Not Interested <span class="seg-count">31</span></div>
+      <div class="seg-item"><i class="ti ti-check"></i> Converted <span class="seg-count">19</span></div>
+    </div>
+
+    <div class="seg-section">
+      <div class="seg-section-label">Saved Segments</div>
+      <div class="seg-item"><i class="ti ti-filter"></i> FB Leads — This Month <span class="seg-count">42</span></div>
+      <div class="seg-item"><i class="ti ti-filter"></i> Budget ₹2Cr+ Bandra <span class="seg-count">17</span></div>
+      <div class="seg-item"><i class="ti ti-filter"></i> Rental Renewals — June <span class="seg-count">9</span></div>
+      <div class="seg-item"><i class="ti ti-filter"></i> Warm — No contact 7d <span class="seg-count">12</span></div>
+      <div class="seg-item"><i class="ti ti-filter"></i> Commercial Inquiries <span class="seg-count">22</span></div>
+    </div>
+
+    <div class="seg-section">
+      <div class="seg-section-label">Property Lists</div>
+      <div class="seg-item"><i class="ti ti-building"></i> All Properties <span class="seg-count">54</span></div>
+      <div class="seg-item"><i class="ti ti-home"></i> Available Units <span class="seg-count">12</span></div>
+      <div class="seg-item"><i class="ti ti-building-skyscraper"></i> Commercial Listings <span class="seg-count">8</span></div>
+    </div>
+
+    <div class="seg-add"><i class="ti ti-plus" style="font-size:13px"></i> New Smart List</div>
+  </div>
+
+  <!-- Main list area -->
+  <div class="main-area">
+    <header class="topbar">
+      <div>
+        <div class="list-title">Hot Leads</div>
+        <div class="list-count">14 leads · Last updated now</div>
+      </div>
+      <div class="tba">
+        <div class="tbb"><i class="ti ti-download" style="font-size:13px"></i> Export</div>
+        <div class="tbb"><i class="ti ti-share" style="font-size:13px"></i> Share list</div>
+        <div class="tbb pri"><i class="ti ti-plus" style="font-size:13px"></i> Add Lead</div>
+      </div>
+    </header>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <div class="filter-chip applied"><i class="ti ti-flame"></i> Status: Hot <span class="x">×</span></div>
+      <div class="filter-chip applied"><i class="ti ti-home"></i> Type: Residential <span class="x">×</span></div>
+      <div class="filter-chip"><i class="ti ti-calendar"></i> Date range</div>
+      <div class="filter-chip"><i class="ti ti-currency-rupee"></i> Budget</div>
+      <div class="filter-chip"><i class="ti ti-map-pin"></i> Location</div>
+      <div class="filter-chip"><i class="ti ti-brand-facebook"></i> Source</div>
+      <div class="filter-chip"><i class="ti ti-user"></i> Assigned to</div>
+      <div class="filter-chip" style="border-style:dashed"><i class="ti ti-plus"></i> Add filter</div>
+      <div class="sort-btn"><i class="ti ti-arrows-sort" style="font-size:13px"></i> Last contact</div>
+      <div class="view-toggle">
+        <button class="vt-btn active" aria-label="List view"><i class="ti ti-list"></i></button>
+        <button class="vt-btn" aria-label="Kanban view"><i class="ti ti-layout-kanban"></i></button>
+        <button class="vt-btn" aria-label="Card view"><i class="ti ti-layout-grid"></i></button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- Bulk action bar -->
+      <div class="bulk-bar">
+        <span class="bulk-count">3 leads selected</span>
+        <div class="bulk-btn"><i class="ti ti-brand-whatsapp" style="font-size:12px"></i> Bulk WhatsApp</div>
+        <div class="bulk-btn"><i class="ti ti-mail" style="font-size:12px"></i> Bulk Email</div>
+        <div class="bulk-btn"><i class="ti ti-user-check" style="font-size:12px"></i> Reassign</div>
+        <div class="bulk-btn"><i class="ti ti-tag" style="font-size:12px"></i> Update Status</div>
+        <div class="bulk-btn" style="margin-left:auto;background:rgba(20, 18, 16, 0.4)"><i class="ti ti-x" style="font-size:12px"></i> Clear</div>
+      </div>
+
+      <table class="lead-table">
+        <thead>
+          <tr>
+            <th class="cb"><div class="chk checked"></div></th>
+            <th>Lead</th>
+            <th>Status</th>
+            <th>Source</th>
+            <th>Requirement</th>
+            <th>Budget</th>
+            <th>Last Contact</th>
+            <th>Follow-up</th>
+            <th>Assigned</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="chk checked"></div></td>
+            <td><div class="lead-name-cell"><div class="mini-avatar" style="background:#c5a867;color:#0c0b09">PS</div><div><div class="lead-nm">Priya Sharma</div><div class="lead-ph">+91 98200 12345</div></div></div></td>
+            <td><span class="tag t-hot">Hot</span></td>
+            <td><span class="tag t-src">Insta</span></td>
+            <td style="color:var(--t2);font-weight:500">3BHK · Bandra W</td>
+            <td style="font-weight:600;font-family:var(--font-title)">₹2.2–2.8Cr</td>
+            <td style="color:var(--t2);font-weight:500">Today 10:00 AM</td>
+            <td><span class="fu-dot" style="background:#10B981;color:#10B981"></span>Today 2 PM</td>
+            <td style="color:var(--t2);font-weight:500">Rahul M</td>
+            <td><div class="row-actions"><div class="ra-btn"><i class="ti ti-brand-whatsapp"></i></div><div class="ra-btn"><i class="ti ti-phone"></i></div><div class="ra-btn"><i class="ti ti-eye"></i></div></div></td>
+          </tr>
+          <tr>
+            <td><div class="chk checked"></div></td>
+            <td><div class="lead-name-cell"><div class="mini-avatar" style="background:#8B5CF6">RJ</div><div><div class="lead-nm">Rahul Joshi</div><div class="lead-ph">+91 93456 78901</div></div></div></td>
+            <td><span class="tag t-hot">Hot</span></td>
+            <td><span class="tag t-src">Reference</span></td>
+            <td style="color:var(--t2);font-weight:500">Villa · Juhu</td>
+            <td style="font-weight:600;font-family:var(--font-title)">₹6–8Cr</td>
+            <td style="color:var(--t2);font-weight:500">Yesterday 4 PM</td>
+            <td><span class="fu-dot" style="background:#F59E0B;color:#F59E0B"></span>May 24</td>
+            <td style="color:var(--t2);font-weight:500">Rahul M</td>
+            <td><div class="row-actions"><div class="ra-btn"><i class="ti ti-brand-whatsapp"></i></div><div class="ra-btn"><i class="ti ti-phone"></i></div><div class="ra-btn"><i class="ti ti-eye"></i></div></div></td>
+          </tr>
+          <tr>
+            <td><div class="chk checked"></div></td>
+            <td><div class="lead-name-cell"><div class="mini-avatar" style="background:#10B981">MK</div><div><div class="lead-nm">Meena Kapoor</div><div class="lead-ph">+91 99001 23456</div></div></div></td>
+            <td><span class="tag t-hot">Hot</span></td>
+            <td><span class="tag t-src">Web</span></td>
+            <td style="color:var(--t2);font-weight:500">2BHK · Andheri E</td>
+            <td style="font-weight:600;font-family:var(--font-title)">₹90L–1.2Cr</td>
+            <td style="color:var(--t2);font-weight:500">May 22 11:00 AM</td>
+            <td><span class="fu-dot" style="background:#EF4444;color:#EF4444"></span>Overdue</td>
+            <td style="color:var(--t2);font-weight:500">Aisha K</td>
+            <td><div class="row-actions"><div class="ra-btn"><i class="ti ti-brand-whatsapp"></i></div><div class="ra-btn"><i class="ti ti-phone"></i></div><div class="ra-btn"><i class="ti ti-eye"></i></div></div></td>
+          </tr>
+          <tr>
+            <td><div class="chk"></div></td>
+            <td><div class="lead-name-cell"><div class="mini-avatar" style="background:#b89047">VB</div><div><div class="lead-nm">Vikram Bose</div><div class="lead-ph">+91 87654 32109</div></div></div></td>
+            <td><span class="tag t-hot">Hot</span></td>
+            <td><span class="tag t-src">FB</span></td>
+            <td style="color:var(--t2);font-weight:500">3BHK · Worli</td>
+            <td style="font-weight:600;font-family:var(--font-title)">₹3.5–5Cr</td>
+            <td style="color:var(--t2);font-weight:500">Today 8:00 AM</td>
+            <td><span class="fu-dot" style="background:#10B981;color:#10B981"></span>Today 3 PM</td>
+            <td style="color:var(--t2);font-weight:500">Rahul M</td>
+            <td><div class="row-actions"><div class="ra-btn"><i class="ti ti-brand-whatsapp"></i></div><div class="ra-btn"><i class="ti ti-phone"></i></div><div class="ra-btn"><i class="ti ti-eye"></i></div></div></td>
+          </tr>
+          <tr>
+            <td><div class="chk"></div></td>
+            <td><div class="lead-name-cell"><div class="mini-avatar" style="background:#EF4444">DN</div><div><div class="lead-nm">Divya Nair</div><div class="lead-ph">+91 91234 56789</div></div></div></td>
+            <td><span class="tag t-missed">Missed F/U</span></td>
+            <td><span class="tag t-src">Insta</span></td>
+            <td style="color:var(--t2);font-weight:500">4BHK · Worli</td>
+            <td style="font-weight:600;font-family:var(--font-title)">₹8–11Cr</td>
+            <td style="color:var(--t2);font-weight:500">May 20 2:00 PM</td>
+            <td><span class="fu-dot" style="background:#EF4444;color:#EF4444"></span>3 days overdue</td>
+            <td style="color:var(--t2);font-weight:500">Aisha K</td>
+            <td><div class="row-actions"><div class="ra-btn"><i class="ti ti-brand-whatsapp"></i></div><div class="ra-btn"><i class="ti ti-phone"></i></div><div class="ra-btn"><i class="ti ti-eye"></i></div></div></td>
+          </tr>
+          <tr>
+            <td><div class="chk"></div></td>
+            <td><div class="lead-name-cell"><div class="mini-avatar" style="background:#b89047">AD</div><div><div class="lead-nm">Amit Desai</div><div class="lead-ph">+91 98765 43210</div></div></div></td>
+            <td><span class="tag t-warm">Warm</span></td>
+            <td><span class="tag t-src">GDS</span></td>
+            <td style="color:var(--t2);font-weight:500">Office · BKC</td>
+            <td style="font-weight:600;font-family:var(--font-title)">₹2.8–3.5Cr</td>
+            <td style="color:var(--t2);font-weight:500">May 21 9:00 AM</td>
+            <td><span class="fu-dot" style="background:#F59E0B;color:#F59E0B"></span>May 24</td>
+            <td style="color:var(--t2);font-weight:500">Rahul M</td>
+            <td><div class="row-actions"><div class="ra-btn"><i class="ti ti-brand-whatsapp"></i></div><div class="ra-btn"><i class="ti ti-phone"></i></div><div class="ra-btn"><i class="ti ti-eye"></i></div></div></td>
+          </tr>
+          <tr>
+            <td><div class="chk"></div></td>
+            <td><div class="lead-name-cell"><div class="mini-avatar" style="background:#10B981">NI</div><div><div class="lead-nm">Nalini Iyer</div><div class="lead-ph">+91 90909 12345</div></div></div></td>
+            <td><span class="tag t-hot">Hot</span></td>
+            <td><span class="tag t-src">Insta</span></td>
+            <td style="color:var(--t2);font-weight:500">2BHK · Powai</td>
+            <td style="font-weight:600;font-family:var(--font-title)">₹75L–95L</td>
+            <td style="color:var(--t2);font-weight:500">Today 9:30 AM</td>
+            <td><span class="fu-dot" style="background:#10B981;color:#10B981"></span>Today 4 PM</td>
+            <td style="color:var(--t2);font-weight:500">Sunita R</td>
+            <td><div class="row-actions"><div class="ra-btn"><i class="ti ti-brand-whatsapp"></i></div><div class="ra-btn"><i class="ti ti-phone"></i></div><div class="ra-btn"><i class="ti ti-eye"></i></div></div></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="pagination">
+        <span>Showing 1–7 of 14 leads</span>
+        <div class="page-nums">
+          <div class="page-btn"><i class="ti ti-chevron-left" style="font-size:12px"></i> Prev</div>
+          <div class="pg active">1</div>
+          <div class="pg">2</div>
+          <div class="page-btn">Next <i class="ti ti-chevron-right" style="font-size:12px"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
