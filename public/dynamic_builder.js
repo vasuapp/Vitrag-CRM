@@ -1341,3 +1341,108 @@ window.renderCustomDetails = async function(module, customData) {
     container.style.display = 'none';
   }
 };
+
+window.validateCustomFields = async function(module) {
+  try {
+    const res = await fetch('/api/custom-forms');
+    const forms = await res.json();
+    const form = forms.find(f => f.module_type === module);
+
+    if (!form || !form.sections || form.sections.length === 0) {
+      return null; // No custom fields, no validation errors
+    }
+
+    const inputs = document.querySelectorAll('.custom-dynamic-field-input');
+    const inputVals = {};
+    inputs.forEach(el => {
+      const key = el.getAttribute('data-key');
+      inputVals[key] = {
+        val: el.value.trim(),
+        element: el
+      };
+    });
+
+    for (const sec of form.sections) {
+      if (!sec.fields) continue;
+      for (const f of sec.fields) {
+        const inputData = inputVals[f.key];
+        const valStr = inputData ? inputData.val : '';
+        const el = inputData ? inputData.element : null;
+
+        // Reset previous validation error highlights
+        if (el) {
+          el.style.borderColor = '';
+          el.style.boxShadow = '';
+        }
+
+        const rules = f.rules || {};
+        const isMandatory = rules.mandatory || f.required;
+
+        // 1. Mandatory Check
+        if (isMandatory && valStr === '') {
+          if (el) {
+            el.style.borderColor = 'var(--color-status-sold)';
+            el.style.boxShadow = '0 0 8px rgba(239, 68, 68, 0.25)';
+            el.focus();
+          }
+          return `Validation Error: "${f.label}" is a required field.`;
+        }
+
+        if (valStr !== '') {
+          // 2. Range validation (for number type)
+          if (f.type === 'number') {
+            const numVal = parseFloat(valStr);
+            if (isNaN(numVal)) {
+              if (el) {
+                el.style.borderColor = 'var(--color-status-sold)';
+                el.focus();
+              }
+              return `Validation Error: "${f.label}" must be a valid number.`;
+            }
+            if (rules.min !== undefined && rules.min !== null) {
+              const minVal = parseFloat(rules.min);
+              if (numVal < minVal) {
+                if (el) {
+                  el.style.borderColor = 'var(--color-status-sold)';
+                  el.focus();
+                }
+                return `Validation Error: "${f.label}" must be at least ${minVal}.`;
+              }
+            }
+            if (rules.max !== undefined && rules.max !== null) {
+              const maxVal = parseFloat(rules.max);
+              if (numVal > maxVal) {
+                if (el) {
+                  el.style.borderColor = 'var(--color-status-sold)';
+                  el.focus();
+                }
+                return `Validation Error: "${f.label}" must not exceed ${maxVal}.`;
+              }
+            }
+          }
+
+          // 3. RegEx Pattern Check
+          if (rules.regex) {
+            try {
+              const regexObj = new RegExp(rules.regex);
+              if (!regexObj.test(valStr)) {
+                if (el) {
+                  el.style.borderColor = 'var(--color-status-sold)';
+                  el.focus();
+                }
+                return `Validation Error: "${f.label}" must match validation pattern: ${rules.regex}`;
+              }
+            } catch (regexErr) {
+              console.error('Invalid regex rule pattern:', rules.regex, regexErr);
+            }
+          }
+        }
+      }
+    }
+
+    return null; // Passed all validations
+  } catch (err) {
+    console.error('Validation engine error:', err);
+    return null; // In case of network errors, bypass validation to prevent blockages
+  }
+};

@@ -4395,6 +4395,16 @@ window.showAddEnquiryModal = function() {
 
 window.submitEditLead = async function(e) {
   e.preventDefault();
+
+  // Validate customizable table rules for Leads
+  if (typeof window.validateCustomFields === 'function') {
+    const errorMsg = await window.validateCustomFields('Leads');
+    if (errorMsg) {
+      showToast(errorMsg, 'error');
+      return;
+    }
+  }
+
   const id = document.getElementById('edit-lead-id').value;
 
   const sourceVal = document.getElementById('edit-lead-source').value;
@@ -15152,6 +15162,14 @@ window.handleBlueprintFieldTypeChange = function(type) {
       optionsGroup.classList.add('hidden');
     }
   }
+  const rangeGroup = document.getElementById('blueprint-rule-range-group');
+  if (rangeGroup) {
+    if (type === 'number') {
+      rangeGroup.classList.remove('hidden');
+    } else {
+      rangeGroup.classList.add('hidden');
+    }
+  }
 };
 
 window.showAddBlueprintColumnModal = async function(moduleType) {
@@ -15185,6 +15203,12 @@ window.showAddBlueprintColumnModal = async function(moduleType) {
     document.getElementById('blueprint-field-key').disabled = false;
     document.getElementById('blueprint-field-type').value = 'text';
     document.getElementById('blueprint-field-options').value = '';
+    
+    document.getElementById('blueprint-rule-mandatory').checked = false;
+    document.getElementById('blueprint-rule-min').value = '';
+    document.getElementById('blueprint-rule-max').value = '';
+    document.getElementById('blueprint-rule-regex').value = '';
+    
     window.handleBlueprintFieldTypeChange('text');
 
     openModal('modal-blueprint-field');
@@ -15215,6 +15239,12 @@ window.showEditBlueprintColumnModal = async function(moduleType, formId, secIdx,
     document.getElementById('blueprint-field-key').disabled = true;
     document.getElementById('blueprint-field-type').value = f.type;
     document.getElementById('blueprint-field-options').value = f.options || '';
+    
+    document.getElementById('blueprint-rule-mandatory').checked = f.rules ? f.rules.mandatory : false;
+    document.getElementById('blueprint-rule-min').value = f.rules ? (f.rules.min || '') : '';
+    document.getElementById('blueprint-rule-max').value = f.rules ? (f.rules.max || '') : '';
+    document.getElementById('blueprint-rule-regex').value = f.rules ? (f.rules.regex || '') : '';
+    
     window.handleBlueprintFieldTypeChange(f.type);
 
     openModal('modal-blueprint-field');
@@ -15235,6 +15265,11 @@ window.submitBlueprintColumnForm = async function(e) {
   const key = document.getElementById('blueprint-field-key').value.trim();
   const type = document.getElementById('blueprint-field-type').value;
   const options = document.getElementById('blueprint-field-options').value;
+  
+  const mandatory = document.getElementById('blueprint-rule-mandatory').checked;
+  const min = document.getElementById('blueprint-rule-min').value;
+  const max = document.getElementById('blueprint-rule-max').value;
+  const regex = document.getElementById('blueprint-rule-regex').value.trim();
 
   try {
     const res = await fetch('/api/custom-forms');
@@ -15260,7 +15295,20 @@ window.submitBlueprintColumnForm = async function(e) {
       return;
     }
 
-    const fieldObj = { label, key, type, options };
+    const fieldObj = {
+      label,
+      key,
+      type,
+      options,
+      required: mandatory,
+      rules: {
+        mandatory,
+        min: type === 'number' && min ? parseFloat(min) : undefined,
+        max: type === 'number' && max ? parseFloat(max) : undefined,
+        regex: regex ? regex : undefined
+      }
+    };
+    
     if (isEdit) {
       const fIdx = parseInt(fieldIdxStr);
       form.sections[secIdx].fields[fIdx] = fieldObj;
