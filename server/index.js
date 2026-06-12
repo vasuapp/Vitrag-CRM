@@ -5458,6 +5458,26 @@ app.delete('/api/sops/:id', async (req, res) => {
   }
 });
 
+app.put('/api/sops/:id', async (req, res) => {
+  try {
+    const { title, steps } = req.body;
+    if (!title || !steps) {
+      return res.status(400).json({
+        error: "Missing title or steps"
+      });
+    }
+    await db.query("UPDATE sops SET title = $1, steps = $2 WHERE id = $3", [title, JSON.stringify(steps), req.params.id]);
+    res.json({
+      success: true,
+      message: "SOP successfully updated."
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+});
+
 // 14. Communication Templates CRUD APIs (Phase 9)
 app.get('/api/templates', async (req, res) => {
   try {

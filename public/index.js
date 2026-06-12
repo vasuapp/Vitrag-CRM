@@ -13768,6 +13768,7 @@ window.loadSOPs = async function() {
   try {
     const res = await fetch('/api/sops');
     const sops = await res.json();
+    state.sops = sops;
 
     if (sops.length === 0) {
       container.innerHTML = `<div style="text-align:center; padding: 20px 0; color:var(--text-muted);">No SOP workflows logged yet.</div>`;
@@ -13826,6 +13827,7 @@ window.loadSOPs = async function() {
               <span style="font-size:12.5px; font-weight:700; color:#fff;">${s.title}</span>
               <div style="display:flex; gap:10px; align-items:center;">
                 <i class="ti ti-chevron-down" style="font-size: 11px;"></i>
+                <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); editSOP(${s.id})" style="color:var(--gold); padding: 2px 4px; font-size:10px; border:none; background:transparent;">✏️ Edit</button>
                 <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); deleteSOP(${s.id})" style="color:var(--red); padding: 2px 4px; font-size:10px; border:none; background:transparent;">✕ Delete</button>
               </div>
             </div>
@@ -13879,6 +13881,51 @@ window.saveNewSOP = async function() {
     }
   } catch (err) {
     console.error(err);
+  }
+};
+
+window.editSOP = function(id) {
+  const sop = (state.sops || []).find(s => s.id === id);
+  if (!sop) return;
+  document.getElementById('edit-sop-id').value = sop.id;
+  document.getElementById('edit-sop-title').value = sop.title;
+  document.getElementById('edit-sop-steps').value = (sop.steps || []).join('\n');
+  document.getElementById('sop-edit-block').style.display = 'block';
+  document.getElementById('sop-create-block').style.display = 'none';
+  // Scroll down to the edit block
+  document.getElementById('sop-edit-block').scrollIntoView({ behavior: 'smooth' });
+};
+
+window.saveEditSOP = async function() {
+  const id = document.getElementById('edit-sop-id').value;
+  const title = document.getElementById('edit-sop-title').value.trim();
+  const stepsText = document.getElementById('edit-sop-steps').value.trim();
+
+  if (!title || !stepsText) {
+    showToast('Please fill out Title and Steps');
+    return;
+  }
+
+  const steps = stepsText.split('\n').filter(s => s.trim() !== '');
+
+  try {
+    const res = await fetch(`/api/sops/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, steps })
+    });
+
+    if (res.ok) {
+      showToast('SOP workflow updated successfully!');
+      document.getElementById('edit-sop-id').value = '';
+      document.getElementById('edit-sop-title').value = '';
+      document.getElementById('edit-sop-steps').value = '';
+      document.getElementById('sop-edit-block').style.display = 'none';
+      loadSOPs();
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Failed to update SOP workflow', 'error');
   }
 };
 

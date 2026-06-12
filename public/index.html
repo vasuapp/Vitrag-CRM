@@ -1964,6 +1964,24 @@
                 <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sop-create-block').style.display='none'">Cancel</button>
               </div>
             </div>
+
+            <!-- Edit SOP Inline Form -->
+            <div id="sop-edit-block" style="display:none; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+              <div style="font-weight: 700; font-size: 13px; color: var(--gold-l); margin-bottom: 10px;"><i class="ti ti-edit"></i> Edit Operating Procedure</div>
+              <input type="hidden" id="edit-sop-id">
+              <div class="form-group">
+                <label class="form-label" style="font-size: 11px;">SOP Title</label>
+                <input class="form-input" type="text" id="edit-sop-title" placeholder="e.g. 🏢 Commercial Leasing SOP" style="font-size:12px;">
+              </div>
+              <div class="form-group" style="margin-top: 8px;">
+                <label class="form-label" style="font-size: 11px;">SOP Steps (One per line)</label>
+                <textarea class="form-input" id="edit-sop-steps" rows="4" placeholder="Step 1: Check inventory availability&#10;Step 2: Generate draft lease agreement..." style="font-size:12px; font-family:sans-serif;"></textarea>
+              </div>
+              <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn btn-primary btn-sm" onclick="saveEditSOP()"><i class="ti ti-save"></i> Update Procedure</button>
+                <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sop-edit-block').style.display='none'">Cancel</button>
+              </div>
+            </div>
           </div>
         <!-- ================= PAGE: TEMPLATES MANAGER ================= -->
         <div class="page" id="page-templates">

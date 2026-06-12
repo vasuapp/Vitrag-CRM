@@ -2903,7 +2903,6 @@ html, body {
   /* Sidebar: hide text elements on mobile for thin ribbon */
   .sidebar .logo-text-details,
   .sidebar .sb-user-details,
-  .sidebar .nav-section,
   .sidebar .nav-item span:not(.icon):not(.nb),
   .sidebar .sidebar-footer,
   .sidebar details details,
@@ -2938,7 +2937,8 @@ html, body {
     padding: 10px 0 !important;
     width: 100% !important;
   }
-  .sidebar .nav-item {
+  .sidebar .nav-item,
+  .sidebar .nav-section {
     width: 44px !important;
     height: 44px !important;
     margin: 6px auto !important;
@@ -2948,8 +2948,10 @@ html, body {
     justify-content: center !important;
     gap: 0 !important;
     border-radius: var(--radius-md) !important;
+    cursor: pointer;
   }
-  .sidebar .nav-item .icon {
+  .sidebar .nav-item .icon,
+  .sidebar .nav-section .icon {
     width: 100% !important;
     height: 100% !important;
     margin: 0 !important;
