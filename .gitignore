@@ -4,3 +4,9 @@ node_modules/
 *.sqlite
 *.sqlite3
 simulated_google_sheet.csv
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
