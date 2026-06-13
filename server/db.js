@@ -552,116 +552,8 @@ CREATE TABLE IF NOT EXISTS communication_templates (
       const sopCountResult = await pool.query("SELECT COUNT(*) FROM sops");
       const sopCount = sopCountResult.rows[0].count;
       if (parseInt(sopCount) === 0) {
-        const insertSop = async (title, steps) => {
-          await pool.query("INSERT INTO sops (title, steps) VALUES ($1, $2)", [title, JSON.stringify(steps)]);
-        };
-
-        await insertSop('SOP 1: New Lead Intake & CRM Registry', [
-          'Verify phone/email in CRM search to check for existing prospect files and avoid duplicate registrations.',
-          'Qualify the lead budget, configuration requirement (BHK/Zoning), location preference, and purchase timeline.',
-          'Input lead details in CRM under "Register Enquiry". Tag status as Hot, Warm, or Cold based on response latency.',
-          'Assign appropriate Agent ID for auto-assignment or manual delegation, and log base lead score (15 points).'
-        ]);
-
-        await insertSop('SOP 2: Cold Call Outreach & Pitching', [
-          'Filter out numbers on the national DND registry before making calling list dials.',
-          'Introduce Vitrag Real Estate Advisory using the pre-saved "New Enquiry Opening" script.',
-          'Confirm prospect location preferences and purchase authority (self vs corporate/investor).',
-          'Offer to send curated listings catalog via WhatsApp and log notes into the interaction history.'
-        ]);
-
-        await insertSop('SOP 3: Client Requirement Profiling', [
-          'Identify key purchase triggers: family relocation, investment yield, rental lease expiry, or secondary booking.',
-          'Discuss financing details: pre-approved home loan, self-funded, or subvention plan suitability.',
-          'Document specific amenities desired (e.g. club house, high floor, Vaastu compliance, park facing).',
-          'Update lead scorecard details (Budget, Timeline, Funding, Responsiveness, Clarity) in the CRM.'
-        ]);
-
-        await insertSop('SOP 4: Inventory Matching & Shortlisting', [
-          'Cross-match lead location/budget preference with secondary Resale, Rental, Commercial, or Land inventory.',
-          'Check primary Builder Projects tab for active developer configurations offering cash discounts.',
-          'Select the top 3 verified matches, avoiding direct seller POC phone numbers to prevent co-broke disintermediation.',
-          'Verify that RERA details and mandatory society maintenance fees are correctly detailed in the list.'
-        ]);
-
-        await insertSop('SOP 5: Coordinating Private Site Tours', [
-          'Obtain client calendar availability and verify entries for gated communities.',
-          'Contact builder POC or secondary property owner to schedule visual site tours (allow 45-minute slots).',
-          'Book company chauffeur vehicle and dispatch details via WhatsApp Site Visit Confirmation template.',
-          'Print premium property brochures with golden branding and redact direct owner contact details.'
-        ]);
-
-        await insertSop('SOP 6: Executing a Professional Site Visit', [
-          'Ensure agent dress code is business professional and arrive 15 minutes before the scheduled tour time.',
-          'Escort client through sample flats, orienting them with layout, SBA vs carpet area, and road width views.',
-          'Highlight builder credentials, past deliveries, construction materials (Mivan) and metro connectivity.',
-          'Capture client immediate feedback on society parameters and log them in the CRM interaction log.'
-        ]);
-
-        await insertSop('SOP 7: Handling Objections & Negotiating', [
-          'Address pricing objections by presenting comparative market analysis (CMA) reports from similar societies.',
-          'If budget is rigid, highlight alternative properties or request flexible developer payment structures.',
-          'Facilitate direct face-to-face negotiations between buyer and seller in the office for secondary resale deals.',
-          'Obtain written consent/objection notes and update the closure timeline to "Negotiation".'
-        ]);
-
-        await insertSop('SOP 8: Executing Under-Agreement MoU Procedures', [
-          'Request buyer token check (minimum 10% of deal value) to demonstrate transaction commitment.',
-          'Draft standard Memorandum of Understanding (MoU) or Agreement to Sell outlining closing timelines.',
-          'Collect KYC documentation from both parties (PAN Card, Aadhaar Card, Passport, Company GSTIN).',
-          'Upload documents to the CRM Document Vault referencing the specific lead ID and property ID.'
-        ]);
-
-        await insertSop('SOP 9: Title Verification & Legal Clearance', [
-          'Verify original property title deeds, tax paid receipts, encumbrance certificates, and RERA approvals.',
-          'Submit copies of deeds to legal counsel for vetting and obtaining title clearance reports.',
-          'Assist buyer bank representatives in physical property valuation checks for mortgage approval.',
-          'Verify that society NOC (No Objection Certificate) is processed by the management committee.'
-        ]);
-
-        await insertSop('SOP 10: Registration & Biometric Title Transfer', [
-          'Coordinate stamp duty payment calculations based on guidance values and pay online.',
-          'Schedule appointment slot at Sub-Registrar Office (SRO) for registration.',
-          'Ensure presence of buyer, seller, agent, and two witnesses with valid identification.',
-          'Facilitate execution of final Sale Deed, biometrics verification, and registry scan.'
-        ]);
-
-        await insertSop('SOP 11: Deal Closure & Commission Ledger', [
-          'Mark property status in database as SOLD or RENTED OUT.',
-          'Mark lead status as "Converted" and update pipeline stage to "Won".',
-          'Post the transaction to Commissions finance ledger, calculating company cut and co-broker splits.',
-          'Generate professional GST invoice and dispatch copy to the client email.'
-        ]);
-
-        await insertSop('SOP 12: Co-Brokerage Partnership & Payouts', [
-          'Identify the linked associate co-broker and review the pre-agreed co-brokerage share percentage.',
-          'Verify that buyer final payments have cleared before processing co-broker payouts.',
-          'Execute bank transfer for co-brokerage fee split and update the ledger payment status to Paid.',
-          'Request co-broker feedback and invite them to joint exclusive listing pools.'
-        ]);
-
-        await insertSop('SOP 13: Customer Onboarding & Welcome Kit', [
-          'Deliver hand-over welcome folder containing original sale deeds, NOC copies, key chains, and gift box.',
-          'Introduce client to community managers and facilitate electricity meter name transfer (BESCOM).',
-          'Provide a complimentary introduction to verified home interior design partners.',
-          'Trigger post-sale review email asking for Google reviews and testimonial logs.'
-        ]);
-
-        await insertSop('SOP 14: Handling Dispute & Fallouts', [
-          'If a transaction falls out, document the exact reason (e.g. loan rejection, title defect, buyer default).',
-          'Audit MoU clauses to determine forfeiture of token deposit or refund liability.',
-          'Archive dispute details and adjust commission projections in the database ledger.',
-          'Change property status back to AVAILABLE and notify pipeline agents.'
-        ]);
-
-        await insertSop('SOP 15: Daily Realtor Discipline & Habits', [
-          'Clock-in on the CRM attendance logs dashboard by 9:30 AM daily.',
-          'Verify daily checklists and schedule follow-ups for overdue alarm contacts.',
-          'Review newly imported raw leads from portals and qualify them within 2 hours.',
-          'Log all interactions, site visits, and habits data in the grid before clocking out.'
-        ]);
-
-        console.log("Seeded 15 standard SOP real estate procedures successfully.");
+        await seedDefaultSops(pool);
+        console.log("Seeded 15 detailed standard SOP real estate procedures successfully.");
       }
       console.log("PostgreSQL database successfully initialized and migrated.");
       dbStatus.initialized = true;
@@ -678,6 +570,135 @@ CREATE TABLE IF NOT EXISTS communication_templates (
     }
   }
 })();
+
+const seedDefaultSops = async (pool) => {
+  // Clear any existing default SOPs or clear the table
+  await pool.query("DELETE FROM sops");
+  
+  const insertSop = async (title, steps) => {
+    await pool.query("INSERT INTO sops (title, steps) VALUES ($1, $2)", [title, JSON.stringify(steps)]);
+  };
+
+  await insertSop('SOP 01: Lead Capture & Source Tagging', [
+    'Query the CRM database via search by phone number or email to ensure the lead is not an existing prospect assigned to another agent, avoiding duplicate file registration.',
+    'Extract standard portal parameters (Name, Contact, Query, Budget) from incoming API payloads (99acres, Magicbricks, Facebook Lead Ads, or Website forms).',
+    'Set lead source tag dynamically: portal-inbound, direct-call, organic-web, developer-referral, or broker-co-op to enable accurate marketing ROI reporting.',
+    'Systematically assign the lead to the roster-active agent on duty based on the dynamic round-robin routing protocol.',
+    'Log a baseline Lead Score of 15 points in the system registry, indicating auto-capture completion, and send an instant WhatsApp/SMS notification to the assigned advisor.'
+  ]);
+
+  await insertSop('SOP 02: Prospecting Cadence (Digital + Referral)', [
+    'Execute the initial outbound call within a strict 15-minute SLA window for all digital inbound leads during business hours (9 AM - 7 PM).',
+    'If the lead does not answer, trigger "Touchpoint 1" via WhatsApp, dispatching a co-branded introduction card, company credentials presentation, and a calendar slot link.',
+    'Implement the 5-touchpoint dialing rhythm: Day 1 (Call + WhatsApp), Day 2 (Afternoon Call), Day 4 (Morning Follow-up), Day 7 (Value-Add Listing PDF), Day 10 (Final Re-engagement Check).',
+    'For referral leads, contact the referring party first to gather background insights, and initiate contact with the prospect using a warm introduction mentioning the referrer.',
+    'If no response is received by Day 12, mark the lead status as "Idle/Cold" and move it to the re-engagement bucket for quarterly email newsletter broadcasts.'
+  ]);
+
+  await insertSop('SOP 03: Lead Qualification Script (Residential)', [
+    'Open the call with the standard greeting: "Good morning/afternoon, this is [Agent Name] from Vitrag Real Estate Advisory. I\'m calling regarding your interest in..."',
+    'Confirm critical configuration criteria: BHK type (1/2/3/4 BHK), structural layout preference (penthouse, villa, high-rise apartment), and carpet area vs super built-up area (SBA) expectation.',
+    'Determine location scope: identify preferred micro-markets, proximity requirements to work/schools, and threshold tolerance for daily transit.',
+    'Qualify financial parameters: ask if they have a pre-approved home loan, their funding split (self-funded vs loan ratio), and their absolute maximum budget cap including stamp duty.',
+    'Gauge timeline urgency: categorize readiness to close (Immediate 0-30 days, Active 30-90 days, Nurture 90+ days), and log all qualified parameters into the Lead Profile card.'
+  ]);
+
+  await insertSop('SOP 04: Corporate Mandate Intake (Commercial)', [
+    'Receive corporate enquiry and verify the legal entity registration name, industry vertical, and corporate GSTIN credentials.',
+    'Establish the specific leasing mandate requirements: warm shell vs fully furnished space, seat count requirements, server room parameters, and dedicated parking allocations.',
+    'Document zoning laws: ensure the target corporate requirement conforms to local commercial zoning rules, IT/ITES compliance, and fire safety (OC) mandates.',
+    'Discuss commercial lease parameters: average lease tenure (3/5/9 years), lock-in period expectations, security deposit limits (typically 6-10 months), and annual escalation escalators.',
+    'Issue a formal Corporate Mandate Agreement to the client representative, get it signed by authorized signatories, and log it in the Commercial Mandates Vault.'
+  ]);
+
+  await insertSop('SOP 05: Residential Inventory Matching Protocol', [
+    'Query the CRM inventory database matching qualified lead parameters (BHK, price range, micro-market locality).',
+    'Check secondary resale listings and run seller verification: verify original allotment letters, title chain continuity, and confirm active selling intent.',
+    'Query the primary Developer Projects ledger to identify configurations offering active buyer incentives or subvention plans.',
+    'Select the top 3 best-fit options; redact direct seller/developer POC phone numbers from the client-facing presentation to prevent co-broke disintermediation.',
+    'Compile matched listings into a co-branded, high-quality digital catalog PDF and send it to the client with a customized invitation for physical preview tours.'
+  ]);
+
+  await insertSop('SOP 06: Commercial Inventory Curation (3-Option Rule)', [
+    'Analyze the corporate commercial requirement, filtering properties strictly by IT/ITES or commercial zoning clearances.',
+    'Curate exactly 3 highly optimized options: Option A (Direct fit/budget match), Option B (Slightly larger space/higher yield option), Option C (Budget/value alternative option).',
+    'Run comprehensive commercial metrics: calculate efficiency ratios (carpet-to-SBA ratio), monthly CAM charges (Common Area Maintenance), and power back-up capacities.',
+    'Verify building parameters: check elevator capacity, occupancy certifications (OC), fire department approvals, and parking slot ratios per 1000 sqft.',
+    'Present the curated 3-Option comparison grid to the corporate acquisition committee, setting clear pros and cons for each property location.'
+  ]);
+
+  await insertSop('SOP 07: Site Visit Protocol & Follow-Up Playbook', [
+    'Coordinate scheduling: confirm the visit date/time with the client, developer representative, or individual seller, allowing a 45-minute tour window per property.',
+    'Dispatch the chauffeur-driven corporate vehicle to pick up the client, sending the driver details and car number via the WhatsApp Site Visit Confirmation template.',
+    'Conduct the walkthrough professionally: highlight community layout, Mivan construction durability, RERA approvals, local social infrastructure, and possession timelines.',
+    'Execute "Post-Visit Debrief": capture client immediate feedback (likes/dislikes, layout preferences) in the car immediately following the tour.',
+    'Run the Follow-Up sequence: send a site tour summary PDF within 4 hours, make a feedback call on Day 2, and pitch property comparisons on Day 5 to sustain client momentum.'
+  ]);
+
+  await insertSop('SOP 08: Negotiation Playbook', [
+    'Collect written, formal offers from the buyer stating their proposed price, payment schedule, and target closing date.',
+    'Conduct seller vetting: discuss the buyer\'s offer details, gauge seller flexibility, and highlight the buyer\'s financial readiness (e.g. self-funded or pre-approved loan).',
+    'Schedule a face-to-face negotiation meeting at the Vitrag CRM conference room to bridge price differences in real-time, acting as a neutral advisor.',
+    'Break down price structures: isolate the base unit price from secondary charges (parking, amenities, club membership, corpus fund) to find negotiation leverage.',
+    'Lock in the final negotiated terms, write down the consensus points, and obtain signature clearances from both parties on a formal Negotiation Sheet.'
+  ]);
+
+  await insertSop('SOP 09: LOI / Token / Offer Letter Drafting', [
+    'Draft the formal Letter of Intent (LOI) or Offer Letter detailing the final price, transaction timeline, and payment schedules.',
+    'Incorporate critical protection clauses: token deposit refund conditions in case of legal title defects, default consequences, and registration deadlines.',
+    'Facilitate the escrow token payment (typically 2-5% of deal value), ensuring the cheque or online transfer is documented with receipts.',
+    'Send the draft LOI to the buyer and seller legal counsels for final review, alignment, and signature execution.',
+    'Log the signed LOI in the CRM Document Vault, change the listing status to "Under Agreement (UA)", and trigger title vetting.'
+  ]);
+
+  await insertSop('SOP 10: Agreement Drafting & Legal Checklist', [
+    'Collect all original property documents: allotment letters, possession certificates, sale agreements, tax receipts, and building plans.',
+    'Appoint a certified legal counsel to run a search at the Sub-Registrar Office (SRO) for the last 13-30 years to verify title history and clear ownership.',
+    'Obtain a certified Encumbrance Certificate (EC) confirming no active bank mortgages or legal disputes exist on the property.',
+    'Draft the formal Sale Agreement or Lease Agreement, ensuring all legal clauses, penalty charges, and payment dates are detailed.',
+    'Deliver the final draft agreement to both parties, schedule the signing date, and archive the legal clearance certificate in the CRM vault.'
+  ]);
+
+  await insertSop('SOP 11: RERA & Compliance Documentation', [
+    'Search the state RERA portal to verify the developer project registration number, active status, and litigation history.',
+    'Check the builder\'s quarterly compliance reports on construction progress, fund allocation, and completion timelines.',
+    'Obtain and verify municipal approvals: building plan approvals, environmental clearances, and the final Occupancy Certificate (OC).',
+    'Collect and verify the client\'s tax compliance details (TDS certificate showing 1% tax deduction on properties above ₹50 Lakhs).',
+    'Log all compliance certificates, RERA printouts, and tax documents in the CRM Audit Panel to ensure regulatory readiness.'
+  ]);
+
+  await insertSop('SOP 12: Deal Closure & Brokerage Invoice Protocol', [
+    'Confirm the final execution of the Sale Deed or Lease Agreement at the Sub-Registrar Office, ensuring registration is complete.',
+    'Mark the property status as "SOLD/RENTED" and update the lead profile status to "Converted (Won)" in the CRM.',
+    'Calculate the advisory brokerage fee: typically 1-2% for sale transactions or 1-month rent for leasing mandates, adding standard GST (18%).',
+    'Generate a professional, co-branded invoice containing banking details, PAN, GSTIN, and corporate remittance instructions.',
+    'Deliver the invoice via email to the client, track the payment status in the Commissions Ledger, and log co-broker splits.'
+  ]);
+
+  await insertSop('SOP 13: Client Retention & Referral Engine', [
+    'Deliver a physical "Welcome Kit" to the client within 3 days of registration, containing deed copies, society contacts, keychains, and a gift box.',
+    'Assist with utility transfers: facilitate electricity connection name transfer (e.g. BESCOM), water connection, and local association registry setup.',
+    'Share verified partners for home renovation, interiors, and moving services, acting as a resource for their move.',
+    'Send automated anniversary greetings (home purchase date) and holiday wishes via WhatsApp/Email to maintain top-of-mind recall.',
+    'Trigger the Referral Engine: contact the client at Day 90 post-move to ask for referrals and request a Google Review testimonial.'
+  ]);
+
+  await insertSop('SOP 14: Daily & Weekly Reporting Protocol', [
+    'Ensure all active sales agents execute a "Daily Clock-In" by 9:30 AM on the CRM attendance portal to signal shift start.',
+    'Update daily contact logs: record all outbound calls, follow-up callbacks, site visits, and negotiation stages by 6:30 PM.',
+    'Submit the Daily Sales Report (DSR) summarizing new enquiries qualified, meetings scheduled, and revenue booked.',
+    'Compile the Weekly Pipeline Report every Friday, detailing active deal slippage, hot prospect warm-up ratios, and team conversions.',
+    'Admin reviews DSR logs weekly, maps conversions against KPI metrics, and exports monthly performance charts to CSV.'
+  ]);
+
+  await insertSop('SOP 15: Inventory & Pipeline Hygiene', [
+    'Review active resale and rental inventory every Friday, contacting sellers to confirm property availability and verify pricing.',
+    'Run pipeline cleanup: move stale leads (no contact in 30 days) to the "Nurture" bucket, freeing up hot routing queues.',
+    'Audit property listings: update details, replace placeholder images with high-resolution photos, and check geo-coordinates.',
+    'Reconcile financial records: check for pending brokerage payments, follow up on overdue client invoices, and register splits.',
+    'Back up the PostgreSQL database weekly to secure storage, archiving old transactional data to maintain system speed.'
+  ]);
+};
 
 const db = {
   query: async (text, params) => {
@@ -701,7 +722,8 @@ const db = {
   },
   pool: pool,
   initPromise: initPromise,
-  dbStatus: dbStatus
+  dbStatus: dbStatus,
+  resetSopsToDefaults: () => seedDefaultSops(pool)
 };
 
 module.exports = db;

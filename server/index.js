@@ -5478,6 +5478,20 @@ app.put('/api/sops/:id', async (req, res) => {
   }
 });
 
+app.post('/api/sops/reset', async (req, res) => {
+  try {
+    await db.resetSopsToDefaults();
+    res.json({
+      success: true,
+      message: "SOPs successfully reset to default 15-SOP stack."
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: err.message
+    });
+  }
+});
+
 // 14. Communication Templates CRUD APIs (Phase 9)
 app.get('/api/templates', async (req, res) => {
   try {

@@ -12188,39 +12188,7 @@ window.filterSmartList = async function(filterId) {
   }
 };
 
-window.saveNewSOP = function() {
-  const title = document.getElementById('new-sop-title').value;
-  const stepsText = document.getElementById('new-sop-steps').value;
-  
-  if(!title || !stepsText) {
-    showToast('Please fill out the SOP Title and Steps', 'error');
-    return;
-  }
-  
-  const steps = stepsText.split('\n').filter(s => s.trim() !== '');
-  const sopId = 'sop' + Date.now();
-  
-  let html = `
-    <div class="accord-hd" onclick="toggleAccordion('${sopId}')" style="margin-top:6px;">
-      <span>${title}</span><i class="ti ti-chevron-down"></i>
-    </div>
-    <div class="accord-body" id="${sopId}">
-  `;
-  
-  steps.forEach((step, idx) => {
-    html += `<div class="step-row"><div class="step-num" style="background:var(--blue-light)">${idx+1}</div><div>${step}</div></div>`;
-  });
-  
-  html += `</div>`;
-  
-  const createBlock = document.getElementById('sop-create-block');
-  createBlock.insertAdjacentHTML('beforebegin', html);
-  
-  document.getElementById('new-sop-title').value = '';
-  document.getElementById('new-sop-steps').value = '';
-  createBlock.style.display = 'none';
-  showToast('New SOP Added successfully!');
-};
+
 
 window.generateVisualInvoice = function() {
   const invNumber = document.getElementById('inv-number').value || `INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000)}`;
@@ -13876,7 +13844,7 @@ window.saveNewSOP = async function() {
       showToast('SOP workflow persisted successfully!');
       document.getElementById('new-sop-title').value = '';
       document.getElementById('new-sop-steps').value = '';
-      document.getElementById('sop-create-block').style.display = 'none';
+      closeModal('modal-create-sop');
       loadSOPs();
     }
   } catch (err) {
@@ -13890,10 +13858,7 @@ window.editSOP = function(id) {
   document.getElementById('edit-sop-id').value = sop.id;
   document.getElementById('edit-sop-title').value = sop.title;
   document.getElementById('edit-sop-steps').value = (sop.steps || []).join('\n');
-  document.getElementById('sop-edit-block').style.display = 'block';
-  document.getElementById('sop-create-block').style.display = 'none';
-  // Scroll down to the edit block
-  document.getElementById('sop-edit-block').scrollIntoView({ behavior: 'smooth' });
+  openModal('modal-edit-sop');
 };
 
 window.saveEditSOP = async function() {
@@ -13920,7 +13885,7 @@ window.saveEditSOP = async function() {
       document.getElementById('edit-sop-id').value = '';
       document.getElementById('edit-sop-title').value = '';
       document.getElementById('edit-sop-steps').value = '';
-      document.getElementById('sop-edit-block').style.display = 'none';
+      closeModal('modal-edit-sop');
       loadSOPs();
     }
   } catch (err) {
@@ -13939,6 +13904,24 @@ window.deleteSOP = async function(id) {
     }
   } catch (err) {
     console.error(err);
+  }
+};
+
+window.resetSOPsToDefaults = async function() {
+  if (!confirm('Are you sure you want to reset all SOPs to the default 15-SOP stack? This will overwrite existing procedures.')) return;
+  try {
+    const res = await fetch('/api/sops/reset', {
+      method: 'POST'
+    });
+    if (res.ok) {
+      showToast('SOPs reset to default stack successfully!');
+      loadSOPs();
+    } else {
+      showToast('Failed to reset SOPs', 'error');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Error resetting SOPs', 'error');
   }
 };
 

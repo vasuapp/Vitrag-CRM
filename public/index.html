@@ -1937,52 +1937,20 @@
         <!-- ================= PAGE 13: SOPs ================= -->
         <div class="page" id="page-sops">
           <div class="card">
-            <div class="chr">
+            <div class="chr" style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
               <div class="card-title"><i class="ti ti-checkup-list"></i> Real Estate Standard Operating Procedures (SOPs)</div>
-              <button class="btn btn-primary btn-sm" onclick="document.getElementById('sop-create-block').style.display='block'"><i class="ti ti-plus"></i> Create New SOP</button>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn-ghost btn-sm" onclick="resetSOPsToDefaults()"><i class="ti ti-refresh"></i> Reset Defaults</button>
+                <button class="btn btn-primary btn-sm" onclick="openModal('modal-create-sop')"><i class="ti ti-plus"></i> Create New SOP</button>
+              </div>
             </div>
             <div class="card-sub">Rigorous guides for document archival, partnerships, and operations</div>
             
             <div id="dynamic-sops-list-container" style="display:flex; flex-direction:column; gap:6px;">
               <!-- Dynamic SOPs loaded here -->
             </div>
-            </div>
-
-            <!-- Create SOP Inline Form -->
-            <div id="sop-create-block" style="display:none; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
-              <div style="font-weight: 700; font-size: 13px; color: var(--gold-l); margin-bottom: 10px;"><i class="ti ti-playlist-add"></i> Add New Operating Procedure</div>
-              <div class="form-group">
-                <label class="form-label" style="font-size: 11px;">SOP Title</label>
-                <input class="form-input" type="text" id="new-sop-title" placeholder="e.g. 🏢 Commercial Leasing SOP" style="font-size:12px;">
-              </div>
-              <div class="form-group" style="margin-top: 8px;">
-                <label class="form-label" style="font-size: 11px;">SOP Steps (One per line)</label>
-                <textarea class="form-input" id="new-sop-steps" rows="4" placeholder="Step 1: Check inventory availability&#10;Step 2: Generate draft lease agreement..." style="font-size:12px; font-family:sans-serif;"></textarea>
-              </div>
-              <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button class="btn btn-primary btn-sm" onclick="saveNewSOP()"><i class="ti ti-save"></i> Save Procedure</button>
-                <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sop-create-block').style.display='none'">Cancel</button>
-              </div>
-            </div>
-
-            <!-- Edit SOP Inline Form -->
-            <div id="sop-edit-block" style="display:none; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
-              <div style="font-weight: 700; font-size: 13px; color: var(--gold-l); margin-bottom: 10px;"><i class="ti ti-edit"></i> Edit Operating Procedure</div>
-              <input type="hidden" id="edit-sop-id">
-              <div class="form-group">
-                <label class="form-label" style="font-size: 11px;">SOP Title</label>
-                <input class="form-input" type="text" id="edit-sop-title" placeholder="e.g. 🏢 Commercial Leasing SOP" style="font-size:12px;">
-              </div>
-              <div class="form-group" style="margin-top: 8px;">
-                <label class="form-label" style="font-size: 11px;">SOP Steps (One per line)</label>
-                <textarea class="form-input" id="edit-sop-steps" rows="4" placeholder="Step 1: Check inventory availability&#10;Step 2: Generate draft lease agreement..." style="font-size:12px; font-family:sans-serif;"></textarea>
-              </div>
-              <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button class="btn btn-primary btn-sm" onclick="saveEditSOP()"><i class="ti ti-save"></i> Update Procedure</button>
-                <button class="btn btn-ghost btn-sm" onclick="document.getElementById('sop-edit-block').style.display='none'">Cancel</button>
-              </div>
-            </div>
           </div>
+        </div>
         <!-- ================= PAGE: TEMPLATES MANAGER ================= -->
         <div class="page" id="page-templates">
           <div class="card">
@@ -6791,6 +6759,55 @@
           <button class="btn btn-primary" type="submit">Save Column</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Create SOP Modal -->
+  <div class="mbg hidden" id="modal-create-sop">
+    <div class="modal" style="max-width: 500px;">
+      <div class="mhd">
+        <div class="mtitle"><i class="ti ti-playlist-add"></i> Create New SOP</div>
+        <button class="mclose" onclick="closeModal('modal-create-sop')">&times;</button>
+      </div>
+      <div class="mbdy">
+        <div class="form-group">
+          <label class="form-label">SOP Title</label>
+          <input class="form-input" type="text" id="new-sop-title" placeholder="e.g. 🏢 Commercial Leasing SOP">
+        </div>
+        <div class="form-group" style="margin-top: 12px;">
+          <label class="form-label">SOP Steps (One step per line)</label>
+          <textarea class="form-input" id="new-sop-steps" rows="6" placeholder="Step 1: Check inventory availability&#10;Step 2: Generate draft lease agreement..." style="font-family: inherit; font-size: 13px;"></textarea>
+        </div>
+      </div>
+      <div class="mft">
+        <button class="btn btn-ghost" onclick="closeModal('modal-create-sop')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveNewSOP()"><i class="ti ti-save"></i> Save Procedure</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit SOP Modal -->
+  <div class="mbg hidden" id="modal-edit-sop">
+    <div class="modal" style="max-width: 500px;">
+      <div class="mhd">
+        <div class="mtitle"><i class="ti ti-edit"></i> Edit SOP</div>
+        <button class="mclose" onclick="closeModal('modal-edit-sop')">&times;</button>
+      </div>
+      <div class="mbdy">
+        <input type="hidden" id="edit-sop-id">
+        <div class="form-group">
+          <label class="form-label">SOP Title</label>
+          <input class="form-input" type="text" id="edit-sop-title" placeholder="e.g. 🏢 Commercial Leasing SOP">
+        </div>
+        <div class="form-group" style="margin-top: 12px;">
+          <label class="form-label">SOP Steps (One step per line)</label>
+          <textarea class="form-input" id="edit-sop-steps" rows="6" placeholder="Step 1: Check inventory availability&#10;Step 2: Generate draft lease agreement..." style="font-family: inherit; font-size: 13px;"></textarea>
+        </div>
+      </div>
+      <div class="mft">
+        <button class="btn btn-ghost" onclick="closeModal('modal-edit-sop')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveEditSOP()"><i class="ti ti-save"></i> Update Procedure</button>
+      </div>
     </div>
   </div>
 
