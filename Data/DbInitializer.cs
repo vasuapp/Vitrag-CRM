@@ -10,9 +10,13 @@ namespace VitragCRM.Backend.Data
     {
         public static void Initialize()
         {
+            // Configure Dapper to map snake_case database columns to PascalCase model properties globally
+            DefaultTypeMap.MatchNamesWithUnderscores = true;
+
             int maxRetries = 10;
             int retryDelayMs = 3000;
             string connString = DbConnectionFactory.GetConnectionString();
+
 
             for (int attempt = 1; attempt <= maxRetries; attempt++)
             {
