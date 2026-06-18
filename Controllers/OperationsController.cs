@@ -133,8 +133,66 @@ namespace VitragCRM.Backend.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("api/team/login")]
+        public IHttpActionResult TeamLogin([FromBody] Newtonsoft.Json.Linq.JObject body)
+        {
+            if (body == null) return BadRequest("Missing request body.");
+
+            var agentIdToken = body["agent_id"] ?? body["agentId"];
+            var pinToken = body["pin"];
+
+            if (agentIdToken == null || pinToken == null)
+            {
+                return BadRequest("Agent selection and PIN are required.");
+            }
+
+            int agentId = (int)agentIdToken;
+            string pin = pinToken.ToString();
+
+            try
+            {
+                using (var conn = new NpgsqlConnection(GetConnString()))
+                {
+                    conn.Open();
+                    var agent = conn.QueryFirstOrDefault<Agent>(
+                        "SELECT * FROM agents WHERE id = @agentId", 
+                        new { agentId }
+                    );
+
+                    if (agent == null)
+                    {
+                        return Content(System.Net.HttpStatusCode.NotFound, new { error = "Profile not found." });
+                    }
+
+                    if (agent.LoginPin != pin)
+                    {
+                        return Content(System.Net.HttpStatusCode.Unauthorized, new { error = "Invalid 4-digit PIN code." });
+                    }
+
+                    return Ok(new
+                    {
+                        success = true,
+                        agent = new
+                        {
+                            id = agent.Id,
+                            name = agent.Name,
+                            email = agent.Email,
+                            role = agent.Role,
+                            allowed_pages = agent.AllowedPages
+                        }
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                return InternalServerError(ex);
+            }
+        }
+
         [HttpGet]
         [Route("api/attendance/logs")]
+
         public IHttpActionResult GetAttendanceLogs()
         {
             using (var conn = new NpgsqlConnection(GetConnString()))
