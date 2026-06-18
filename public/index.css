@@ -314,23 +314,23 @@ html, body {
 
 /* Collapsed Transitions */
 @media (hover: hover) {
-  .sidebar:not(.locked-expanded):not(:hover) .logo-text-details,
+  .sidebar:not(.locked-expanded):not(:hover):not(.mobile-open) .logo-text-details,
   .sidebar.locked-collapsed .logo-text-details,
-  .sidebar:not(.locked-expanded):not(:hover) .sb-user-details,
+  .sidebar:not(.locked-expanded):not(:hover):not(.mobile-open) .sb-user-details,
   .sidebar.locked-collapsed .sb-user-details,
-  .sidebar:not(.locked-expanded):not(:hover) .nav-item span:not(.icon):not(.nb),
+  .sidebar:not(.locked-expanded):not(:hover):not(.mobile-open) .nav-item span:not(.icon):not(.nb),
   .sidebar.locked-collapsed .nav-item span:not(.icon):not(.nb),
-  .sidebar:not(.locked-expanded):not(:hover) .sidebar-footer,
+  .sidebar:not(.locked-expanded):not(:hover):not(.mobile-open) .sidebar-footer,
   .sidebar.locked-collapsed .sidebar-footer,
-  .sidebar:not(.locked-expanded):not(:hover) details details,
+  .sidebar:not(.locked-expanded):not(:hover):not(.mobile-open) details details,
   .sidebar.locked-collapsed details details,
-  .sidebar:not(.locked-expanded):not(:hover) details > summary span:not(.icon),
+  .sidebar:not(.locked-expanded):not(:hover):not(.mobile-open) details > summary span:not(.icon),
   .sidebar.locked-collapsed details > summary span:not(.icon),
-  .sidebar:not(.locked-expanded):not(:hover) details > summary i.ti-chevron-down,
+  .sidebar:not(.locked-expanded):not(:hover):not(.mobile-open) details > summary i.ti-chevron-down,
   .sidebar.locked-collapsed details > summary i.ti-chevron-down,
-  .sidebar:not(.locked-expanded):not(:hover) .nav-sub-item,
+  .sidebar:not(.locked-expanded):not(:hover):not(.mobile-open) .nav-sub-item,
   .sidebar.locked-collapsed .nav-sub-item,
-  .sidebar:not(.locked-expanded):not(:hover) .sidebar button,
+  .sidebar:not(.locked-expanded):not(:hover):not(.mobile-open) .sidebar button,
   .sidebar.locked-collapsed .sidebar button {
     opacity: 0 !important;
     visibility: hidden !important;
@@ -338,7 +338,7 @@ html, body {
     pointer-events: none;
   }
   
-  .sidebar:not(.locked-expanded):not(:hover) .nav-section,
+  .sidebar:not(.locked-expanded):not(:hover):not(.mobile-open) .nav-section,
   .sidebar.locked-collapsed .nav-section {
     width: 48px !important;
     height: 48px !important;
@@ -350,16 +350,16 @@ html, body {
     gap: 0 !important;
     border-radius: var(--radius-md) !important;
   }
-  .sidebar:not(.locked-expanded):not(:hover) .nav-section span:not(.icon),
+  .sidebar:not(.locked-expanded):not(:hover):not(.mobile-open) .nav-section span:not(.icon),
   .sidebar.locked-collapsed .nav-section span:not(.icon),
-  .sidebar:not(.locked-expanded):not(:hover) .nav-section i.ti-chevron-down,
+  .sidebar:not(.locked-expanded):not(:hover):not(.mobile-open) .nav-section i.ti-chevron-down,
   .sidebar.locked-collapsed .nav-section i.ti-chevron-down {
     opacity: 0 !important;
     visibility: hidden !important;
     display: none !important;
     pointer-events: none;
   }
-  .sidebar:not(.locked-expanded):not(:hover) .nav-section .icon,
+  .sidebar:not(.locked-expanded):not(:hover):not(.mobile-open) .nav-section .icon,
   .sidebar.locked-collapsed .nav-section .icon {
     width: 100% !important;
     height: 100% !important;
@@ -370,26 +370,26 @@ html, body {
     font-size: 20px !important;
     color: rgba(255, 255, 255, 0.7) !important;
   }
-  .sidebar:not(.locked-expanded):not(:hover) .logo,
+  .sidebar:not(.locked-expanded):not(:hover):not(.mobile-open) .logo,
   .sidebar.locked-collapsed .logo {
     padding: 14px 15px;
     justify-content: center;
   }
-  .sidebar:not(.locked-expanded):not(:hover) .sb-user,
+  .sidebar:not(.locked-expanded):not(:hover):not(.mobile-open) .sb-user,
   .sidebar.locked-collapsed .sb-user {
     padding: 12px 17px;
     justify-content: center;
   }
-  .sidebar:not(.locked-expanded):not(:hover) .nav,
+  .sidebar:not(.locked-expanded):not(:hover):not(.mobile-open) .nav,
   .sidebar.locked-collapsed .nav {
     padding: 10px 6px;
   }
-  .sidebar:not(.locked-expanded):not(:hover) .nav-item,
+  .sidebar:not(.locked-expanded):not(:hover):not(.mobile-open) .nav-item,
   .sidebar.locked-collapsed .nav-item {
     padding: 10px;
     justify-content: center;
   }
-  .sidebar:not(.locked-expanded):not(:hover) .nav-item .nb,
+  .sidebar:not(.locked-expanded):not(:hover):not(.mobile-open) .nav-item .nb,
   .sidebar.locked-collapsed .nav-item .nb {
     top: 4px;
     right: 4px;
@@ -405,22 +405,22 @@ html, body {
 }
 
 @media (hover: none) {
-  .sidebar:not(.locked-expanded) .logo-text-details,
-  .sidebar:not(.locked-expanded) .sb-user-details,
-  .sidebar:not(.locked-expanded) .nav-item span:not(.icon):not(.nb),
-  .sidebar:not(.locked-expanded) .sidebar-footer,
-  .sidebar:not(.locked-expanded) details details,
-  .sidebar:not(.locked-expanded) details > summary span:not(.icon),
-  .sidebar:not(.locked-expanded) details > summary i.ti-chevron-down,
-  .sidebar:not(.locked-expanded) .nav-sub-item,
-  .sidebar:not(.locked-expanded) .sidebar button {
+  .sidebar:not(.locked-expanded):not(.mobile-open) .logo-text-details,
+  .sidebar:not(.locked-expanded):not(.mobile-open) .sb-user-details,
+  .sidebar:not(.locked-expanded):not(.mobile-open) .nav-item span:not(.icon):not(.nb),
+  .sidebar:not(.locked-expanded):not(.mobile-open) .sidebar-footer,
+  .sidebar:not(.locked-expanded):not(.mobile-open) details details,
+  .sidebar:not(.locked-expanded):not(.mobile-open) details > summary span:not(.icon),
+  .sidebar:not(.locked-expanded):not(.mobile-open) details > summary i.ti-chevron-down,
+  .sidebar:not(.locked-expanded):not(.mobile-open) .nav-sub-item,
+  .sidebar:not(.locked-expanded):not(.mobile-open) .sidebar button {
     opacity: 0 !important;
     visibility: hidden !important;
     display: none !important;
     pointer-events: none;
   }
   
-  .sidebar:not(.locked-expanded) .nav-section {
+  .sidebar:not(.locked-expanded):not(.mobile-open) .nav-section {
     width: 48px !important;
     height: 48px !important;
     margin: 6px auto !important;
@@ -431,14 +431,14 @@ html, body {
     gap: 0 !important;
     border-radius: var(--radius-md) !important;
   }
-  .sidebar:not(.locked-expanded) .nav-section span:not(.icon),
-  .sidebar:not(.locked-expanded) .nav-section i.ti-chevron-down {
+  .sidebar:not(.locked-expanded):not(.mobile-open) .nav-section span:not(.icon),
+  .sidebar:not(.locked-expanded):not(.mobile-open) .nav-section i.ti-chevron-down {
     opacity: 0 !important;
     visibility: hidden !important;
     display: none !important;
     pointer-events: none;
   }
-  .sidebar:not(.locked-expanded) .nav-section .icon {
+  .sidebar:not(.locked-expanded):not(.mobile-open) .nav-section .icon {
     width: 100% !important;
     height: 100% !important;
     margin: 0 !important;
@@ -448,22 +448,22 @@ html, body {
     font-size: 20px !important;
     color: rgba(255, 255, 255, 0.7) !important;
   }
-  .sidebar:not(.locked-expanded) .logo {
+  .sidebar:not(.locked-expanded):not(.mobile-open) .logo {
     padding: 14px 15px;
     justify-content: center;
   }
-  .sidebar:not(.locked-expanded) .sb-user {
+  .sidebar:not(.locked-expanded):not(.mobile-open) .sb-user {
     padding: 12px 17px;
     justify-content: center;
   }
-  .sidebar:not(.locked-expanded) .nav {
+  .sidebar:not(.locked-expanded):not(.mobile-open) .nav {
     padding: 10px 6px;
   }
-  .sidebar:not(.locked-expanded) .nav-item {
+  .sidebar:not(.locked-expanded):not(.mobile-open) .nav-item {
     padding: 10px;
     justify-content: center;
   }
-  .sidebar:not(.locked-expanded) .nav-item .nb {
+  .sidebar:not(.locked-expanded):not(.mobile-open) .nav-item .nb {
     top: 4px;
     right: 4px;
     width: 8px;
@@ -1228,29 +1228,46 @@ html, body {
 
 /* ─── RESPONSIVE ─── */
 @media (max-width: 992px) {
-  .sidebar {
+  .sidebar:not(.mobile-open) {
     width: 68px !important;
     height: 100vh !important;
     height: 100dvh !important;
     display: flex !important;
     flex-direction: column !important;
   }
-  .sidebar .nav {
+  .sidebar:not(.mobile-open) .nav {
     flex: 1 !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
   }
-  .sidebar details {
+  .sidebar:not(.mobile-open) details {
     display: contents !important;
   }
-  .sidebar details > summary {
+  .sidebar:not(.mobile-open) details > summary {
     pointer-events: none !important;
     display: none !important;
   }
-  .logo, .sb-uname, .sb-urole, .sb-section, .sb-user { display: none; }
-  .nav-item span:last-child { display: none; }
-  .nav-item { justify-content: center; padding: 10px; margin: 6px 4px; border-radius: 8px; }
-  .nav-item .icon { width: 28px; height: 28px; font-size: 14px; }
+  .sidebar:not(.mobile-open) .logo, 
+  .sidebar:not(.mobile-open) .sb-uname, 
+  .sidebar:not(.mobile-open) .sb-urole, 
+  .sidebar:not(.mobile-open) .sb-section, 
+  .sidebar:not(.mobile-open) .sb-user { 
+    display: none !important; 
+  }
+  .sidebar:not(.mobile-open) .nav-item span:last-child { 
+    display: none !important; 
+  }
+  .sidebar:not(.mobile-open) .nav-item { 
+    justify-content: center !important; 
+    padding: 10px !important; 
+    margin: 6px 4px !important; 
+    border-radius: 8px !important; 
+  }
+  .sidebar:not(.mobile-open) .nav-item .icon { 
+    width: 28px !important; 
+    height: 28px !important; 
+    font-size: 14px !important; 
+  }
   .stats { grid-template-columns: 1fr 1fr; }
   .pipeline { grid-template-columns: 1fr 1fr; }
   .grid2, .grid3, .grid4 { grid-template-columns: 1fr; }
@@ -2926,7 +2943,7 @@ html, body {
     pointer-events: none !important;
   }
 
-  .sidebar .logo {
+  .sidebar:not(.mobile-open) .logo {
     width: 100% !important;
     padding: 10px 0 !important;
     height: 56px !important;
@@ -2935,7 +2952,7 @@ html, body {
     justify-content: center !important;
     margin: 0 !important;
   }
-  .sidebar .sb-user {
+  .sidebar:not(.mobile-open) .sb-user {
     width: 100% !important;
     padding: 10px 0 !important;
     height: 48px !important;
@@ -2944,12 +2961,12 @@ html, body {
     justify-content: center !important;
     margin: 0 !important;
   }
-  .sidebar .nav {
+  .sidebar:not(.mobile-open) .nav {
     padding: 10px 0 !important;
     width: 100% !important;
   }
-  .sidebar .nav-item,
-  .sidebar .nav-section {
+  .sidebar:not(.mobile-open) .nav-item,
+  .sidebar:not(.mobile-open) .nav-section {
     width: 44px !important;
     height: 44px !important;
     margin: 6px auto !important;
@@ -2961,8 +2978,8 @@ html, body {
     border-radius: var(--radius-md) !important;
     cursor: pointer;
   }
-  .sidebar .nav-item .icon,
-  .sidebar .nav-section .icon {
+  .sidebar:not(.mobile-open) .nav-item .icon,
+  .sidebar:not(.mobile-open) .nav-section .icon {
     width: 100% !important;
     height: 100% !important;
     margin: 0 !important;
@@ -2971,7 +2988,7 @@ html, body {
     justify-content: center !important;
     font-size: 20px !important;
   }
-  .sidebar .nav-item .nb {
+  .sidebar:not(.mobile-open) .nav-item .nb {
     top: 2px;
     right: 2px;
     width: 8px;
