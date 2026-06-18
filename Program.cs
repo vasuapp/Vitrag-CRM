@@ -9,6 +9,14 @@ namespace VitragCRM.Backend
     {
         static void Main(string[] args)
         {
+            // Force unbuffered console output for real-time Docker/Railway logs
+            try {
+                var stdout = new System.IO.StreamWriter(Console.OpenStandardOutput()) { AutoFlush = true };
+                Console.SetOut(stdout);
+                var stderr = new System.IO.StreamWriter(Console.OpenStandardError()) { AutoFlush = true };
+                Console.SetError(stderr);
+            } catch { }
+
             try
             {
                 Console.WriteLine("Starting Vitrag CRM C# Backend Server...");
