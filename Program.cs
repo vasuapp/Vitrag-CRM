@@ -29,7 +29,7 @@ namespace VitragCRM.Backend
                 }
 
                 // Bind to all network interfaces (needed for Docker / Railway)
-                string baseUri = $"http://*:{port}";
+                string baseUri = $"http://*:{port}/";
 
                 Console.WriteLine($"Starting OWIN Self-Host on {baseUri}");
 
