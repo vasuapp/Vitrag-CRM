@@ -6680,13 +6680,34 @@
       }
     }
     window.addEventListener('resize', initMobileNav);
-    document.addEventListener('DOMContentLoaded', initMobileNav);
-    // Close sidebar when any nav item is clicked on mobile
-    document.addEventListener('click', function(e) {
-      if (window.innerWidth <= 768 && e.target.closest('.nav-item, .nav-sub-item')) {
-        setTimeout(closeMobileSidebar, 150);
+    document.addEventListener('DOMContentLoaded', () => {
+      initMobileNav();
+      
+      // Tap thin side ribbon on mobile to open the sidebar
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar) {
+        sidebar.addEventListener('click', (e) => {
+          if (window.innerWidth <= 768) {
+            // Check if clicking summary or nav-item or container itself while closed
+            if (!sidebar.classList.contains('mobile-open')) {
+              e.preventDefault();
+              e.stopPropagation();
+              toggleMobileSidebar();
+            }
+          }
+        });
       }
     });
+    // Close sidebar when any nav item is clicked on mobile
+    document.addEventListener('click', function(e) {
+      if (window.innerWidth <= 768) {
+        const item = e.target.closest('.nav-item, .nav-sub-item');
+        if (item && (item.hasAttribute('data-page') || item.classList.contains('nav-sub-item'))) {
+          setTimeout(closeMobileSidebar, 150);
+        }
+      }
+    });
+
   </script>
 
 
