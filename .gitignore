@@ -12,3 +12,9 @@ packages/
 backups/
 *.suo
 *.user
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
