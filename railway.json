@@ -1,10 +1,6 @@
 {
   "$schema": "https://schema.railway.app/railway-schema-v2.json",
-  "build": {
-    "builder": "RAILPACK"
-  },
   "deploy": {
-    "startCommand": "node server/index.js",
     "healthcheckPath": "/api/system/settings",
     "healthcheckTimeout": 60,
     "restartPolicyType": "ON_FAILURE",

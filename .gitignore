@@ -4,3 +4,11 @@ node_modules/
 *.sqlite
 *.sqlite3
 simulated_google_sheet.csv
+bin/
+obj/
+packages/
+.DS_Store
+**/.DS_Store
+backups/
+*.suo
+*.user
